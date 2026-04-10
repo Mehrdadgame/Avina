@@ -1,0 +1,733 @@
+@page "/"
+@rendermode InteractiveServer
+
+<style>
+.home-container {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 100px);
+    padding: 2rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Featured Hero Section */
+.hero-section {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    height: 420px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    margin-bottom: 2rem;
+    group: true;
+}
+
+.hero-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+    transition: all 0.7s ease;
+}
+
+.hero-section:hover .hero-image {
+    transform: scale(1.05);
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, #0f172a, rgba(15, 23, 42, 0.4), transparent);
+}
+
+.hero-content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem;
+    max-width: 50%;
+    z-index: 10;
+}
+
+.hero-badge {
+    display: inline-block;
+    background: rgba(156, 39, 93, 0.2);
+    border: 1px solid #9d365d;
+    color: #f472b6;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    width: fit-content;
+}
+
+.hero-badge-text {
+    color: rgba(244, 114, 182, 0.8);
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-description {
+    color: rgba(244, 114, 182, 0.8);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-hero {
+    padding: 0.9rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-primary-hero {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+}
+
+.btn-primary-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.3);
+}
+
+.btn-secondary-hero {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.btn-secondary-hero:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hero-stats {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1rem;
+    border-radius: 1rem;
+    display: none;
+}
+
+.hero-stats.show {
+    display: flex;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 2.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 1.5rem;
+}
+
+/* Category Filters */
+.filters-section {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
+
+.filter-btn {
+    padding: 0.625rem 1.5rem;
+    border: none;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+}
+
+.filter-btn.inactive {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
+
+.filter-btn.inactive:hover {
+    background-color: rgba(124, 58, 237, 0.1);
+    border-color: #7c3aed;
+}
+
+.sort-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sort-btn:hover {
+    background-color: #1e293b;
+    color: #a78bfa;
+}
+
+/* Content Grid */
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    animation: slideUp 0.6s ease-out;
+}
+
+.content-card {
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.content-card:nth-child(1) { animation-delay: 0.1s; }
+.content-card:nth-child(2) { animation-delay: 0.2s; }
+.content-card:nth-child(3) { animation-delay: 0.3s; }
+.content-card:nth-child(4) { animation-delay: 0.4s; }
+
+.card-image-container {
+    position: relative;
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: #1e293b;
+    margin-bottom: 1rem;
+    group: true;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.5s ease;
+}
+
+.card-image-container:hover .card-image {
+    transform: scale(1.1);
+}
+
+.card-bookmark {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem;
+    border-radius: 9999px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.card-bookmark:hover {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+}
+
+.card-tag {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: white;
+    color: #38274c;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.5rem;
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #f1f5f9;
+    line-height: 1.3;
+}
+
+.card-price {
+    font-weight: 700;
+    color: #7c3aed;
+}
+
+.card-creator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-creator-avatar {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.card-creator-name {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.card-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.card-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Curated Section */
+.curated-section {
+    margin-top: 5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #f1f5f9;
+    margin-bottom: 2rem;
+}
+
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    auto-rows: 240px;
+}
+
+.bento-item {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    transition: all 0.3s ease;
+}
+
+.bento-item:hover {
+    border-color: #7c3aed;
+    box-shadow: 0 15px 40px rgba(124, 58, 237, 0.2);
+}
+
+.bento-large {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+.bento-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.7s ease;
+}
+
+.bento-item:hover .bento-image {
+    transform: scale(1.05);
+}
+
+.bento-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent);
+}
+
+.bento-content {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 10;
+}
+
+.bento-badge {
+    color: #a78bfa;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+
+.bento-title {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.bento-btn {
+    background: white;
+    color: #38274c;
+    border: none;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bento-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.bento-card {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.bento-card-icon {
+    font-size: 2rem;
+    color: #7c3aed;
+    margin-bottom: 1rem;
+}
+
+.bento-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
+}
+
+.bento-card-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+
+.bento-card-link {
+    color: #7c3aed;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bento-card-link:hover {
+    color: #ec4899;
+    gap: 0.75rem;
+}
+
+.bento-stats {
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.bento-stats-number {
+    font-size: 2rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.bento-stats-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 1.5rem;
+}
+
+.avatar-group {
+    display: flex;
+    gap: -0.75rem;
+    justify-content: center;
+}
+
+.avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 2px solid #7c3aed;
+    object-fit: cover;
+    margin-left: -0.75rem;
+}
+
+.avatar:first-child {
+    margin-left: 0;
+}
+
+.avatar-count {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: #a78bfa;
+    color: white;
+    border: 2px solid #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+    margin-left: -0.75rem;
+}
+</style>
+
+<div class="home-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <img class="hero-image" src="https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=1600&q=80" alt="درس هوم">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span>✨ نوظهور</span>
+                <span class="hero-badge-text">داغِ در مدرسه آنلاین</span>
+            </div>
+            <h1 class="hero-title">سمفونی مسیر زندگی:</h1>
+            <p class="hero-description">
+                تجربه کریں فیزیکس و شاعری کا تقاطع۔ ۴۵ ویڈیوز درسی از استاد علی ریاضی‌دان
+            </p>
+            <div class="hero-buttons">
+                <button class="btn-hero btn-primary-hero">دوره را کاوش کریں</button>
+                <button class="btn-hero btn-secondary-hero">پروفایل دیکھیں</button>
+            </div>
+        </div>
+        <div class="hero-stats show">
+            <div class="stat-item">
+                <div class="stat-number">1.2M</div>
+                <div class="stat-label">نمایش</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-number">42K</div>
+                <div class="stat-label">ثبت‌نام</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters-section">
+        <div class="filter-buttons">
+            <button class="filter-btn active">تمام دوره‌ها</button>
+            <button class="filter-btn inactive">📚 مدرسه</button>
+            <button class="filter-btn inactive">🎮 بازی</button>
+            <button class="filter-btn inactive">📖 مطالعه</button>
+            <button class="filter-btn inactive">🎓 مهارت</button>
+        </div>
+        <button class="sort-btn">📊 ترتیب: محبوب‌ترین</button>
+    </section>
+
+    <!-- Content Grid -->
+    <section class="content-grid">
+        @foreach (var course in featuredCourses)
+        {
+            <div class="content-card">
+                <div class="card-image-container">
+                    <img class="card-image" src="https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=600&q=80" alt="@course.Title">
+                    <button class="card-bookmark">📌</button>
+                    <div class="card-tag">@course.Category</div>
+                </div>
+                <div class="card-header">
+                    <h3 class="card-title">@course.Title</h3>
+                    <span class="card-price">@course.Price.ToString("N0")ت</span>
+                </div>
+                <div class="card-creator">
+                    <img class="card-creator-avatar" src="https://i.pravatar.cc/150?img=1" alt="معلم">
+                    <span class="card-creator-name">@course.Creator</span>
+                </div>
+                <div class="card-stats">
+                    <div class="card-stat-item">
+                        <span>❤️</span>
+                        <span>@course.Likes.ToString("N0")</span>
+                    </div>
+                    <div class="card-stat-item">
+                        <span>👁️</span>
+                        <span>@course.Views.ToString("N0")</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- Curated Section -->
+    <section class="curated-section">
+        <h2 class="section-title">📚 برای شما انتخاب شدہ</h2>
+        <div class="bento-grid">
+            <!-- Large Featured -->
+            <div class="bento-item bento-large">
+                <img class="bento-image" src="https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1200&q=80" alt="مستر کلاس">
+                <div class="bento-overlay"></div>
+                <div class="bento-content">
+                    <div class="bento-badge">🎓 مستر کلاس</div>
+                    <h3 class="bento-title">هنر مدیریت زندگی</h3>
+                    <button class="bento-btn">اکنون ببینید</button>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="bento-item bento-card">
+                <div>
+                    <div class="bento-card-icon">✨</div>
+                    <h3 class="bento-card-title">هوش مصنوعی کیوریشن</h3>
+                    <p class="bento-card-desc">اجازت دیں به تمام درس‌های ما با برچسب‌های ذکی!</p>
+                </div>
+                <div class="bento-card-link">
+                    سعی کنید بتا <span>→</span>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="bento-item bento-stats">
+                <div class="bento-stats-number">100K+</div>
+                <div class="bento-stats-label">دانش‌آموز این هفته</div>
+                <div class="avatar-group">
+                    <img class="avatar" src="https://i.pravatar.cc/150?img=2" alt="">
+                    <img class="avatar" src="https://i.pravatar.cc/150?img=3" alt="">
+                    <img class="avatar" src="https://i.pravatar.cc/150?img=4" alt="">
+                    <div class="avatar-count">+12</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private class CourseItem
+    {
+        public string Title { get; set; }
+        public string Category { get; set; }
+        public string Creator { get; set; }
+        public decimal Price { get; set; }
+        public int Likes { get; set; }
+        public int Views { get; set; }
+    }
+
+    private List<CourseItem> featuredCourses = new();
+
+    protected override void OnInitialized()
+    {
+        featuredCourses = new List<CourseItem>
+        {
+            new CourseItem 
+            { 
+                Title = "بسته جریان انتزاعی ۱",
+                Category = "3D Model",
+                Creator = "الینا دیزاین",
+                Price = 29000,
+                Likes = 1200,
+                Views = 45000
+            },
+            new CourseItem 
+            { 
+                Title = "حلقه‌های بافت نئونی",
+                Category = "ویدیو",
+                Creator = "مارکوس موشن",
+                Price = 0,
+                Likes = 892,
+                Views = 12000
+            },
+            new CourseItem 
+            { 
+                Title = "منظرِ سنتز مایع",
+                Category = "صوتی",
+                Creator = "ملکہ سنتِ وِیو",
+                Price = 15000,
+                Likes = 2400,
+                Views = 92000
+            },
+            new CourseItem 
+            { 
+                Title = "رابط کاربری معماری نئو",
+                Category = "UI Kit",
+                Creator = "معمار دیزاین",
+                Price = 49000,
+                Likes = 1800,
+                Views = 33000
+            },
+        };
+    }
+}

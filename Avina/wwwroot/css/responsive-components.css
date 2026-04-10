@@ -1,0 +1,47 @@
+/* Music Player Responsive */
+@media (max-width: 1024px) {
+    .music-player {
+        left: 220px;
+    }
+
+    .player-progress {
+        width: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .music-player {
+        left: 0;
+        bottom: 60px;
+    }
+
+    .player-progress {
+        width: 80px;
+    }
+
+    .volume-control {
+        display: none;
+    }
+}
+
+/* PDF Reader Responsive */
+@media (max-width: 1024px) {
+    .pdf-reader-container {
+        flex-direction: column;
+    }
+
+    .pdf-sidebar {
+        width: 100%;
+        max-height: 200px;
+    }
+
+    .pdf-list {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .pdf-item {
+        flex-shrink: 0;
+        min-width: 150px;
+    }
+}

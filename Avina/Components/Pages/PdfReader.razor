@@ -1,0 +1,306 @@
+@page "/pdf-reader"
+@rendermode InteractiveServer
+
+<style>
+.pdf-reader-container {
+    display: flex;
+    height: calc(100vh - 100px);
+    background-color: #0f172a;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.pdf-sidebar {
+    width: 250px;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.pdf-title {
+    color: #f1f5f9;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.pdf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.pdf-item {
+    background-color: rgba(124, 58, 237, 0.1);
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    padding: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.pdf-item:hover {
+    border-color: #7c3aed;
+    background-color: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+}
+
+.pdf-item.active {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(244, 114, 182, 0.1));
+    border-color: #a78bfa;
+    color: #a78bfa;
+}
+
+.pdf-viewer {
+    flex: 1;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 0.875rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 0.875rem 0.875rem 0 0;
+}
+
+.pdf-header-title {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.pdf-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pdf-btn {
+    background: none;
+    border: 1px solid #334155;
+    color: #a78bfa;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.pdf-btn:hover {
+    border-color: #7c3aed;
+    background-color: rgba(124, 58, 237, 0.1);
+    color: #f472b6;
+}
+
+.pdf-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.pdf-page {
+    background-color: white;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    border-radius: 0.5rem;
+    line-height: 1.8;
+    color: #1f2937;
+}
+
+.pdf-page h1 {
+    color: #7c3aed;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.pdf-page h2 {
+    color: #ec4899;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.3rem;
+}
+
+.pdf-page p {
+    margin-bottom: 0.75rem;
+    text-align: justify;
+}
+
+.pdf-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid #334155;
+    background-color: #0f172a;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    border-radius: 0 0 0.875rem 0.875rem;
+}
+
+.page-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-input {
+    width: 60px;
+    background-color: rgba(124, 58, 237, 0.1);
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+}
+</style>
+
+<div class="pdf-reader-container">
+    <!-- Sidebar -->
+    <div class="pdf-sidebar">
+        <div class="pdf-title">📚 فایل‌های PDF</div>
+        <div class="pdf-list">
+            @foreach (var pdf in pdfList)
+            {
+                <div class="pdf-item @(selectedPdf == pdf ? "active" : "")" 
+                     @onclick="@(() => SelectPdf(pdf))">
+                    @pdf
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Viewer -->
+    <div class="pdf-viewer">
+        <!-- Header -->
+        <div class="pdf-header">
+            <div class="pdf-header-title">@selectedPdf</div>
+            <div class="pdf-controls">
+                <button class="pdf-btn" @onclick="ZoomOut">🔍-</button>
+                <span style="color: #cbd5e1; min-width: 40px; text-align: center;">@zoomLevel%</span>
+                <button class="pdf-btn" @onclick="ZoomIn">🔍+</button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="pdf-content">
+            <div class="pdf-page">
+                @if (selectedPdf == "درس ریاضی - فصل ۱")
+                {
+                    <h1>📐 درس ریاضی - فصل ۱</h1>
+                    <h2>اعداد و عملیات</h2>
+                    <p>
+                        این فصل به مطالعه اعداد و عملیات ریاضی می‌پردازد. ما یاد خواهیم گرفت 
+                        که چگونه اعداد را جمع، تفریق، ضرب و تقسیم کنیم.
+                    </p>
+                    <h2>مفاهیم اساسی</h2>
+                    <p>
+                        عدد: نماد اصلی ریاضی است که برای نشان دادن مقدار استفاده می‌شود.
+                    </p>
+                    <p>
+                        عملیات: روش‌هایی برای ترکیب یا تغییر اعداد هستند.
+                    </p>
+                }
+                else if (selectedPdf == "درس فارسی - کتاب خوانی")
+                {
+                    <h1>📖 درس فارسی - کتاب خوانی</h1>
+                    <h2>اهمیت خواندن</h2>
+                    <p>
+                        خواندن یکی از مهم‌ترین مهارت‌های انسان است. از طریق خواندن 
+                        می‌توانیم دانش جدید کسب کنیم و فرهنگ غنی خود را غنی‌تر کنیم.
+                    </p>
+                    <h2>نکات خواندن مؤثر</h2>
+                    <p>
+                        ۱. در یک محیط آرام بخوانید
+                        ۲. متنی که می‌خوانید را تفهم کنید
+                        ۳. یادداشت‌های مختصر بنویسید
+                    </p>
+                }
+                else
+                {
+                    <h1>🎓 شروع کنید</h1>
+                    <p>یکی از فایل‌های PDF را انتخاب کنید تا مطالعه کنید.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="pdf-footer">
+            <div style="color: #94a3b8;">
+                @if (!string.IsNullOrEmpty(selectedPdf))
+                {
+                    <span>📄 @selectedPdf - صفحه @currentPage از @totalPages</span>
+                }
+            </div>
+            <div class="page-nav">
+                <button class="pdf-btn" @onclick="PreviousPage">⬅️ قبلی</button>
+                <input type="number" class="page-input" @bind="currentPage" min="1" max="@totalPages">
+                <button class="pdf-btn" @onclick="NextPage">بعدی ➡️</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<string> pdfList = new()
+    {
+        "درس ریاضی - فصل ۱",
+        "درس فارسی - کتاب خوانی",
+        "درس علوم - فیزیک",
+        "درس تاریخ - دوره پهلوی",
+    };
+
+    private string selectedPdf = "";
+    private int currentPage = 1;
+    private int totalPages = 10;
+    private int zoomLevel = 100;
+
+    private void SelectPdf(string pdf)
+    {
+        selectedPdf = pdf;
+        currentPage = 1;
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+            currentPage--;
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+            currentPage++;
+    }
+
+    private void ZoomIn()
+    {
+        if (zoomLevel < 200)
+            zoomLevel += 10;
+    }
+
+    private void ZoomOut()
+    {
+        if (zoomLevel > 50)
+            zoomLevel -= 10;
+    }
+}

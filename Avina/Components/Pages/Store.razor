@@ -1,0 +1,281 @@
+@page "/store"
+@using Avina.Models
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <!-- Header -->
+    <section class="mb-5">
+        <h1 class="display-5 fw-bold mb-3">فروشگاه</h1>
+        <p class="lead text-muted">محصولات فیزیکی و دیجیتال برای رشد شخصی</p>
+    </section>
+
+    <!-- Store Tabs -->
+    <section class="mb-5">
+        <ul class="nav nav-tabs" id="storeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="physical-tab" data-bs-toggle="tab" data-bs-target="#physical" type="button" role="tab">محصولات فیزیکی</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="digital-tab" data-bs-toggle="tab" data-bs-target="#digital" type="button" role="tab">محصولات دیجیتال</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart" type="button" role="tab">سبد خریدم (3)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="storeTabsContent">
+            <!-- Physical Products -->
+            <div class="tab-pane fade show active" id="physical" role="tabpanel" aria-labelledby="physical-tab">
+                <div class="mt-4">
+                    <div class="row g-4">
+                        @foreach (var product in physicalProducts)
+                        {
+                            <div class="col-lg-4">
+                                <div class="product-card rounded-4 overflow-hidden shadow-sm h-100">
+                                    <div style="position: relative; height: 200px; overflow: hidden;">
+                                        <img src="@product.Image" alt="@product.Name" style="width: 100%; height: 100%; object-fit: cover;">
+                                        @if (product.IsNew)
+                                        {
+                                            <span class="badge bg-danger position-absolute top-0 end-0 m-3">جدید</span>
+                                        }
+                                    </div>
+                                    <div class="p-4">
+                                        <h5 class="fw-bold mb-2">@product.Name</h5>
+                                        <p class="text-muted mb-3">@product.Description</p>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-primary fw-bold">@product.Price.ToString("N0") تومان</span>
+                                            <span class="badge bg-info">@product.CoinPrice کوین</span>
+                                        </div>
+                                        <button class="btn btn-primary w-100" @onclick="() => AddToCart(product.Id)">افزودن به سبد</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Digital Products -->
+            <div class="tab-pane fade" id="digital" role="tabpanel" aria-labelledby="digital-tab">
+                <div class="mt-4">
+                    <div class="row g-4">
+                        @foreach (var product in digitalProducts)
+                        {
+                            <div class="col-lg-4">
+                                <div class="product-card rounded-4 overflow-hidden shadow-sm h-100">
+                                    <div style="position: relative; height: 200px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                                        <div style="font-size: 3rem;">📱</div>
+                                    </div>
+                                    <div class="p-4">
+                                        <h5 class="fw-bold mb-2">@product.Name</h5>
+                                        <p class="text-muted mb-3">@product.Description</p>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-primary fw-bold">@product.Price.ToString("N0") تومان</span>
+                                        </div>
+                                        <button class="btn btn-primary w-100" @onclick="() => BuyDigitalProduct(product.Id)">خریداری</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shopping Cart -->
+            <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="cart-tab">
+                <div class="mt-4">
+                    @if (cartItems.Any())
+                    {
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>محصول</th>
+                                                <th>قیمت</th>
+                                                <th>تعداد</th>
+                                                <th>جمع</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in cartItems)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td>@item.Price.ToString("N0") تومان</td>
+                                                    <td>@item.Quantity</td>
+                                                    <td class="fw-bold">@(item.Price * item.Quantity).ToString("N0") تومان</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveFromCart(item.Id)">حذف</button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="card rounded-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title fw-bold mb-3">خلاصه سفارش</h5>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>قیمت کالاها:</span>
+                                            <span>@cartTotal.ToString("N0") تومان</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>هزینه ارسال:</span>
+                                            <span>۲۵۰۰۰ تومان</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between mb-3 fw-bold">
+                                            <span>جمع کل:</span>
+                                            <span>@(cartTotal + 25000).ToString("N0") تومان</span>
+                                        </div>
+                                        <button class="btn btn-primary w-100">پرداخت و تکمیل سفارش</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info text-center">
+                            <p>سبد خریدتان خالی است.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private class CartItem
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    private List<Product> physicalProducts = new();
+    private List<Product> digitalProducts = new();
+    private List<CartItem> cartItems = new();
+    private decimal cartTotal = 0;
+
+    protected override void OnInitialized()
+    {
+        physicalProducts = new List<Product>
+        {
+            new Product 
+            { 
+                Id = 1,
+                Name = "کیت خالقیت و نوآوری",
+                Description = "مجموعه ابزارهای خالقیت و ساخت",
+                Image = "images/products/creativity-kit.jpg",
+                Price = 250000,
+                CoinPrice = 1250,
+                Category = "کیت‌های آموزشی",
+                IsNew = true,
+                Stock = 15
+            },
+            new Product 
+            { 
+                Id = 2,
+                Name = "بردگیم فکری",
+                Description = "بازی‌های فکری برای توسعه ذهن",
+                Image = "images/products/board-game.jpg",
+                Price = 180000,
+                CoinPrice = 900,
+                Category = "بازی‌های فکری",
+                IsNew = false,
+                Stock = 23
+            },
+            new Product 
+            { 
+                Id = 3,
+                Name = "کتاب علم داستانی",
+                Description = "کتاب‌های سرگرم‌کننده و آموزنده",
+                Image = "images/products/story-book.jpg",
+                Price = 120000,
+                CoinPrice = 600,
+                Category = "کتاب‌ها",
+                IsNew = true,
+                Stock = 30
+            }
+        };
+
+        digitalProducts = new List<Product>
+        {
+            new Product 
+            { 
+                Id = 4,
+                Name = "دوره ویدیویی پیشرفته",
+                Description = "دوره جامع آموزش برنامه‌نویسی",
+                Image = "images/products/video-course.jpg",
+                Price = 350000,
+                CoinPrice = 1750,
+                Category = "دوره‌های ویدیویی",
+                IsNew = false,
+                Stock = 999
+            },
+            new Product 
+            { 
+                Id = 5,
+                Name = "کتاب صوتی",
+                Description = "کتاب صوتی برای یادگیری آسان",
+                Image = "images/products/audiobook.jpg",
+                Price = 85000,
+                CoinPrice = 425,
+                Category = "کتاب‌های صوتی",
+                IsNew = false,
+                Stock = 999
+            },
+            new Product 
+            { 
+                Id = 6,
+                Name = "دسترسی ویژه دوره‌ها",
+                Description = "دسترسی به تمام دوره‌های پرمیوم",
+                Image = "images/products/premium-access.jpg",
+                Price = 450000,
+                CoinPrice = 2250,
+                Category = "دسترسی‌های پرمیوم",
+                IsNew = true,
+                Stock = 999
+            }
+        };
+
+        // Mock cart data
+        cartItems = new List<CartItem>
+        {
+            new CartItem { Id = 1, Name = "کیت خالقیت و نوآوری", Price = 250000, Quantity = 1 },
+            new CartItem { Id = 2, Name = "بردگیم فکری", Price = 180000, Quantity = 1 },
+            new CartItem { Id = 3, Name = "کتاب علم داستانی", Price = 120000, Quantity = 1 }
+        };
+
+        CalculateCartTotal();
+    }
+
+    private void AddToCart(int productId)
+    {
+        Console.WriteLine($"محصول {productId} به سبد اضافه شد");
+    }
+
+    private void BuyDigitalProduct(int productId)
+    {
+        Console.WriteLine($"خریداری فوری محصول دیجیتالی {productId}");
+    }
+
+    private void RemoveFromCart(int itemId)
+    {
+        cartItems.RemoveAll(x => x.Id == itemId);
+        CalculateCartTotal();
+    }
+
+    private void CalculateCartTotal()
+    {
+        cartTotal = cartItems.Sum(x => x.Price * x.Quantity);
+    }
+}

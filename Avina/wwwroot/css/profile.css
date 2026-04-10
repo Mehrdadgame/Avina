@@ -1,0 +1,41 @@
+/* Profile Page Animations */
+.profile-header {
+    animation: slideUp 0.5s ease-out;
+}
+
+.profile-card {
+    animation: slideUp 0.6s ease-out;
+}
+
+.quick-stats {
+    animation: slideUp 0.7s ease-out;
+}
+
+.achievement-card {
+    animation: scaleIn 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.achievement-card:nth-child(1) { animation-delay: 0.1s; }
+.achievement-card:nth-child(2) { animation-delay: 0.2s; }
+.achievement-card:nth-child(3) { animation-delay: 0.3s; }
+.achievement-card:nth-child(4) { animation-delay: 0.4s; }
+.achievement-card:nth-child(5) { animation-delay: 0.5s; }
+
+.course-item {
+    animation: slideUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.course-item:nth-child(1) { animation-delay: 0.1s; }
+.course-item:nth-child(2) { animation-delay: 0.2s; }
+
+.timeline-item {
+    animation: slideUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+.timeline-item:nth-child(4) { animation-delay: 0.4s; }

@@ -1,0 +1,16 @@
+/* Store Page Animations */
+.product-card-store {
+    animation: slideUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.product-card-store:nth-child(1) { animation-delay: 0.1s; }
+.product-card-store:nth-child(2) { animation-delay: 0.2s; }
+.product-card-store:nth-child(3) { animation-delay: 0.3s; }
+.product-card-store:nth-child(4) { animation-delay: 0.4s; }
+.product-card-store:nth-child(5) { animation-delay: 0.5s; }
+.product-card-store:nth-child(6) { animation-delay: 0.6s; }
+
+.store-tab-content {
+    animation: fadeIn 0.5s ease-out;
+}

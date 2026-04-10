@@ -1,0 +1,34 @@
+/* Upload Page Styles */
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .upload-content {
+        grid-template-columns: 1fr;
+    }
+
+    .content-types {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .upload-wrapper {
+        padding: 1.5rem;
+    }
+
+    .upload-title {
+        font-size: 1.5rem;
+    }
+
+    .access-types {
+        grid-template-columns: 1fr;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .content-types {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -1,0 +1,577 @@
+@page "/upload"
+@rendermode InteractiveServer
+
+<style>
+.upload-page {
+    padding: 2rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.upload-header {
+    margin-bottom: 3rem;
+}
+
+.upload-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+
+.upload-subtitle {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+}
+
+.upload-wrapper {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+}
+
+.upload-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+}
+
+/* Upload Zone */
+.upload-zone-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.zone-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone {
+    border: 3px dashed #7c3aed;
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(244, 114, 182, 0.05) 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone:hover {
+    border-color: #a78bfa;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%);
+}
+
+.cloud-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.upload-text {
+    color: #cbd5e1;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.upload-subtext {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.select-btn {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.select-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+}
+
+.content-types {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.content-type {
+    background-color: rgba(124, 58, 237, 0.1);
+    border: 2px solid #7c3aed;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.content-type:hover {
+    background-color: rgba(124, 58, 237, 0.2);
+    border-color: #a78bfa;
+}
+
+.content-type.active {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(244, 114, 182, 0.2));
+    border-color: #a78bfa;
+}
+
+.type-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.type-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #a78bfa;
+}
+
+/* Form Section */
+.form-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: #f1f5f9;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    background-color: rgba(15, 23, 42, 0.5);
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
+    background-color: rgba(15, 23, 42, 0.8);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+.form-input::placeholder {
+    color: #94a3b8;
+}
+
+.form-textarea::placeholder {
+    color: #94a3b8;
+}
+
+/* Tags */
+.tags-section {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.tag-btn {
+    background-color: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+    border: 1px solid #7c3aed;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tag-btn:hover {
+    background-color: rgba(124, 58, 237, 0.3);
+    border-color: #a78bfa;
+}
+
+.tag-btn.active {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    border-color: transparent;
+}
+
+/* Access Type */
+.access-types {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.access-option {
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 2px solid #334155;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.access-option:hover {
+    border-color: #7c3aed;
+    background-color: rgba(124, 58, 237, 0.1);
+}
+
+.access-option.active {
+    border-color: #a78bfa;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(244, 114, 182, 0.1));
+}
+
+.access-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.access-label {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.access-desc {
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+/* Price Section */
+.price-section {
+    background-color: rgba(124, 58, 237, 0.1);
+    border: 1px solid #7c3aed;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.price-label {
+    color: #a78bfa;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.price-input {
+    width: 100%;
+    background-color: rgba(15, 23, 42, 0.5);
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+}
+
+/* Buttons */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #334155;
+}
+
+.btn-primary-upload {
+    flex: 1;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.3);
+}
+
+.btn-secondary-upload {
+    flex: 1;
+    background-color: transparent;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary-upload:hover {
+    border-color: #7c3aed;
+    color: #a78bfa;
+}
+
+/* Preview */
+.preview-section {
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-top: 3rem;
+}
+
+.preview-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.preview-card {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(244, 114, 182, 0.05));
+    border: 1px solid #7c3aed;
+    border-radius: 0.875rem;
+    padding: 1.5rem;
+}
+
+.preview-title-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #a78bfa;
+    margin-bottom: 0.5rem;
+}
+
+.preview-description {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.preview-price {
+    color: #fbbf24;
+    font-weight: 700;
+    font-size: 1rem;
+}
+</style>
+
+<div class="upload-page">
+    <div class="upload-header">
+        <div class="upload-title">📤 اپلود محتوا</div>
+        <div class="upload-subtitle">نیا محتوا بنائیں اور دنیا کے ساتھ شیئر کریں</div>
+    </div>
+
+    <div class="upload-wrapper">
+        <div class="upload-content">
+            <!-- Left: Upload Zone -->
+            <div class="upload-zone-wrapper">
+                <div class="zone-title">نیا اپلود</div>
+
+                <div class="upload-zone" @ondrop="HandleDrop" @ondragover="HandleDragOver">
+                    <span class="cloud-icon">☁️</span>
+                    <div class="upload-text">cloud_upload</div>
+                    <div class="upload-subtext">اپنی فائل یہاں ڈریگ کریں</div>
+                    <div style="margin-top: 1rem; color: #94a3b8; font-size: 0.85rem;">
+                        High-resolution video, audio or image. Up to 100 per upload.
+                    </div>
+                </div>
+
+                <button class="select-btn">📁 Select File</button>
+
+                <!-- Content Types -->
+                <div style="margin-top: 2rem;">
+                    <div style="color: #f1f5f9; font-weight: 600; margin-bottom: 1rem;">Select Content Type</div>
+                    <div class="content-types">
+                        <div class="content-type @(selectedType == "movie" ? "active" : "")" @onclick="@(() => SelectType("movie"))">
+                            <div class="type-icon">🎬</div>
+                            <div class="type-label">movie</div>
+                        </div>
+                        <div class="content-type @(selectedType == "audio" ? "active" : "")" @onclick="@(() => SelectType("audio"))">
+                            <div class="type-icon">🎵</div>
+                            <div class="type-label">audio</div>
+                        </div>
+                        <div class="content-type @(selectedType == "image" ? "active" : "")" @onclick="@(() => SelectType("image"))">
+                            <div class="type-icon">🖼️</div>
+                            <div class="type-label">image</div>
+                        </div>
+                        <div class="content-type @(selectedType == "document" ? "active" : "")" @onclick="@(() => SelectType("document"))">
+                            <div class="type-icon">📄</div>
+                            <div class="type-label">menu_book</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Form -->
+            <div class="form-section">
+                <!-- Content Title -->
+                <div class="form-group">
+                    <label class="form-label">Content Title</label>
+                    <input type="text" class="form-input" placeholder="e.g. The Future of Digital Art" @bind="contentTitle">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" placeholder="Tell your audience about this creation..." @bind="contentDescription"></textarea>
+                </div>
+
+                <!-- Tags -->
+                <div class="form-group">
+                    <label class="form-label">Text & Discoverability</label>
+                    <div class="tags-section">
+                        @foreach (var tag in new[] { "important class", "material class", "Add tag" })
+                        {
+                            <button class="tag-btn">@tag</button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Access Type -->
+                <div class="form-group">
+                    <label class="form-label">Access Type</label>
+                    <div class="access-types">
+                        <div class="access-option @(accessType == "premium" ? "active" : "")" @onclick="@(() => SelectAccess("premium"))">
+                            <div class="access-icon">💎</div>
+                            <div class="access-label">Premium Content</div>
+                            <div class="access-desc">Only available on the platform</div>
+                        </div>
+                        <div class="access-option @(accessType == "public" ? "active" : "")" @onclick="@(() => SelectAccess("public"))">
+                            <div class="access-icon">🌐</div>
+                            <div class="access-label">Public</div>
+                            <div class="access-desc">Everyone can view</div>
+                        </div>
+                        <div class="access-option @(accessType == "unlisted" ? "active" : "")" @onclick="@(() => SelectAccess("unlisted"))">
+                            <div class="access-icon">🔗</div>
+                            <div class="access-label">Unlisted</div>
+                            <div class="access-desc">Only with the link</div>
+                        </div>
+                        <div class="access-option @(accessType == "private" ? "active" : "")" @onclick="@(() => SelectAccess("private"))">
+                            <div class="access-icon">🔒</div>
+                            <div class="access-label">Private</div>
+                            <div class="access-desc">Only you can see</div>
+                        </div>
+                    </div>
+
+                    @if (accessType == "premium")
+                    {
+                        <div class="price-section">
+                            <label class="price-label">$ 19.99</label>
+                            <div style="color: #94a3b8; font-size: 0.85rem;">
+                                Set your selling price for this premium content
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button class="btn-secondary-upload" @onclick="CancelUpload">
+                        🗑️ Discard
+                    </button>
+                    <button class="btn-primary-upload" @onclick="SubmitUpload">
+                        ✅ Create Tip
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-section">
+            <div class="preview-title">
+                <span>👁️</span> Preview
+            </div>
+            @if (string.IsNullOrEmpty(contentTitle))
+            {
+                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                    <p>Add a title to see your creation's preview</p>
+                </div>
+            }
+            else
+            {
+                <div class="preview-card">
+                    <div class="preview-title-text">@contentTitle</div>
+                    @if (!string.IsNullOrEmpty(contentDescription))
+                    {
+                        <div class="preview-description">@contentDescription</div>
+                    }
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Type: @selectedType</span>
+                        @if (accessType == "premium")
+                        {
+                            <div class="preview-price">💰 $19.99</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string selectedType = "movie";
+    private string accessType = "public";
+    private string contentTitle = "";
+    private string contentDescription = "";
+
+    private void SelectType(string type)
+    {
+        selectedType = type;
+    }
+
+    private void SelectAccess(string access)
+    {
+        accessType = access;
+    }
+
+    private void HandleDrop(DragEventArgs e)
+    {
+        Console.WriteLine("File dropped");
+    }
+
+    private void HandleDragOver(DragEventArgs e)
+    {
+        e.DataTransfer.DropEffect = "copy";
+    }
+
+    private void SubmitUpload()
+    {
+        Console.WriteLine($"Upload: {contentTitle}, Type: {selectedType}, Access: {accessType}");
+    }
+
+    private void CancelUpload()
+    {
+        contentTitle = "";
+        contentDescription = "";
+    }
+}

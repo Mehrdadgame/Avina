@@ -1,0 +1,90 @@
+@page "/school"
+@using Avina.Models
+@using Avina.Services
+@inject ICourseService CourseService
+@rendermode InteractiveServer
+
+<div class="page-header">
+    <h1>📚 مدرسه آنلاین</h1>
+    <p>دوره‌های جامع آموزشی برای رشد شخصی و تحصیلی</p>
+</div>
+
+<div class="filter-section">
+    <input type="text" class="filter-input" placeholder="🔍 جستجو در دوره‌ها..." @oninput="OnSearch">
+    <select class="filter-select" @onchange="OnCategoryChange">
+        <option value="">همه دسته‌ها</option>
+        <option value="ریاضی">ریاضی</option>
+        <option value="علوم">علوم</option>
+        <option value="زبان">زبان</option>
+        <option value="مهارت‌ها">مهارت‌ها</option>
+        <option value="برنامه‌نویسی">برنامه‌نویسی</option>
+    </select>
+</div>
+
+<div class="courses-container">
+    @if (filteredCourses.Any())
+    {
+        @foreach (var course in filteredCourses)
+        {
+            <div class="course-card-new" @onclick="() => EnrollCourse(course.Id)">
+                <img src="@course.ThumbnailImage" alt="@course.Title" class="course-image-new">
+                <div class="course-body">
+                    <div class="course-badge-new">@course.Category</div>
+                    <div class="course-title-new">@course.Title</div>
+                    <div class="course-description-new">@course.Description</div>
+                    <div class="course-footer">
+                        <div>
+                            <div class="course-rating">⭐ @course.Rating.ToString("F1")</div>
+                            <small style="color: #94a3b8;">@course.StudentCount دانش‌آموز</small>
+                        </div>
+                        <div class="course-price-new">@course.Price.ToString("N0")ت</div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="no-courses">
+            <p>دوره‌ای با شرایط جستجو شما یافت نشد.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Course> allCourses = new();
+    private List<Course> filteredCourses = new();
+    private string searchTerm = "";
+    private string selectedCategory = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        allCourses = await CourseService.GetAllCoursesAsync();
+        filteredCourses = allCourses;
+    }
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void OnCategoryChange(ChangeEventArgs e)
+    {
+        selectedCategory = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredCourses = allCourses
+            .Where(c => string.IsNullOrEmpty(searchTerm) || c.Title!.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.IsNullOrEmpty(selectedCategory) || c.Category == selectedCategory)
+            .ToList();
+    }
+
+    private void EnrollCourse(int courseId)
+    {
+        Console.WriteLine($"ثبت‌نام در دوره {courseId}");
+    }
+}

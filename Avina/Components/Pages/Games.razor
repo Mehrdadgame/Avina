@@ -1,0 +1,207 @@
+@page "/games"
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <!-- Header -->
+    <section class="mb-5">
+        <h1 class="display-5 fw-bold mb-3">بازی‌های آموزشی</h1>
+        <p class="lead text-muted">یادگیری از طریق بازی و رقابت سالم</p>
+    </section>
+
+    <!-- Featured Games -->
+    <section class="mb-5">
+        <h3 class="mb-4">بازی‌های پیشنهادی</h3>
+        <div class="row g-4">
+            @foreach (var game in featuredGames)
+            {
+                <div class="col-lg-4">
+                    <div class="game-card rounded-4 overflow-hidden shadow-sm h-100">
+                        <img src="@game.Image" alt="@game.Title" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div class="p-4">
+                            <h5 class="fw-bold mb-2">@game.Title</h5>
+                            <p class="text-muted mb-3">@game.Description</p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-info">@game.Category</span>
+                                <small>⭐ @game.Rating.ToString("F1")</small>
+                            </div>
+                            <button class="btn btn-primary w-100" @onclick="() => PlayGame(game.Id)">شروع بازی</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Leaderboard -->
+    <section class="mb-5">
+        <h3 class="mb-4">جدول رتبه‌بندی</h3>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>رتبه</th>
+                        <th>بازیکن</th>
+                        <th>امتیاز</th>
+                        <th>بازی</th>
+                        <th>زمان</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < leaderboard.Count; i++)
+                    {
+                        <tr>
+                            <td><strong>@(i + 1)</strong></td>
+                            <td>@leaderboard[i].PlayerName</td>
+                            <td class="text-success fw-bold">@leaderboard[i].Score.ToString("N0")</td>
+                            <td>@leaderboard[i].GameName</td>
+                            <td>@leaderboard[i].PlayedAt.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section>
+        <h3 class="mb-4">دسته‌بندی بازی‌ها</h3>
+        <div class="row g-4">
+            @foreach (var category in gameCategories)
+            {
+                <div class="col-md-6 col-lg-3">
+                    <div class="category-card p-4 rounded-4 border text-center" style="cursor: pointer;" @onclick="() => FilterByCategory(category.Name)">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem;">@category.Icon</div>
+                        <h6 class="fw-bold mb-2">@category.Name</h6>
+                        <small class="text-muted">@category.Count بازی</small>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private class Game
+    {
+        public int Id { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public string? Category { get; set; }
+        public string? Image { get; set; }
+        public double Rating { get; set; }
+        public int Players { get; set; }
+    }
+
+    private class LeaderboardEntry
+    {
+        public string? PlayerName { get; set; }
+        public int Score { get; set; }
+        public string? GameName { get; set; }
+        public DateTime PlayedAt { get; set; }
+    }
+
+    private class GameCategory
+    {
+        public string? Name { get; set; }
+        public string? Icon { get; set; }
+        public int Count { get; set; }
+    }
+
+    private List<Game> featuredGames = new();
+    private List<LeaderboardEntry> leaderboard = new();
+    private List<GameCategory> gameCategories = new();
+
+    protected override void OnInitialized()
+    {
+        featuredGames = new List<Game>
+        {
+            new Game 
+            { 
+                Id = 1,
+                Title = "ریاضی چالش",
+                Description = "چالش‌های ریاضی جذاب و سریع",
+                Category = "منطقی",
+                Image = "images/games/math-challenge.jpg",
+                Rating = 4.8,
+                Players = 1250
+            },
+            new Game 
+            { 
+                Id = 2,
+                Title = "کلمات هوشمند",
+                Description = "بازی حدس‌زدن کلمات و تقویت لغات",
+                Category = "زبان",
+                Image = "images/games/word-smart.jpg",
+                Rating = 4.7,
+                Players = 980
+            },
+            new Game 
+            { 
+                Id = 3,
+                Title = "پازل منطق",
+                Description = "حل پازل‌های منطقی و استراتژی",
+                Category = "منطقی",
+                Image = "images/games/logic-puzzle.jpg",
+                Rating = 4.9,
+                Players = 1450
+            },
+            new Game 
+            { 
+                Id = 4,
+                Title = "جغرافیا جهان",
+                Description = "یادگیری جغرافیا از طریق بازی",
+                Category = "دانش",
+                Image = "images/games/world-geo.jpg",
+                Rating = 4.6,
+                Players = 780
+            },
+            new Game 
+            { 
+                Id = 5,
+                Title = "دنباله‌ها",
+                Description = "شناسایی الگوها و دنباله‌ها",
+                Category = "منطقی",
+                Image = "images/games/sequences.jpg",
+                Rating = 4.8,
+                Players = 1100
+            },
+            new Game 
+            { 
+                Id = 6,
+                Title = "رنگین‌کمان",
+                Description = "بازی تطبیق رنگ‌ها و تمرکز",
+                Category = "تمرکز",
+                Image = "images/games/rainbow.jpg",
+                Rating = 4.5,
+                Players = 850
+            }
+        };
+
+        leaderboard = new List<LeaderboardEntry>
+        {
+            new LeaderboardEntry { PlayerName = "علی محمدی", Score = 15450, GameName = "ریاضی چالش", PlayedAt = DateTime.Now.AddHours(-2) },
+            new LeaderboardEntry { PlayerName = "فاطمه احمدی", Score = 14820, GameName = "کلمات هوشمند", PlayedAt = DateTime.Now.AddHours(-1) },
+            new LeaderboardEntry { PlayerName = "محمود رضایی", Score = 14200, GameName = "پازل منطق", PlayedAt = DateTime.Now.AddHours(-3) },
+            new LeaderboardEntry { PlayerName = "سارا کریمی", Score = 13890, GameName = "جغرافیا جهان", PlayedAt = DateTime.Now.AddHours(-4) },
+            new LeaderboardEntry { PlayerName = "حسن سلیمی", Score = 13450, GameName = "دنباله‌ها", PlayedAt = DateTime.Now.AddHours(-5) }
+        };
+
+        gameCategories = new List<GameCategory>
+        {
+            new GameCategory { Name = "منطقی", Icon = "🧩", Count = 12 },
+            new GameCategory { Name = "زبان", Icon = "📚", Count = 8 },
+            new GameCategory { Name = "دانش", Icon = "🧠", Count = 15 },
+            new GameCategory { Name = "تمرکز", Icon = "👁️", Count = 6 }
+        };
+    }
+
+    private void PlayGame(int gameId)
+    {
+        Console.WriteLine($"شروع بازی {gameId}");
+    }
+
+    private void FilterByCategory(string category)
+    {
+        Console.WriteLine($"فیلتر بر اساس دسته {category}");
+    }
+}
