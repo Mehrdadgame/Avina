@@ -16,6 +16,7 @@ builder.Services.AddOpenApi();
 // Add custom services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<AuthStateService>();
 
 var app = builder.Build();
 

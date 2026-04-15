@@ -1,0 +1,361 @@
+@page "/login"
+@using Avina.Services
+@using System.Text.Json
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<style>
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #10131a;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    background: #1c2026;
+    border: 1px solid #414753;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    animation: fadeSlideIn 0.4s ease both;
+}
+
+@@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #aac7ff;
+    margin: 0 0 0.25rem 0;
+}
+
+.login-logo-sub {
+    font-size: 0.85rem;
+    color: #8b919f;
+}
+
+.login-tabs {
+    display: flex;
+    background: #0b0e15;
+    border-radius: 0.75rem;
+    padding: 4px;
+    margin-bottom: 2rem;
+    gap: 4px;
+}
+
+.login-tab {
+    flex: 1;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 0.6rem;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.login-tab.active {
+    background: linear-gradient(135deg, #4248d4, #9197ff);
+    color: white;
+}
+
+.login-tab.inactive {
+    background: transparent;
+    color: #8b919f;
+}
+
+.login-tab.inactive:hover {
+    color: #e0e2ec;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c1c6d5;
+    margin-bottom: 0.5rem;
+    text-align: right;
+}
+
+.form-input {
+    width: 100%;
+    background: #0b0e15;
+    border: 1px solid #414753;
+    border-radius: 0.75rem;
+    color: #e0e2ec;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-family: 'Vazirmatn', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    text-align: right;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #aac7ff;
+    box-shadow: 0 0 0 3px rgba(170,199,255,0.1);
+}
+
+.form-input::placeholder {
+    color: #8b919f;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 0.875rem;
+    border: none;
+    border-radius: 0.875rem;
+    background: linear-gradient(135deg, #4248d4, #9197ff);
+    color: white;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.btn-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.error-msg {
+    background: rgba(255,180,171,0.1);
+    border: 1px solid rgba(255,180,171,0.3);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #ffb4ab;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    text-align: right;
+}
+
+.divider {
+    text-align: center;
+    color: #8b919f;
+    font-size: 0.8rem;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #414753;
+}
+
+.divider span {
+    background: #1c2026;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.btn-guest {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #414753;
+    border-radius: 0.875rem;
+    background: transparent;
+    color: #c1c6d5;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-guest:hover {
+    border-color: #aac7ff;
+    color: #aac7ff;
+}
+</style>
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-logo">
+            <h1 class="login-logo-title">⚔️ آخرین نگهبان</h1>
+            <p class="login-logo-sub">Avina Learning Platform</p>
+        </div>
+
+        <div class="login-tabs">
+            <button class="login-tab @(isRegister ? "inactive" : "active")" @onclick="() => isRegister = false">ورود</button>
+            <button class="login-tab @(isRegister ? "active" : "inactive")" @onclick="() => isRegister = true">ثبت نام</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-msg">⚠️ @errorMessage</div>
+        }
+
+        @if (!isRegister)
+        {
+            <!-- Login Form -->
+            <div class="form-group">
+                <label class="form-label">ایمیل</label>
+                <input class="form-input" type="email" placeholder="your@email.com" @bind="loginEmail" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">رمز عبور</label>
+                <input class="form-input" type="password" placeholder="رمز عبور خود را وارد کنید" @bind="loginPassword" />
+            </div>
+            <button class="btn-submit" @onclick="HandleLogin" disabled="@isLoading">
+                @(isLoading ? "در حال ورود..." : "ورود به حساب")
+            </button>
+        }
+        else
+        {
+            <!-- Register Form -->
+            <div class="form-group">
+                <label class="form-label">نام و نام خانوادگی</label>
+                <input class="form-input" type="text" placeholder="مثلاً: علی احمدی" @bind="regName" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">ایمیل</label>
+                <input class="form-input" type="email" placeholder="your@email.com" @bind="regEmail" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">رمز عبور</label>
+                <input class="form-input" type="password" placeholder="حداقل ۶ کاراکتر" @bind="regPassword" />
+            </div>
+            <button class="btn-submit" @onclick="HandleRegister" disabled="@isLoading">
+                @(isLoading ? "در حال ثبت نام..." : "ایجاد حساب کاربری")
+            </button>
+        }
+
+        <div class="divider"><span>یا</span></div>
+        <button class="btn-guest" @onclick="ContinueAsGuest">ورود به عنوان مهمان</button>
+    </div>
+</div>
+
+@code {
+    private bool isRegister = false;
+    private bool isLoading = false;
+    private string errorMessage = "";
+
+    private string loginEmail = "";
+    private string loginPassword = "";
+
+    private string regName = "";
+    private string regEmail = "";
+    private string regPassword = "";
+
+    private const string StorageKey = "avina_user";
+
+    private async Task HandleLogin()
+    {
+        errorMessage = "";
+        if (string.IsNullOrWhiteSpace(loginEmail))
+        {
+            errorMessage = "ایمیل را وارد کنید.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(loginPassword))
+        {
+            errorMessage = "رمز عبور را وارد کنید.";
+            return;
+        }
+
+        isLoading = true;
+        // Try to load from localStorage
+        var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+        if (!string.IsNullOrEmpty(json))
+        {
+            try
+            {
+                var cached = JsonSerializer.Deserialize<UserCacheDto>(json);
+                if (cached != null && cached.Email == loginEmail)
+                {
+                    AuthState.SetUser(cached);
+                    isLoading = false;
+                    Nav.NavigateTo("/");
+                    return;
+                }
+            }
+            catch { }
+        }
+
+        // Mock login: accept any credentials, create user
+        var user = new UserCacheDto
+        {
+            Name = loginEmail.Split('@')[0],
+            Email = loginEmail,
+            Role = "دانش‌آموز",
+            ProfileImage = "https://i.pravatar.cc/150?img=5",
+            Coin = 0
+        };
+        await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user));
+        AuthState.SetUser(user);
+        isLoading = false;
+        Nav.NavigateTo("/");
+    }
+
+    private async Task HandleRegister()
+    {
+        errorMessage = "";
+        if (string.IsNullOrWhiteSpace(regName))
+        {
+            errorMessage = "نام خود را وارد کنید.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(regEmail) || !regEmail.Contains('@'))
+        {
+            errorMessage = "یک ایمیل معتبر وارد کنید.";
+            return;
+        }
+        if (regPassword.Length < 6)
+        {
+            errorMessage = "رمز عبور باید حداقل ۶ کاراکتر باشد.";
+            return;
+        }
+
+        isLoading = true;
+        var user = new UserCacheDto
+        {
+            Name = regName,
+            Email = regEmail,
+            Role = "دانش‌آموز",
+            ProfileImage = "https://i.pravatar.cc/150?img=5",
+            Coin = 100  // سکه خوش‌آمدگویی
+        };
+        await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user));
+        AuthState.SetUser(user);
+        isLoading = false;
+        Nav.NavigateTo("/");
+    }
+
+    private void ContinueAsGuest()
+    {
+        Nav.NavigateTo("/");
+    }
+}

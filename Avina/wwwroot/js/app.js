@@ -20,4 +20,9 @@ function formatCurrency(amount) {
     return new Intl.NumberFormat('fa-IR').format(amount);
 }
 
+// Blazor-callable localStorage helpers
+window.lsGet = (key) => localStorage.getItem(key);
+window.lsSet = (key, value) => localStorage.setItem(key, value);
+window.lsRemove = (key) => localStorage.removeItem(key);
+
 console.log('Avina loaded.');
