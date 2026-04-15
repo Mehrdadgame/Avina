@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html class="dark" dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>پیشرو دانش - خانه</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        background: "#10131a", "on-background": "#e0e2ec",
+        "on-surface-variant": "#c1c6d5", "on-primary": "#002f64",
+        "surface-container-highest": "#32353c", "on-primary-fixed": "#001b3e",
+        "primary-container": "#4090fe", "surface-container": "#1c2026",
+        "primary-fixed-dim": "#aac7ff", "surface-container-low": "#181c22",
+        "on-secondary": "#153058", primary: "#aac7ff",
+        tertiary: "#ffb68c", "surface-variant": "#32353c",
+        secondary: "#afc7f7", "tertiary-container": "#e3711f",
+        "inverse-on-surface": "#2d3038", "error-container": "#93000a",
+        surface: "#10131a", "on-secondary-fixed": "#001b3e",
+        "secondary-container": "#2e4770", "outline-variant": "#414753",
+        "on-error": "#690005", "on-tertiary-container": "#481d00",
+        outline: "#8b919f", "on-surface": "#e0e2ec",
+        "surface-tint": "#aac7ff", "surface-container-lowest": "#0b0e15",
+        "surface-container-high": "#272a31", "on-secondary-container": "#9db6e5",
+        "tertiary-fixed": "#ffdbc9", "secondary-fixed": "#d6e3ff",
+        "on-tertiary": "#532200", error: "#ffb4ab",
+      }
+    }
+  }
+};
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Vazirmatn', sans-serif; -webkit-font-smoothing: antialiased; }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+  .primary-gradient { background: linear-gradient(135deg, #4248d4 0%, #9197ff 100%); }
+
+  /* Scrollbar hidden */
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Page enter animation */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-page { animation: fadeSlideIn 0.5s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  /* Progress bar animation */
+  @keyframes growWidth {
+    from { width: 0; }
+  }
+  .progress-bar { animation: growWidth 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  /* Floating badge wiggle */
+  @keyframes wiggle {
+    0%,100% { transform: rotate(6deg); }
+    50%      { transform: rotate(10deg) scale(1.05); }
+  }
+  .badge-float { animation: wiggle 3s ease-in-out infinite; }
+
+  /* Pulse glow */
+  @keyframes pulseGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(170,199,255,0.3); }
+    50%      { box-shadow: 0 0 0 12px rgba(170,199,255,0); }
+  }
+  .pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
+
+  /* Sidebar nav active indicator */
+  .nav-active {
+    background: white;
+    color: #4248d4 !important;
+    box-shadow: 0 2px 8px rgba(66,72,212,0.15);
+  }
+  .dark .nav-active { background: #1e293b; color: #9197ff !important; }
+
+  /* Card hover lift */
+  .card-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .card-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+
+  /* Smooth nav transition */
+  header { transition: box-shadow 0.3s ease; }
+  header.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+
+  /* Challenge card border pulse */
+  @keyframes borderPulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+  }
+
+  /* Scroll snap */
+  .snap-scroll { scroll-snap-type: x mandatory; }
+  .snap-item   { scroll-snap-align: start; }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+<!-- Top Navigation -->
+<header id="topbar" class="bg-[#f5f7f9] dark:bg-slate-950 flex flex-row-reverse justify-between items-center w-full px-5 py-3 sticky top-0 z-50">
+  <div class="flex items-center gap-3">
+    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm">
+      <span class="material-symbols-outlined text-yellow-400 text-lg" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+      <span class="font-bold text-on-surface text-sm">۲,۴۵۰</span>
+    </div>
+    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm">
+      <span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings:'FILL' 1;">stars</span>
+      <span class="font-bold text-on-surface text-sm">۱۲</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-6">
+    <span class="text-xl font-black text-[#2c2f31] dark:text-slate-100">پیشرو دانش</span>
+    <nav class="hidden md:flex items-center gap-1 text-sm font-bold">
+      <a href="code.html" class="text-[#4248d4] bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl shadow-sm">خانه</a>
+      <a href="../school/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl">مدرسه</a>
+      <a href="../life_path/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl">مسیر من</a>
+      <a href="../store/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl">فروشگاه</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-2">
+    <button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">notifications</button>
+    <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-primary-container pulse-glow cursor-pointer">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwqGCvYGEeYSUFhZnEqlLkm7BjNk17XlBnYzgoblSUOBj7E6dWHhoe8VHhFNmhHnNLPYMj_3eGShJo-zcvQIJiKN29lTrg36hzoR2a-lN2XY_k9CNjfuUVQqE4KHTXyM7oj-oBsFisbozgjocJktkfe9RqaQgdOuusxbmhmPjJvpruJ3m1Jpq0cuho6OFcEoDCwtrJgJj2Hm8EWFEupZ7gseXKKBNIK_0uFE_bMegrPc-YpZhzLMCpuTawREmmUU2g-I7K0_BWh6E" alt="avatar" class="w-full h-full object-cover"/>
+    </div>
+  </div>
+</header>
+
+<div class="flex">
+  <!-- Sidebar -->
+  <aside class="hidden md:flex flex-col items-end pt-6 px-3 h-[calc(100vh-60px)] sticky top-[60px] right-0 w-60 bg-[#eef1f3] dark:bg-slate-900 transition-all duration-300">
+    <div class="w-full space-y-1">
+      <a href="code.html" class="nav-active flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200">
+        <span>خانه</span>
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span>
+      </a>
+      <a href="../school/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200">
+        <span>مدرسه</span>
+        <span class="material-symbols-outlined">school</span>
+      </a>
+      <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200">
+        <span>بازی</span>
+        <span class="material-symbols-outlined">sports_esports</span>
+      </a>
+      <a href="../life_path/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200">
+        <span>مسیر من</span>
+        <span class="material-symbols-outlined">auto_graph</span>
+      </a>
+      <a href="../store/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200">
+        <span>فروشگاه</span>
+        <span class="material-symbols-outlined">shopping_bag</span>
+      </a>
+      <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200">
+        <span>شبکه اجتماعی</span>
+        <span class="material-symbols-outlined">group</span>
+      </a>
+    </div>
+    <div class="mt-auto mb-6 w-full">
+      <button class="w-full primary-gradient text-white py-2.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all duration-200">
+        <span class="material-symbols-outlined text-lg">bolt</span>
+        <span>شروع چالش امروز</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 px-4 md:px-10 py-8 overflow-x-hidden pb-24 md:pb-8">
+
+    <!-- Greeting -->
+    <section class="mb-8 animate-page">
+      <h1 class="text-3xl md:text-4xl font-black text-on-background mb-1">سلام آریای قهرمان! 👋</h1>
+      <p class="text-on-surface-variant">آماده‌ای برای ماجراجویی امروز در «آخرین نگهبان»؟</p>
+    </section>
+
+    <!-- Bento Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- Mission Hero Card -->
+      <div class="lg:col-span-8 bg-surface-container-lowest rounded-2xl p-7 relative overflow-hidden flex flex-col justify-between min-h-[300px] card-lift animate-page delay-1">
+        <div class="relative z-10">
+          <div class="inline-flex items-center gap-2 bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-xs font-bold mb-4">
+            <span class="material-symbols-outlined text-sm">flag</span>
+            <span>ماموریت امروز</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-black mb-3 max-w-md leading-tight text-on-surface">راز کتیبه‌های باستانی: بخش دوم</h2>
+          <p class="text-on-surface-variant mb-6 max-w-sm text-sm leading-relaxed">با حل این معما، ۲۰ امتیاز تجربه و ۵ سکه طلا دریافت خواهی کرد.</p>
+        </div>
+        <div class="relative z-10">
+          <div class="flex justify-between items-end mb-2">
+            <span class="text-xs font-bold text-on-surface-variant">پیشرفت ماموریت</span>
+            <span class="text-xs font-black text-primary">۶۵٪</span>
+          </div>
+          <div class="w-full h-2.5 bg-surface-container-highest rounded-full overflow-hidden mb-5">
+            <div class="h-full primary-gradient rounded-full progress-bar" style="width:65%; animation-delay:0.4s;"></div>
+          </div>
+          <button class="primary-gradient text-white px-7 py-2.5 rounded-xl font-bold flex items-center gap-2 w-fit hover:opacity-90 active:scale-95 transition-all duration-200">
+            <span>ادامه ماموریت</span>
+            <span class="material-symbols-outlined text-lg">play_arrow</span>
+          </button>
+        </div>
+        <div class="absolute -top-10 -left-10 w-56 h-56 opacity-[0.07] pointer-events-none">
+          <span class="material-symbols-outlined text-[200px] text-on-surface" style="font-variation-settings:'FILL' 1;">castle</span>
+        </div>
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjVfCHXrDM14F1-kiVtaO6wNLO1vksLX3eXHMLe3p3janp68VeajGIJLYo4_RHxLSoshsgZXqOIaWe_zwL9cChIJpyC3ROVd9L1Z_4KAwQxg7KusOysYhsq8_0c2oZR6qwzF0ds5Yu7utHropClGcwEkWa0imfcYvxciCBfKjK5lUDIKDpZAE_sm-Q4QBx85ZGZVCNwzvHuHrJw92hL9khiJCc1IckhnlAuS6sxqQR0Dq3II52QKNMFSHCeEjGdKZMX84PN3q0f8U" alt="" class="absolute top-0 left-0 h-full w-1/3 object-cover mix-blend-multiply opacity-20 hidden md:block pointer-events-none"/>
+      </div>
+
+      <!-- Side Cards -->
+      <div class="lg:col-span-4 flex flex-col gap-4">
+        <!-- Continue Learning -->
+        <div class="bg-surface-container-low rounded-2xl p-5 flex-1 border-r-4 border-primary card-lift animate-page delay-2">
+          <h3 class="text-base font-bold mb-3 flex items-center justify-between">
+            <span>ادامه یادگیری</span>
+            <span class="material-symbols-outlined text-primary text-xl">history</span>
+          </h3>
+          <a href="../school/code.html" class="block aspect-video rounded-xl overflow-hidden mb-3 relative group">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJpcLMLOQ1UUeZvpLroiO-B5FtBCfiNuLHIbYt4qaVboEe79ZZqBOIPBMEjjUkQwYwlCx7H2B3Gl0WqC7E8RweI6tt4qg0VArnowghqU9xKZUeguH3bPRrGPn2lGNzVJTq1tXiIBFyQwnMBB7i3yZp-qzFFn8trZqCISaIYiy68805E-QZKZcTYofJgio9HdbYs9woRUlRACmHTz-jctvObdRiF14KG5okBSkTB8dEx-qvi-D9fJPZUi7ShgKHo2Z4uKaSxROl3_o" alt="" class="w-full h-full object-cover transition-transform duration-400 group-hover:scale-105"/>
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span class="material-symbols-outlined text-white text-5xl group-hover:scale-110 transition-transform duration-300" style="font-variation-settings:'FILL' 1;">play_circle</span>
+            </div>
+          </a>
+          <h4 class="font-bold text-on-surface text-sm mb-0.5">درس ۴: ساختار اتم</h4>
+          <p class="text-xs text-on-surface-variant">آخرین مشاهده: دیروز</p>
+        </div>
+        <!-- Level Badge -->
+        <div class="bg-secondary-container text-on-secondary-container rounded-2xl p-5 flex items-center justify-between card-lift animate-page delay-3">
+          <div>
+            <p class="text-xs font-medium mb-0.5">سطح شما</p>
+            <p class="text-xl font-black">نبردآموز ۱۲</p>
+          </div>
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl">military_tech</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Challenges -->
+    <section class="mt-10 animate-page delay-4">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-xl font-black text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary" style="font-variation-settings:'FILL' 1;">local_fire_department</span>
+          چالش‌های روزانه
+        </h2>
+        <a href="#" class="text-primary font-bold text-sm hover:underline">مشاهده همه</a>
+      </div>
+      <div class="flex overflow-x-auto gap-4 pb-4 hide-scrollbar -mx-4 px-4 snap-scroll">
+        <!-- Challenge 1 -->
+        <div class="snap-item min-w-[270px] bg-surface-container-lowest rounded-2xl p-5 shadow-sm border-t-4 border-tertiary card-lift flex-shrink-0">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-11 h-11 rounded-xl bg-tertiary/10 flex items-center justify-center text-tertiary">
+              <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1;">calculate</span>
+            </div>
+            <span class="text-xs font-bold text-tertiary bg-tertiary-container/20 px-2 py-1 rounded-full">+۵۰ امتیاز</span>
+          </div>
+          <h3 class="font-bold text-on-surface mb-2">استاد محاسبات</h3>
+          <p class="text-xs text-on-surface-variant mb-5 leading-relaxed">۱۰ مسئله ریاضی سطح متوسط را در کمتر از ۵ دقیقه حل کن.</p>
+          <button class="w-full py-2 border border-outline-variant text-on-surface font-bold rounded-xl hover:bg-surface-container-low active:scale-95 transition-all duration-200 text-sm">شروع چالش</button>
+        </div>
+        <!-- Challenge 2 -->
+        <div class="snap-item min-w-[270px] bg-surface-container-lowest rounded-2xl p-5 shadow-sm border-t-4 border-secondary card-lift flex-shrink-0">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-11 h-11 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+              <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1;">translate</span>
+            </div>
+            <span class="text-xs font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded-full">+۳۰ امتیاز</span>
+          </div>
+          <h3 class="font-bold text-on-surface mb-2">سفیر زبان</h3>
+          <p class="text-xs text-on-surface-variant mb-5 leading-relaxed">۲۰ لغت جدید انگلیسی را امروز یاد بگیر و در آزمون شرکت کن.</p>
+          <button class="w-full py-2 border border-outline-variant text-on-surface font-bold rounded-xl hover:bg-surface-container-low active:scale-95 transition-all duration-200 text-sm">شروع چالش</button>
+        </div>
+        <!-- Challenge 3 -->
+        <div class="snap-item min-w-[270px] bg-surface-container-lowest rounded-2xl p-5 shadow-sm border-t-4 border-primary card-lift flex-shrink-0">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1;">science</span>
+            </div>
+            <span class="text-xs font-bold text-primary bg-primary-container/20 px-2 py-1 rounded-full">+۸۰ امتیاز</span>
+          </div>
+          <h3 class="font-bold text-on-surface mb-2">دانشمند کوچک</h3>
+          <p class="text-xs text-on-surface-variant mb-5 leading-relaxed">ویدئوی آزمایش شیمی را ببین و به ۳ سوال نهایی پاسخ درست بده.</p>
+          <button class="w-full py-2 border border-outline-variant text-on-surface font-bold rounded-xl hover:bg-surface-container-low active:scale-95 transition-all duration-200 text-sm">شروع چالش</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex justify-around items-center py-3 px-2 z-50">
+  <a href="code.html" class="flex flex-col items-center gap-0.5 text-[#4248d4]">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span>
+    <span class="text-[10px] font-bold">خانه</span>
+  </a>
+  <a href="../school/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">school</span>
+    <span class="text-[10px]">مدرسه</span>
+  </a>
+  <a href="#" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">sports_esports</span>
+    <span class="text-[10px]">بازی</span>
+  </a>
+  <a href="../store/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">shopping_bag</span>
+    <span class="text-[10px]">فروشگاه</span>
+  </a>
+  <a href="../life_path/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">auto_graph</span>
+    <span class="text-[10px]">مسیر من</span>
+  </a>
+</nav>
+
+<script>
+  // Header shadow on scroll
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => {
+    topbar.classList.toggle('scrolled', window.scrollY > 10);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html class="dark" dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>پیشرو دانش - فروشگاه</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        background: "#10131a", "on-background": "#e0e2ec",
+        "on-surface-variant": "#c1c6d5",
+        "surface-container-highest": "#32353c",
+        "primary-container": "#4090fe", "surface-container": "#1c2026",
+        "surface-container-low": "#181c22",
+        "on-secondary": "#153058", primary: "#aac7ff",
+        tertiary: "#ffb68c", secondary: "#afc7f7",
+        "tertiary-container": "#e3711f",
+        surface: "#10131a",
+        "secondary-container": "#2e4770", "outline-variant": "#414753",
+        "on-tertiary-container": "#481d00",
+        outline: "#8b919f", "on-surface": "#e0e2ec",
+        "surface-container-lowest": "#0b0e15",
+        "surface-container-high": "#272a31", "on-secondary-container": "#9db6e5",
+        "tertiary-fixed": "#ffdbc9",
+        "on-tertiary": "#532200", error: "#ffb4ab", "error-container": "#93000a",
+      }
+    }
+  }
+};
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Vazirmatn', sans-serif; -webkit-font-smoothing: antialiased; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .primary-gradient { background: linear-gradient(135deg, #4248d4 0%, #9197ff 100%); }
+
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-page { animation: fadeSlideIn 0.5s ease both; }
+  .delay-1 { animation-delay: 0.08s; }
+  .delay-2 { animation-delay: 0.16s; }
+  .delay-3 { animation-delay: 0.24s; }
+  .delay-4 { animation-delay: 0.32s; }
+
+  .card-lift { transition: transform 0.28s ease, box-shadow 0.28s ease; }
+  .card-lift:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.3); }
+
+  .nav-active { background: white; color: #4248d4 !important; box-shadow: 0 2px 8px rgba(66,72,212,0.15); }
+  .dark .nav-active { background: #1e293b; color: #9197ff !important; }
+
+  header { transition: box-shadow 0.3s ease; }
+  header.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+
+  /* Hero banner */
+  .hero-banner {
+    background: linear-gradient(135deg, #2e4770 0%, #4248d4 60%, #9197ff 100%);
+  }
+
+  /* Product card image */
+  .product-img { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+  .product-card:hover .product-img { transform: scale(1.1); }
+
+  /* Buy button reveal */
+  .product-card .buy-btn {
+    background: rgba(255,255,255,0.08);
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .product-card:hover .buy-btn {
+    background: linear-gradient(135deg, #4248d4, #9197ff);
+    color: white;
+  }
+
+  /* Badge rotate */
+  .badge-rotate { transform: rotate(12deg); }
+
+  /* Cart FAB pulse */
+  @keyframes fabPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(170,199,255,0.4); }
+    50%      { box-shadow: 0 0 0 10px rgba(170,199,255,0); }
+  }
+  .fab-pulse { animation: fabPulse 2s ease-in-out infinite; }
+
+  /* Filter toggle */
+  .filter-active { background: #aac7ff; color: #002f64; font-weight: 700; }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+<!-- Header -->
+<header id="topbar" class="bg-[#f5f7f9] dark:bg-slate-950 flex flex-row-reverse justify-between items-center w-full px-5 py-3 fixed top-0 z-50">
+  <div class="flex items-center gap-2">
+    <span class="text-xl font-black text-[#2c2f31] dark:text-slate-100">پیشرو دانش</span>
+  </div>
+  <nav class="hidden md:flex items-center gap-1 text-sm font-bold">
+    <a href="../home/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">خانه</a>
+    <a href="../school/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">مدرسه</a>
+    <a href="../life_path/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">مسیر من</a>
+    <a href="code.html" class="text-[#4248d4] bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl shadow-sm">فروشگاه</a>
+  </nav>
+  <div class="flex items-center gap-2">
+    <button class="material-symbols-outlined p-2 text-[#4248d4] hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">monetization_on</button>
+    <button class="material-symbols-outlined p-2 text-[#4248d4] hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">notifications</button>
+    <button class="material-symbols-outlined p-2 text-[#4248d4] hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">account_circle</button>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<aside class="hidden md:flex flex-col items-end pt-6 px-3 h-screen fixed right-0 top-0 w-60 bg-[#eef1f3] dark:bg-slate-900 z-40 pt-20">
+  <div class="flex flex-col items-center w-full mb-6 text-center">
+    <div class="w-16 h-16 rounded-full border-4 border-primary-container overflow-hidden mb-2 shadow">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvw08vX_Z9MM6riYcJDAezuiHrzkyJFcJopwnaiGmoHCQqqKzJEnQ02lrFOTLiv5XN0fE47o9Ighw6UQ0Lz2dYRQYhUu1bmfn6bCmiy62jWoKygCSXdil7XsB_U0waRZMKm8HnapFmrVIVBqN3ewzrzS8qtzJPcIpYS-AXXbrCkGGDtfOAL313xV7chuPAyR6DO48qHbjhuriByPSuvGQ1sJIAS5NiZSDWun25H_y0e_A5wqmqcofGpy8X_ZPMpJEInlOllimilvg" alt="avatar" class="w-full h-full object-cover"/>
+    </div>
+    <h3 class="font-bold text-[#4248d4] text-sm">آریا قهرمان</h3>
+    <p class="text-on-surface-variant text-xs">سطح ۱۲ - نبردآموز</p>
+    <button class="mt-3 w-full py-2 primary-gradient text-white rounded-xl text-xs font-bold shadow active:scale-95 transition-all hover:opacity-90">شروع چالش امروز</button>
+  </div>
+  <nav class="w-full flex flex-col gap-1">
+    <a href="../home/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>خانه</span><span class="material-symbols-outlined text-lg">home</span>
+    </a>
+    <a href="../school/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>مدرسه</span><span class="material-symbols-outlined text-lg">school</span>
+    </a>
+    <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>بازی</span><span class="material-symbols-outlined text-lg">sports_esports</span>
+    </a>
+    <a href="../life_path/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>مسیر من</span><span class="material-symbols-outlined text-lg">auto_graph</span>
+    </a>
+    <a href="code.html" class="nav-active flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold transition-all">
+      <span>فروشگاه</span><span class="material-symbols-outlined text-lg" style="font-variation-settings:'FILL' 1;">shopping_bag</span>
+    </a>
+    <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>شبکه اجتماعی</span><span class="material-symbols-outlined text-lg">group</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="md:mr-60 pt-20 pb-28 px-4 md:px-8 max-w-7xl">
+
+  <!-- Hero Banner -->
+  <section class="mb-10 animate-page">
+    <div class="hero-banner relative overflow-hidden rounded-2xl h-72 md:h-96 flex items-center">
+      <div class="absolute inset-0 bg-black/10"></div>
+      <div class="relative z-10 p-7 md:p-14 max-w-xl text-white">
+        <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block">کیت جدید</span>
+        <h1 class="text-3xl md:text-5xl font-black mb-3 leading-tight">کیت خلاقیت:<br/>نگهبانان کهن</h1>
+        <p class="text-base opacity-85 mb-6 leading-relaxed">با این مجموعه، ابزارهای جادویی خود را بسازید و به نبرد با تاریکی بروید.</p>
+        <button class="bg-white text-[#4248d4] px-7 py-3 rounded-xl font-bold text-base hover:scale-105 active:scale-95 transition-transform duration-200 shadow-lg">همین حالا دریافت کنید</button>
+      </div>
+      <div class="absolute -left-8 bottom-0 top-0 w-1/2 hidden md:block overflow-hidden">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD44w71Wnnjw8x5ch8ZwVdQRDXLTak_QMFzpDrXMULP_qhnb2ieVmnoSXMARMmBYcj7oCI5VASNfcHu3VAt8_kxoziHc5Lh42ptPV50F7VZnPn4rxXmBLEskMLTiokXoZHgAjJMu8Li1YiYXcln4uRQNAOpuMgSRr5Eco3lhi7fuWHhG1q39cpYMzdhlYeEMRZKSorGq9D5BSGvnV23_F6DvEgJzDJK-mQjbug1l3ZCLsD2h4YIwNiffozGyyLgYHxZxJoGygTy_ZI" alt="" class="h-full w-full object-cover rounded-l-3xl transform rotate-3 scale-110 shadow-2xl opacity-80"/>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories & QR Hub -->
+  <section class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-10 animate-page delay-1">
+    <div class="md:col-span-4 bg-tertiary-container rounded-2xl p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer active:scale-95 transition-transform card-lift">
+      <div class="relative z-10">
+        <span class="material-symbols-outlined text-4xl mb-4 text-on-tertiary-container" style="font-variation-settings:'FILL' 1;">qr_code_scanner</span>
+        <h3 class="text-xl font-bold text-on-tertiary-container mb-2">اسکنر محصولات</h3>
+        <p class="text-on-tertiary-container/80 text-sm leading-relaxed">کد کتاب‌های فیزیکی را اسکن کنید تا محتوای دیجیتال آن‌ها باز شود.</p>
+      </div>
+      <div class="absolute -bottom-3 -left-3 opacity-15 pointer-events-none">
+        <span class="material-symbols-outlined text-[100px]">photo_camera</span>
+      </div>
+    </div>
+    <div class="md:col-span-8 bg-surface-container-low rounded-2xl p-7">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-black">دسته‌بندی‌های برتر</h2>
+        <button class="text-primary font-bold text-sm hover:underline">مشاهده همه</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group card-lift">
+          <div class="flex items-center gap-3">
+            <div class="bg-primary/10 p-2.5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+              <span class="material-symbols-outlined">menu_book</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm">کتاب و بازی</h4>
+              <p class="text-xs text-on-surface-variant">محصولات فیزیکی</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-outline-variant">chevron_left</span>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group card-lift">
+          <div class="flex items-center gap-3">
+            <div class="bg-secondary/10 p-2.5 rounded-xl text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+              <span class="material-symbols-outlined">smart_display</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm">دوره‌های دیجیتال</h4>
+              <p class="text-xs text-on-surface-variant">آموزش آنلاین</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-outline-variant">chevron_left</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Grid -->
+  <section class="mb-12 animate-page delay-2">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-black">جدیدترین محصولات</h2>
+      <div class="flex gap-2 items-center">
+        <button class="p-2 rounded-full border border-outline-variant text-outline hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-lg">tune</span>
+        </button>
+        <div class="flex bg-surface-container p-1 rounded-full">
+          <button class="filter-active px-4 py-1 rounded-full text-sm transition-all" data-filter="all">همه</button>
+          <button class="px-4 py-1 rounded-full text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all" data-filter="physical">فیزیکی</button>
+          <button class="px-4 py-1 rounded-full text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all" data-filter="digital">دیجیتال</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Product 1 -->
+      <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
+        <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx2aQKC5dVedHZTf7LebprVWiNcp7CYFYzXQL2W2mhXInOUmNYRbWF6pOxBE_cgygeANnegfOSA5bz-FgBm6Wy-XUdurcPAPrgiIYEkUCy3YQyYzfU1e7ZFlYFNDIqXfTe47XIbCgprN90LyvtB_uhfl_o2nooeZhlPVcXwflg79OihnjOPd0RLGDUpjDtCjByt3wkWfBTsXFg2aaoUXzCABS5UMA5wUh4uFiToESA6CIFUC0PWNOGaUlAqwJj7FPjpdTJg2VXGVU" alt="" class="product-img w-full h-full object-cover"/>
+          <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="text-sm font-black text-on-surface">۴۵۰</span>
+            <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-0.5 px-1">آخرین نگهبان: طلوع</h3>
+        <p class="text-on-surface-variant text-xs mb-4 px-1">نویسنده: علیرضا پارسا</p>
+        <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm">
+          <span>خرید محصول</span>
+          <span class="material-symbols-outlined text-lg">shopping_cart</span>
+        </button>
+      </div>
+      <!-- Product 2 -->
+      <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
+        <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuANvvEl01NPiMF1KxfmgnGfF7Sb8DaZdAwmcJy8mVv9059XRrofPgh41yMcfl1Uh23B-jthXoLtFvj0EecgctXMTHbQRQwpAocwr0jKUMkjvgMpodCbD8Zc5pDksbwSzimt5MklWhr4d3XrhrHJ2VnyekCq77W02bsi70i-1o8xr-4ocJHt3RDKfxfIqWXWcpSjKU36rl989rE72nD9odeina2L3d-rrDk55ANtnod4dHDAuY1AveY4eBNCm-beXK7WzJnuDVL0sOg" alt="" class="product-img w-full h-full object-cover"/>
+          <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="text-sm font-black text-on-surface">۱,۲۰۰</span>
+            <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+          </div>
+          <div class="absolute bottom-2.5 right-2.5 bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">دوره تصویری</div>
+        </div>
+        <h3 class="font-bold text-base mb-0.5 px-1">دوره جامع پایتون مقدماتی</h3>
+        <p class="text-on-surface-variant text-xs mb-4 px-1">مدرس: سارا احمدی</p>
+        <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm">
+          <span>ثبت‌نام دوره</span>
+          <span class="material-symbols-outlined text-lg">play_circle</span>
+        </button>
+      </div>
+      <!-- Product 3 -->
+      <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
+        <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvc0CUm2b3tDqSCUDp_n3VKn49zBeL7e354bu7woi7uhqeouiRQ8w9UcDpxy2k-6t3jU_DT9MIEIBc26gS28_drDczUd7rGnRVEhAwPk65ok6tM8lE6FHAmhKEA5udl2pKa-rmzXvm6JEUGhMElF3s8V9mFlJx-JN-Xq3gOPEzma9IEqveBgvqglR3anzUo2pil86g2jHU19TO9hh_oCBLPNHxX4I9Y4XFrJ9SlEzYEHtx8r64nmvWgg535xRJrNnmzEJ-rtZxWZg" alt="" class="product-img w-full h-full object-cover"/>
+          <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="text-sm font-black text-on-surface">۸۹۰</span>
+            <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-0.5 px-1">بازی رومیزی: فتح دژ</h3>
+        <p class="text-on-surface-variant text-xs mb-4 px-1">تعداد بازیکن: ۲-۴ نفر</p>
+        <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm">
+          <span>خرید محصول</span>
+          <span class="material-symbols-outlined text-lg">shopping_cart</span>
+        </button>
+      </div>
+      <!-- Product 4 -->
+      <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
+        <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkX6bIbukvrd1aNW8wSRmRbt3PTqylZTL6dCuaDPZN5zdpDLyLHVkxZ9pLj7MDPO1UHkzZTQZ2GVGNsU5xGe2jm9ob9X9v1TPuErJxFAgcUdbSuQzbRg9N35IUwM3hzp4dXhQ3VoEuQMJ9kQAsxUVOA5zNG5GRV896LbcofsQT2u7HDDEFAVDCmvoCCt_7hJfkIanA4OdApGpm06qPV-zPtJAuGCkP3klVP-6mDkXAQecu80R5JeRKZ4SmglhnEmHlGV38ReOA1OI" alt="" class="product-img w-full h-full object-cover"/>
+          <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="text-sm font-black text-on-surface">۳۰۰</span>
+            <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-0.5 px-1">افسانه‌های شاهنامه</h3>
+        <p class="text-on-surface-variant text-xs mb-4 px-1">مناسب سنین ۷ تا ۱۲ سال</p>
+        <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm">
+          <span>خرید محصول</span>
+          <span class="material-symbols-outlined text-lg">shopping_cart</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Info Section -->
+  <section class="mt-10 p-8 md:p-12 bg-surface-container-lowest rounded-2xl shadow-sm animate-page delay-3">
+    <div class="grid md:grid-cols-2 gap-10 items-center">
+      <div class="order-2 md:order-1 text-right">
+        <h2 class="text-2xl md:text-3xl font-black mb-4 text-on-background">تجربه یادگیری فراتر از فیزیک</h2>
+        <p class="text-on-surface-variant leading-relaxed mb-6 text-sm">
+          هر محصول فیزیکی که از فروشگاه ما تهیه می‌کنید، یک کلید برای دنیای دیجیتال است. با اسکن کدهای مخفی داخل بسته‌ها، مراحل جدید در بازی باز شده و سکه‌های جایزه دریافت خواهید کرد.
+        </p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 bg-tertiary-container rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-on-tertiary-container">verified</span>
+            </div>
+            <span class="font-bold text-sm">تایید اصالت کالا</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 bg-secondary-container rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-on-secondary-container">sync</span>
+            </div>
+            <span class="font-bold text-sm">همگام‌سازی با اپلیکیشن</span>
+          </div>
+        </div>
+      </div>
+      <div class="order-1 md:order-2 flex justify-center">
+        <div class="w-full max-w-xs aspect-square bg-gradient-to-tr from-surface-container to-surface-container-high rounded-3xl p-6 relative">
+          <div class="absolute inset-4 bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-4 flex flex-col justify-center items-center text-center">
+            <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+              <span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings:'FILL' 1;">token</span>
+            </div>
+            <h4 class="text-lg font-bold mb-1">امتیاز پاداش</h4>
+            <p class="text-xs text-on-surface-variant">با هر خرید سکه رایگان دریافت کنید و سطح خود را بالا ببرید.</p>
+          </div>
+          <div class="badge-rotate absolute -top-5 -right-5 bg-secondary text-white px-5 py-2 rounded-2xl shadow-lg font-black text-sm">هدیه ویژه</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex justify-around items-center py-3 px-2 z-50">
+  <a href="../home/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">home</span><span class="text-[10px]">خانه</span>
+  </a>
+  <a href="../school/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">school</span><span class="text-[10px]">مدرسه</span>
+  </a>
+  <a href="code.html" class="flex flex-col items-center gap-0.5 text-[#4248d4]">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">shopping_bag</span><span class="text-[10px] font-bold">فروشگاه</span>
+  </a>
+  <a href="../life_path/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">auto_graph</span><span class="text-[10px]">مسیر</span>
+  </a>
+  <a href="#" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">person</span><span class="text-[10px]">پروفایل</span>
+  </a>
+</nav>
+
+<!-- Cart FAB -->
+<div class="fixed bottom-20 left-5 z-40 md:left-10 md:bottom-10">
+  <button class="fab-pulse primary-gradient text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform relative">
+    <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+    <span class="absolute -top-1 -right-1 bg-error-container text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">۳</span>
+  </button>
+</div>
+
+<script>
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 10));
+
+  // Filter tabs
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter]').forEach(b => {
+        b.classList.remove('filter-active');
+        b.classList.add('text-on-surface-variant');
+      });
+      btn.classList.add('filter-active');
+      btn.classList.remove('text-on-surface-variant');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html class="dark" dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>پیشرو دانش - مدرسه</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        background: "#10131a", "on-background": "#e0e2ec",
+        "on-surface-variant": "#c1c6d5", "on-primary": "#002f64",
+        "surface-container-highest": "#32353c",
+        "primary-container": "#4090fe", "surface-container": "#1c2026",
+        "surface-container-low": "#181c22",
+        "on-secondary": "#153058", primary: "#aac7ff",
+        tertiary: "#ffb68c", secondary: "#afc7f7",
+        "tertiary-container": "#e3711f",
+        surface: "#10131a", "on-secondary-fixed": "#001b3e",
+        "secondary-container": "#2e4770", "outline-variant": "#414753",
+        "on-error": "#690005", "on-tertiary-container": "#481d00",
+        outline: "#8b919f", "on-surface": "#e0e2ec",
+        "surface-container-lowest": "#0b0e15",
+        "surface-container-high": "#272a31", "on-secondary-container": "#9db6e5",
+        "tertiary-fixed": "#ffdbc9", "secondary-fixed": "#d6e3ff",
+        "on-tertiary": "#532200", error: "#ffb4ab",
+      }
+    }
+  }
+};
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Vazirmatn', sans-serif; -webkit-font-smoothing: antialiased; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .primary-gradient { background: linear-gradient(135deg, #4248d4 0%, #9197ff 100%); }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-page { animation: fadeSlideIn 0.5s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  @keyframes growWidth { from { width: 0; } }
+  .progress-bar { animation: growWidth 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  .card-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .card-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+
+  .nav-active { background: white; color: #4248d4 !important; box-shadow: 0 2px 8px rgba(66,72,212,0.15); }
+  .dark .nav-active { background: #1e293b; color: #9197ff !important; }
+
+  header { transition: box-shadow 0.3s ease; }
+  header.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+
+  /* Podcast banner shimmer */
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .podcast-banner {
+    background: linear-gradient(135deg, #2e4770 0%, #4248d4 50%, #2e4770 100%);
+    background-size: 200% auto;
+    animation: shimmer 6s linear infinite;
+  }
+
+  /* Chip active */
+  .chip-active { background: #aac7ff; color: #002f64; font-weight: 700; }
+
+  /* Course card image zoom */
+  .course-img { transition: transform 0.5s ease; }
+  .course-card:hover .course-img { transform: scale(1.07); }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+<!-- Header -->
+<header id="topbar" class="bg-[#f5f7f9] dark:bg-slate-950 flex flex-row-reverse justify-between items-center w-full px-5 py-3 fixed top-0 z-50">
+  <div class="flex items-center gap-6">
+    <span class="text-xl font-black text-[#2c2f31] dark:text-slate-100">پیشرو دانش</span>
+    <nav class="hidden md:flex items-center gap-1 text-sm font-bold">
+      <a href="../home/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">خانه</a>
+      <a href="code.html" class="text-[#4248d4] bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl shadow-sm">مدرسه</a>
+      <a href="../life_path/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">مسیر من</a>
+      <a href="../store/code.html" class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl transition-colors">فروشگاه</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="bg-[#eef1f3] dark:bg-slate-900 rounded-full px-3 py-1.5 hidden md:flex items-center gap-2">
+      <span class="material-symbols-outlined text-[#4248d4] text-lg">search</span>
+      <input class="bg-transparent border-none focus:outline-none text-sm w-40 text-right text-on-surface" placeholder="جستجو در دروس..."/>
+    </div>
+    <button class="material-symbols-outlined p-2 text-[#4248d4] hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">notifications</button>
+    <button class="material-symbols-outlined p-2 text-[#4248d4] hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">account_circle</button>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<aside class="hidden lg:flex flex-col items-end pt-6 px-3 h-screen fixed right-0 top-0 w-60 bg-[#eef1f3] dark:bg-slate-900 z-40 pt-20">
+  <div class="flex flex-col items-center w-full mb-6 text-center">
+    <div class="w-16 h-16 rounded-2xl overflow-hidden mb-3 border-4 border-white shadow-md">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzDC4QWvGc5Ct0LckWQx6iGu_nqmp34rqIHU1IUZvzt66qxPQ2iCKOFCWLOLRxvSUknk1vP6zR5niv9gFSJKBYZK8luq3W062JVVCO-sOHDKpaJf9aa69xY4YaOAjQ83-5k76w9fN8pvUFZxwe4Unw76ihVBWBCcJ779iNRhxMNYH-jpTpnftu9JFsIseQza4yxABYos04GSLi-lNLtzSnBowY8Z0bfmaSdXJoIDsFN0-_bcRKJ-fYlj66m-gAj2HDHl1xzoVtWCE" alt="avatar" class="w-full h-full object-cover"/>
+    </div>
+    <h3 class="font-bold text-on-background text-sm">آریا قهرمان</h3>
+    <p class="text-xs text-on-surface-variant">سطح ۱۲ - نبردآموز</p>
+    <button class="mt-3 primary-gradient text-white px-4 py-1.5 rounded-xl text-xs font-bold w-full shadow-md hover:opacity-90 active:scale-95 transition-all">شروع چالش امروز</button>
+  </div>
+  <nav class="w-full flex flex-col gap-1">
+    <a href="../home/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>خانه</span><span class="material-symbols-outlined text-lg">home</span>
+    </a>
+    <a href="code.html" class="nav-active flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-bold transition-all">
+      <span>مدرسه</span><span class="material-symbols-outlined text-lg" style="font-variation-settings:'FILL' 1;">school</span>
+    </a>
+    <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>بازی</span><span class="material-symbols-outlined text-lg">sports_esports</span>
+    </a>
+    <a href="../life_path/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>مسیر من</span><span class="material-symbols-outlined text-lg">auto_graph</span>
+    </a>
+    <a href="../store/code.html" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>فروشگاه</span><span class="material-symbols-outlined text-lg">shopping_bag</span>
+    </a>
+    <a href="#" class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all">
+      <span>شبکه اجتماعی</span><span class="material-symbols-outlined text-lg">group</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="pt-20 lg:mr-60 px-5 md:px-10 pb-24 lg:pb-10">
+  <div class="max-w-5xl mx-auto">
+
+    <!-- Podcast Banner -->
+    <section class="mb-10 animate-page">
+      <div class="podcast-banner rounded-2xl p-7 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div class="z-10 text-right space-y-3 max-w-lg">
+          <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-xs font-bold">جدیدترین انتشار</span>
+          <h2 class="text-2xl md:text-3xl font-black text-white">پادکست «آخرین نگهبان»: هنر تفکر انتقادی</h2>
+          <p class="text-white/80 leading-relaxed text-sm">در این قسمت با آریا همراه شوید تا بیاموزیم چگونه در دنیای اطلاعات، حقیقت را از شایعه تشخیص دهیم.</p>
+          <button class="bg-white text-[#4248d4] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 w-fit">
+            <span>گوش دادن به اپیزود</span>
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">play_circle</span>
+          </button>
+        </div>
+        <div class="relative">
+          <div class="absolute inset-0 bg-white/10 blur-3xl scale-150 rounded-full"></div>
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0yU70lUgb9fDgRPc1uvIIqxRghiITexc6C-3JdFM2oK7iecFburd-15_CMd0qdGtpue1aNogNKU5vcOZ4obapX28eM-uw3OdnBBkurqi3VJk0Bt3i_3wLW1xErnMmw6Aovm8jivFPsN21acpJNGtwvNQY9-K4ODBIg2kOg53yFLvwN3_0rAtfwst-UzmSTZRW02m1BtuAIkdbBl3KyUgqJJSw-yqg4WhLJwLYHk9D99SE8lF1w48Xn73jH4oWhsJmYNpYetlmeNQ" alt="" class="w-44 h-44 md:w-56 md:h-56 object-contain drop-shadow-2xl relative z-10"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Chips -->
+    <section class="mb-8 overflow-x-auto hide-scrollbar animate-page delay-1">
+      <div class="flex gap-3 pb-2">
+        <button class="chip-active whitespace-nowrap px-5 py-2 rounded-xl text-sm transition-all">همه دوره‌ها</button>
+        <button class="whitespace-nowrap px-5 py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high text-sm transition-colors">دروس مدرسه‌ای</button>
+        <button class="whitespace-nowrap px-5 py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high text-sm transition-colors">مهارت‌های زندگی</button>
+        <button class="whitespace-nowrap px-5 py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high text-sm transition-colors">شناختی</button>
+      </div>
+    </section>
+
+    <!-- My Courses -->
+    <section class="mb-10 animate-page delay-2">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-black">دوره‌های من</h3>
+        <a href="#" class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">مشاهده همه</a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Course Progress 1 -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-5 shadow-sm card-lift relative">
+          <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBISy8Bx10ksCG7sj9XaiRvv6g4Tc6KUE6rXRUuDRBn1A7D1ROlKf9OVp_GMZsv_t1g3qkO9OgK-GVtNj_96V4ZNj9f5etf7UM0muZzDuzeDMX0DTMmVlgR2H44lClZnS0ZsrHlnBBPQibZcoYeOGrrN_ajti5DjcWaZiaY6t1tuCEpO3OrhvI_22WmraDdiKtkX6LkYkvVHm0V52jgH0-l1JT4BwSIDCGBXyZ7Zdb-9-aBQtBBLUFR4bggfuUIlfEUym5e4GXjy_8" alt="" class="w-full h-full object-cover"/>
+          </div>
+          <div class="flex-1 text-right">
+            <h4 class="font-bold text-base mb-1">زیست‌شناسی: راز حیات</h4>
+            <div class="flex justify-between text-xs text-on-surface-variant mb-2">
+              <span>۶۸٪ تکمیل شده</span>
+              <span>۱۲ جلسه باقی‌مانده</span>
+            </div>
+            <div class="h-2.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full primary-gradient rounded-full progress-bar" style="width:68%; animation-delay:0.3s;"></div>
+            </div>
+          </div>
+          <span class="absolute -top-2.5 -right-2.5 bg-tertiary-container text-on-tertiary-container text-[10px] px-2 py-0.5 rounded-full font-black border-2 border-background shadow">ادامه نبرد</span>
+        </div>
+        <!-- Course Progress 2 -->
+        <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-5 shadow-sm card-lift">
+          <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMAE7TNi69HCFazxP-Kc0zS0kYQZ29m8szwtNHx1OxBEUY-ANJP4LdbzrEI-msbDU8QymgGXqIQv54NY88yhc0sRxaLln0m3uBj2S7UWL6TDJN5vu8hHGbZIjmUxLH9zkj9VBnKZ9WBZPdrLwZrdPEwtSXgQk0ekx2-RkF3f0pp-lO5O1vAn8YvADxJI4S1gqIYiBm-6aidmFGsKeFBt7k1dO44IewkfzEHWrNoLenlWphqVOxzYwcRPIar5GJdX2e56vdyBuxNpU" alt="" class="w-full h-full object-cover"/>
+          </div>
+          <div class="flex-1 text-right">
+            <h4 class="font-bold text-base mb-1">هوش مصنوعی و آینده</h4>
+            <div class="flex justify-between text-xs text-on-surface-variant mb-2">
+              <span>۳۲٪ تکمیل شده</span>
+              <span>۸ مأموریت جدید</span>
+            </div>
+            <div class="h-2.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full primary-gradient rounded-full progress-bar" style="width:32%; animation-delay:0.5s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Course Grid -->
+    <section class="animate-page delay-3">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-black">کاوش در علوم</h3>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="course-card group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden card-lift">
+          <div class="h-44 relative overflow-hidden">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qQXH6IORXvOe1PSlZgRwtGVNL2B_ecmXP6mlNwit4p650RO2BbFN5VYokR8p9u_LORgOEhwii9QvGWULfTakTkSHEGoPMPoF_K2LaoJdulh6iZc7b_2X0AVUJ8idYFbaMV4BVJq37RVsUGYtcZUEsDvS7LAKqGnHhagLL1FrTaccq2RsAFk_tPsM8sS4R5F3eU4Z2QF3eI5AzeOQhW3zpkidXcofWKOFB91FFCCIYVD7fG-2IxBBn-jhQFy7ibjGs9Nk6kgsYZ4" alt="" class="course-img w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-3 right-3 flex gap-1.5">
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">ریاضیات</span>
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">سطح متوسط</span>
+            </div>
+          </div>
+          <div class="p-5 text-right flex-1 flex flex-col">
+            <h4 class="text-base font-bold mb-2">هندسه و معماری هستی</h4>
+            <p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2 flex-1">درک روابط ریاضی پنهان در طبیعت و بناهای بزرگ تاریخی ایران و جهان.</p>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-1 text-tertiary font-bold">
+                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">grade</span>
+                <span class="text-xs">۴.۸</span>
+              </div>
+              <button class="text-primary font-black text-xs hover:underline">مشاهده سرفصل‌ها</button>
+            </div>
+          </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="course-card group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden card-lift">
+          <div class="h-44 relative overflow-hidden">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtPgmdSgmn0BjLYVGV_cSn9H7H13HT8OBMGryjN-MhEQ8EawDB1QS6l3uC4kUAR2lecY9CEf1R3_ZTtaL0Cz7p6aF_-mdUuHh5fz0P-ucWg7_UQHpKaXsspAV9yyx466DM8RmX0M-8zJMVBZaj50ha_diOgi1hgdsh8UNurB0bnCHHC3qCiVbL9IbfxD0bzrz7lMKhtwVup9jNRsfWNk36uZ_l79RZ8pdYHZw67l79Dk3CCBgpujvMv1UTaB_E4y0b6x9A8DiLwVs" alt="" class="course-img w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-3 right-3 flex gap-1.5">
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">تاریخ</span>
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">مهارت زندگی</span>
+            </div>
+          </div>
+          <div class="p-5 text-right flex-1 flex flex-col">
+            <h4 class="text-base font-bold mb-2">خرد نگهبانان باستان</h4>
+            <p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2 flex-1">درس‌هایی از فلسفه و سبک زندگی اندیشمندان بزرگ ایرانی برای زندگی مدرن.</p>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-1 text-tertiary font-bold">
+                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">grade</span>
+                <span class="text-xs">۵.۰</span>
+              </div>
+              <button class="text-primary font-black text-xs hover:underline">مشاهده سرفصل‌ها</button>
+            </div>
+          </div>
+        </div>
+        <!-- Card 3 -->
+        <div class="course-card group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden card-lift">
+          <div class="h-44 relative overflow-hidden">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeMx4eByvEzXBJGrwmxk2hrI2aa7E7K4977I7n_hCVbXnyb0xVa8rJPon0X6CjvftEvc-3Q4FvD36E6zvd562bB72zwnNW8bUqM4f-hJBB-GVnmCBzesFbjiw9iYQz4YJakPubohRcEZYwPUHN8_oUDgtM70H2PlcMruhrmMnUMkCkSUz_2ADo5WjeG5g388t6LqgRJHUJ3gNzu7RZauYLIDw6fqYLH9on_HNL51rYaFee2hJM815-KGEBQoTjF4l3t8Jj8uYmZZU" alt="" class="course-img w-full h-full object-cover"/>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-3 right-3 flex gap-1.5">
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">مهارت</span>
+              <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">فن بیان</span>
+            </div>
+          </div>
+          <div class="p-5 text-right flex-1 flex flex-col">
+            <h4 class="text-base font-bold mb-2">قدرت کلمات: فن بیان</h4>
+            <p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2 flex-1">چگونه با اطمینان صحبت کنیم و دیگران را با ایده‌های خود همراه سازیم.</p>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-1 text-tertiary font-bold">
+                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">grade</span>
+                <span class="text-xs">۴.۹</span>
+              </div>
+              <button class="text-primary font-black text-xs hover:underline">مشاهده سرفصل‌ها</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex justify-around items-center py-3 px-2 z-50">
+  <a href="../home/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-[10px]">خانه</span>
+  </a>
+  <a href="code.html" class="flex flex-col items-center gap-0.5 text-[#4248d4]">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">school</span>
+    <span class="text-[10px] font-bold">مدرسه</span>
+  </a>
+  <a href="#" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">sports_esports</span>
+    <span class="text-[10px]">بازی</span>
+  </a>
+  <a href="../store/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">shopping_bag</span>
+    <span class="text-[10px]">فروشگاه</span>
+  </a>
+  <a href="../life_path/code.html" class="flex flex-col items-center gap-0.5 text-on-surface-variant">
+    <span class="material-symbols-outlined">auto_graph</span>
+    <span class="text-[10px]">مسیر من</span>
+  </a>
+</nav>
+
+<script>
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 10));
+
+  // Chip toggle
+  document.querySelectorAll('button.whitespace-nowrap, button.chip-active').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('button.whitespace-nowrap, button.chip-active').forEach(b => {
+        b.classList.remove('chip-active');
+        b.classList.add('bg-surface-container-low', 'text-on-surface');
+      });
+      btn.classList.add('chip-active');
+      btn.classList.remove('bg-surface-container-low', 'text-on-surface');
+    });
+  });
+</script>
+</body>
+</html>
