@@ -1,5 +1,10 @@
 @page "/profile"
 @using Avina.Models
+@using Avina.Services
+@using System.Text.Json
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 @rendermode InteractiveServer
 
 <style>
@@ -393,20 +398,24 @@
     private string editRole = "";
     private string editBio = "";
 
+    private const string StorageKey = "avina_user";
+
     protected override void OnInitialized()
     {
+        // Load from AuthState if logged in, otherwise use guest defaults
+        var u = AuthState.CurrentUser;
         currentUser = new User
         {
             Id = 1,
-            Name = "علی محمدی",
-            Email = "ali@example.com",
-            Role = "دانش‌آموز",
-            ProfileImage = "https://i.pravatar.cc/150?img=5",
-            Bio = "فعال و پرانرژی، علاقه‌مند به یادگیری و رشد شخصی. دوست‌دارِ ریاضی و علوم.",
-            Coin = 2450,
-            Followers = 125,
-            Following = 89,
-            CreatedAt = DateTime.Now.AddMonths(-3)
+            Name = u != null ? u.Name : "مهمان",
+            Email = u != null ? u.Email : "",
+            Role = u != null ? u.Role : "بازدیدکننده",
+            ProfileImage = u != null ? u.ProfileImage : "https://i.pravatar.cc/150?img=5",
+            Bio = u != null ? u.Bio : "",
+            Coin = u != null ? u.Coin : 0,
+            Followers = 0,
+            Following = 0,
+            CreatedAt = DateTime.Now
         };
 
         enrolledCourses = new List<EnrolledCourse>
@@ -452,18 +461,40 @@
         }
     }
 
-    private void SaveProfile()
+    private async Task SaveProfile()
     {
         if (currentUser != null)
         {
             if (!string.IsNullOrWhiteSpace(editName)) currentUser.Name = editName;
             if (!string.IsNullOrWhiteSpace(editRole)) currentUser.Role = editRole;
             currentUser.Bio = editBio;
+
+            // Sync back to AuthState and localStorage
+            if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
+            {
+                AuthState.CurrentUser.Name = currentUser.Name ?? "";
+                AuthState.CurrentUser.Role = currentUser.Role ?? "";
+                AuthState.CurrentUser.Bio = currentUser.Bio ?? "";
+                // Notify layout to re-render sidebar
+                AuthState.SetUser(AuthState.CurrentUser);
+                try
+                {
+                    await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(AuthState.CurrentUser));
+                }
+                catch { }
+            }
         }
         isEditing = false;
     }
 
     private void CancelEdit() => isEditing = false;
-    private void Logout() { }
+
+    private async Task Logout()
+    {
+        try { await JS.InvokeVoidAsync("lsRemove", StorageKey); } catch { }
+        AuthState.Logout();
+        Nav.NavigateTo("/");
+    }
+
     private void SaveSettings() { }
 }

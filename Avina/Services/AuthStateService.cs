@@ -5,6 +5,7 @@ public class UserCacheDto
     public string Name { get; set; } = "";
     public string Email { get; set; } = "";
     public string Role { get; set; } = "دانش‌آموز";
+    public string Bio { get; set; } = "";
     public string ProfileImage { get; set; } = "https://i.pravatar.cc/150?img=5";
     public int Coin { get; set; } = 0;
 }
