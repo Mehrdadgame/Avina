@@ -588,14 +588,14 @@
             }
         </div>
         <!-- Prev / Next buttons -->
-        <button onclick="@PrevHero" style="position:absolute; top:50%; right:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">‹</button>
-        <button onclick="@NextHero" style="position:absolute; top:50%; left:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">›</button>
+        <button @onclick="PrevHero" style="position:absolute; top:50%; right:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">‹</button>
+        <button @onclick="NextHero" style="position:absolute; top:50%; left:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">›</button>
         <!-- Dot indicators -->
         <div style="position:absolute; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.5rem;">
             @for (int i = 0; i < heroSlides.Count; i++)
             {
                 int idx = i;
-                <button onclick="@(() => SetHeroSlide(idx))" style="width:@(heroIndex == idx ? "28px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(heroIndex == idx ? "rgba(170,199,255,0.9)" : "rgba(255,255,255,0.35)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
+                <button @onclick="@(() => SetHeroSlide(idx))" style="width:@(heroIndex == idx ? "28px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(heroIndex == idx ? "rgba(170,199,255,0.9)" : "rgba(255,255,255,0.35)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
             }
         </div>
     </section>

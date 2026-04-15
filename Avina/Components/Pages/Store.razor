@@ -99,14 +99,21 @@
             </div>
         </div>
 
+        @{ var productImgs = new[] {
+            "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80",
+            "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
+            "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400&q=80",
+            "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&q=80",
+            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80",
+            "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
+        }; int pi = 0; }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach (var product in visibleProducts)
             {
+                var pImg = productImgs[pi % productImgs.Length]; pi++;
                 <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
                     <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
-                        <div class="product-img w-full h-full bg-gradient-to-br from-surface-container to-surface-container-high flex items-center justify-center">
-                            <span class="material-symbols-outlined text-6xl text-outline-variant" style="font-variation-settings:'FILL' 1;">@GetProductIcon(product.Category)</span>
-                        </div>
+                        <img src="@pImg" alt="@product.Name" class="product-img w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
                             <span class="text-sm font-black text-on-surface">@product.CoinPrice.ToString("N0")</span>
                             <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
