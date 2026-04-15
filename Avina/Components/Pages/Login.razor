@@ -1,10 +1,10 @@
 @page "/login"
+@rendermode InteractiveServer
 @using Avina.Services
 @using System.Text.Json
 @inject AuthStateService AuthState
 @inject IJSRuntime JS
 @inject NavigationManager Nav
-@rendermode InteractiveServer
 
 <style>
 .login-page {
@@ -23,30 +23,17 @@
     border: 1px solid #414753;
     border-radius: 1.5rem;
     padding: 2.5rem;
-    animation: fadeSlideIn 0.4s ease both;
+    animation: cardIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
-@@keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+@@keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.login-logo {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.login-logo-title {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #aac7ff;
-    margin: 0 0 0.25rem 0;
-}
-
-.login-logo-sub {
-    font-size: 0.85rem;
-    color: #8b919f;
-}
+.login-logo { text-align: center; margin-bottom: 2rem; }
+.login-logo-title { font-size: 1.6rem; font-weight: 900; color: #aac7ff; margin: 0 0 0.25rem 0; }
+.login-logo-sub { font-size: 0.85rem; color: #8b919f; }
 
 .login-tabs {
     display: flex;
@@ -56,207 +43,215 @@
     margin-bottom: 2rem;
     gap: 4px;
 }
-
 .login-tab {
-    flex: 1;
-    padding: 0.6rem;
-    border: none;
-    border-radius: 0.6rem;
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    flex: 1; padding: 0.6rem; border: none; border-radius: 0.6rem;
+    font-family: 'Vazirmatn', sans-serif; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease;
 }
+.login-tab.active { background: linear-gradient(135deg, #4248d4, #9197ff); color: white; }
+.login-tab.inactive { background: transparent; color: #8b919f; }
+.login-tab.inactive:hover { color: #e0e2ec; }
 
-.login-tab.active {
-    background: linear-gradient(135deg, #4248d4, #9197ff);
-    color: white;
-}
-
-.login-tab.inactive {
-    background: transparent;
-    color: #8b919f;
-}
-
-.login-tab.inactive:hover {
-    color: #e0e2ec;
-}
-
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #c1c6d5;
-    margin-bottom: 0.5rem;
-    text-align: right;
-}
-
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; font-size: 0.85rem; font-weight: 600; color: #c1c6d5; margin-bottom: 0.5rem; text-align: right; }
 .form-input {
-    width: 100%;
-    background: #0b0e15;
-    border: 1px solid #414753;
-    border-radius: 0.75rem;
-    color: #e0e2ec;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-    font-family: 'Vazirmatn', sans-serif;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
-    text-align: right;
+    width: 100%; background: #0b0e15; border: 1px solid #414753;
+    border-radius: 0.75rem; color: #e0e2ec; padding: 0.75rem 1rem;
+    font-size: 0.9rem; font-family: 'Vazirmatn', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; text-align: right;
 }
-
-.form-input:focus {
-    outline: none;
-    border-color: #aac7ff;
-    box-shadow: 0 0 0 3px rgba(170,199,255,0.1);
-}
-
-.form-input::placeholder {
-    color: #8b919f;
-}
+.form-input:focus { outline: none; border-color: #aac7ff; box-shadow: 0 0 0 3px rgba(170,199,255,0.1); }
+.form-input::placeholder { color: #8b919f; }
 
 .btn-submit {
-    width: 100%;
-    padding: 0.875rem;
-    border: none;
-    border-radius: 0.875rem;
-    background: linear-gradient(135deg, #4248d4, #9197ff);
-    color: white;
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 1rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: 0.5rem;
+    width: 100%; padding: 0.875rem; border: none; border-radius: 0.875rem;
+    background: linear-gradient(135deg, #4248d4, #9197ff); color: white;
+    font-family: 'Vazirmatn', sans-serif; font-size: 1rem; font-weight: 800;
+    cursor: pointer; transition: all 0.2s ease; margin-top: 0.5rem;
 }
-
-.btn-submit:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-}
-
-.btn-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
+.btn-submit:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(66,72,212,0.4); }
+.btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .error-msg {
-    background: rgba(255,180,171,0.1);
-    border: 1px solid rgba(255,180,171,0.3);
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: #ffb4ab;
-    font-size: 0.875rem;
-    margin-bottom: 1.25rem;
-    text-align: right;
+    background: rgba(255,180,171,0.1); border: 1px solid rgba(255,180,171,0.3);
+    border-radius: 0.75rem; padding: 0.75rem 1rem; color: #ffb4ab;
+    font-size: 0.875rem; margin-bottom: 1.25rem; text-align: right;
 }
 
-.divider {
-    text-align: center;
-    color: #8b919f;
-    font-size: 0.8rem;
-    margin: 1.5rem 0;
-    position: relative;
-}
-
-.divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #414753;
-}
-
-.divider span {
-    background: #1c2026;
-    padding: 0 1rem;
-    position: relative;
-}
+.divider { text-align: center; color: #8b919f; font-size: 0.8rem; margin: 1.5rem 0; position: relative; }
+.divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #414753; }
+.divider span { background: #1c2026; padding: 0 1rem; position: relative; }
 
 .btn-guest {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #414753;
-    border-radius: 0.875rem;
-    background: transparent;
-    color: #c1c6d5;
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    width: 100%; padding: 0.75rem; border: 1px solid #414753; border-radius: 0.875rem;
+    background: transparent; color: #c1c6d5; font-family: 'Vazirmatn', sans-serif;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-guest:hover { border-color: #aac7ff; color: #aac7ff; }
+
+/* ===== Welcome Overlay ===== */
+.welcome-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(11,14,21,0.95);
+    display: flex; align-items: center; justify-content: center;
+    animation: overlayIn 0.3s ease both;
+}
+@@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+.welcome-card {
+    text-align: center;
+    animation: welcomeCardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation-delay: 0.1s;
+}
+@@keyframes welcomeCardIn {
+    from { opacity: 0; transform: scale(0.7) translateY(30px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.btn-guest:hover {
-    border-color: #aac7ff;
-    color: #aac7ff;
+.welcome-emoji {
+    font-size: 5rem;
+    display: block;
+    margin-bottom: 1.5rem;
+    animation: bounceEmoji 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation-delay: 0.3s;
+}
+@@keyframes bounceEmoji {
+    from { transform: scale(0) rotate(-20deg); }
+    to   { transform: scale(1) rotate(0deg); }
+}
+
+.welcome-title {
+    font-size: 2.2rem; font-weight: 900; color: white;
+    margin-bottom: 0.5rem; line-height: 1.2;
+}
+.welcome-title span { color: #aac7ff; }
+
+.welcome-subtitle { color: #c1c6d5; font-size: 1rem; margin-bottom: 2rem; }
+
+.welcome-coins {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    background: rgba(255,182,140,0.15); border: 1px solid rgba(255,182,140,0.35);
+    border-radius: 9999px; padding: 0.6rem 1.5rem;
+    color: #ffb68c; font-weight: 800; font-size: 1rem;
+    animation: coinPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation-delay: 0.5s;
+}
+@@keyframes coinPop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+.welcome-progress {
+    width: 220px; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 9999px; margin: 2rem auto 0;
+    overflow: hidden;
+}
+.welcome-progress-bar {
+    height: 100%; background: linear-gradient(to left, #4248d4, #9197ff);
+    border-radius: 9999px;
+    animation: progressFill @(welcomeDuration)ms linear both;
+    animation-delay: 0.2s;
+}
+@@keyframes progressFill {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+/* Confetti dots */
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti-dot {
+    position: absolute; width: 8px; height: 8px; border-radius: 2px;
+    animation: confettiFall linear both;
+}
+@@keyframes confettiFall {
+    from { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    to   { transform: translateY(110vh) rotate(720deg); opacity: 0; }
 }
 </style>
 
-<div class="login-page">
-    <div class="login-card">
-        <div class="login-logo">
-            <h1 class="login-logo-title">⚔️ آخرین نگهبان</h1>
-            <p class="login-logo-sub">Avina Learning Platform</p>
-        </div>
-
-        <div class="login-tabs">
-            <button class="login-tab @(isRegister ? "inactive" : "active")" @onclick="() => isRegister = false">ورود</button>
-            <button class="login-tab @(isRegister ? "active" : "inactive")" @onclick="() => isRegister = true">ثبت نام</button>
-        </div>
-
-        @if (!string.IsNullOrEmpty(errorMessage))
+@if (showWelcome)
+{
+    <!-- Confetti -->
+    <div class="confetti">
+        @foreach (var dot in confettiDots)
         {
-            <div class="error-msg">⚠️ @errorMessage</div>
+            <div class="confetti-dot" style="left:@(dot.Left)%; background:@dot.Color; animation-duration:@(dot.Duration)ms; animation-delay:@(dot.Delay)ms; top:-10px;"></div>
         }
-
-        @if (!isRegister)
-        {
-            <!-- Login Form -->
-            <div class="form-group">
-                <label class="form-label">ایمیل</label>
-                <input class="form-input" type="email" placeholder="your@email.com" @bind="loginEmail" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">رمز عبور</label>
-                <input class="form-input" type="password" placeholder="رمز عبور خود را وارد کنید" @bind="loginPassword" />
-            </div>
-            <button class="btn-submit" @onclick="HandleLogin" disabled="@isLoading">
-                @(isLoading ? "در حال ورود..." : "ورود به حساب")
-            </button>
-        }
-        else
-        {
-            <!-- Register Form -->
-            <div class="form-group">
-                <label class="form-label">نام و نام خانوادگی</label>
-                <input class="form-input" type="text" placeholder="مثلاً: علی احمدی" @bind="regName" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">ایمیل</label>
-                <input class="form-input" type="email" placeholder="your@email.com" @bind="regEmail" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">رمز عبور</label>
-                <input class="form-input" type="password" placeholder="حداقل ۶ کاراکتر" @bind="regPassword" />
-            </div>
-            <button class="btn-submit" @onclick="HandleRegister" disabled="@isLoading">
-                @(isLoading ? "در حال ثبت نام..." : "ایجاد حساب کاربری")
-            </button>
-        }
-
-        <div class="divider"><span>یا</span></div>
-        <button class="btn-guest" @onclick="ContinueAsGuest">ورود به عنوان مهمان</button>
     </div>
-</div>
+
+    <div class="welcome-overlay">
+        <div class="welcome-card">
+            <span class="welcome-emoji">🎉</span>
+            <h1 class="welcome-title">خوش اومدی،<br /><span>@welcomeName</span>!</h1>
+            <p class="welcome-subtitle">حساب کاربری شما با موفقیت ایجاد شد</p>
+            <div class="welcome-coins">
+                <span>🪙</span>
+                <span>+100 کوین خوش‌آمدگویی دریافت کردی</span>
+            </div>
+            <div class="welcome-progress">
+                <div class="welcome-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1 class="login-logo-title">⚔️ آخرین نگهبان</h1>
+                <p class="login-logo-sub">Avina Learning Platform</p>
+            </div>
+
+            <div class="login-tabs">
+                <button class="login-tab @(isRegister ? "inactive" : "active")" @onclick="() => { isRegister = false; errorMessage = string.Empty; }">ورود</button>
+                <button class="login-tab @(isRegister ? "active" : "inactive")" @onclick="() => { isRegister = true; errorMessage = string.Empty; }">ثبت نام</button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-msg">⚠️ @errorMessage</div>
+            }
+
+            @if (!isRegister)
+            {
+                <div class="form-group">
+                    <label class="form-label">ایمیل</label>
+                    <input class="form-input" type="email" placeholder="your@email.com" @bind="loginEmail" @bind:event="oninput" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رمز عبور</label>
+                    <input class="form-input" type="password" placeholder="رمز عبور خود را وارد کنید" @bind="loginPassword" @bind:event="oninput" />
+                </div>
+                <button class="btn-submit" @onclick="HandleLogin" disabled="@isLoading">
+                    @(isLoading ? "در حال ورود..." : "ورود به حساب")
+                </button>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label class="form-label">نام و نام خانوادگی</label>
+                    <input class="form-input" type="text" placeholder="مثلاً: علی احمدی" @bind="regName" @bind:event="oninput" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ایمیل</label>
+                    <input class="form-input" type="email" placeholder="your@email.com" @bind="regEmail" @bind:event="oninput" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رمز عبور</label>
+                    <input class="form-input" type="password" placeholder="حداقل ۶ کاراکتر" @bind="regPassword" @bind:event="oninput" />
+                </div>
+                <button class="btn-submit" @onclick="HandleRegister" disabled="@isLoading">
+                    @(isLoading ? "در حال ثبت نام..." : "ایجاد حساب کاربری")
+                </button>
+            }
+
+            <div class="divider"><span>یا</span></div>
+            <button class="btn-guest" @onclick="ContinueAsGuest">ادامه به عنوان مهمان</button>
+        </div>
+    </div>
+}
 
 @code {
     private bool isRegister = false;
@@ -265,56 +260,70 @@
 
     private string loginEmail = "";
     private string loginPassword = "";
-
     private string regName = "";
     private string regEmail = "";
     private string regPassword = "";
 
+    // Welcome animation
+    private bool showWelcome = false;
+    private string welcomeName = "";
+    private const int welcomeDuration = 2800;
+
     private const string StorageKey = "avina_user";
+
+    // Confetti data
+    private record ConfettiDot(double Left, string Color, int Duration, int Delay);
+    private List<ConfettiDot> confettiDots = new();
+
+    private static readonly string[] ConfettiColors = {
+        "#aac7ff", "#9197ff", "#ffb68c", "#7dd3a8", "#f472b6", "#fbbf24", "#60a5fa"
+    };
+
+    private void GenerateConfetti()
+    {
+        var rng = new Random();
+        confettiDots = Enumerable.Range(0, 40).Select(i => new ConfettiDot(
+            Left: rng.NextDouble() * 100,
+            Color: ConfettiColors[rng.Next(ConfettiColors.Length)],
+            Duration: rng.Next(1800, 3200),
+            Delay: rng.Next(0, 800)
+        )).ToList();
+    }
 
     private async Task HandleLogin()
     {
         errorMessage = "";
-        if (string.IsNullOrWhiteSpace(loginEmail))
-        {
-            errorMessage = "ایمیل را وارد کنید.";
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(loginPassword))
-        {
-            errorMessage = "رمز عبور را وارد کنید.";
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(loginEmail)) { errorMessage = "ایمیل را وارد کنید."; return; }
+        if (string.IsNullOrWhiteSpace(loginPassword)) { errorMessage = "رمز عبور را وارد کنید."; return; }
 
         isLoading = true;
-        // Try to load from localStorage
-        var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
-        if (!string.IsNullOrEmpty(json))
+        StateHasChanged();
+
+        UserCacheDto? user = null;
+
+        // Try to load existing user from localStorage
+        try
         {
-            try
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (!string.IsNullOrEmpty(json))
+                user = JsonSerializer.Deserialize<UserCacheDto>(json);
+        }
+        catch { }
+
+        if (user == null || user.Email != loginEmail)
+        {
+            // Create user from email
+            user = new UserCacheDto
             {
-                var cached = JsonSerializer.Deserialize<UserCacheDto>(json);
-                if (cached != null && cached.Email == loginEmail)
-                {
-                    AuthState.SetUser(cached);
-                    isLoading = false;
-                    Nav.NavigateTo("/");
-                    return;
-                }
-            }
-            catch { }
+                Name = loginEmail.Split('@')[0],
+                Email = loginEmail,
+                Role = "دانش‌آموز",
+                ProfileImage = "https://i.pravatar.cc/150?img=5",
+                Coin = 0
+            };
         }
 
-        // Mock login: accept any credentials, create user
-        var user = new UserCacheDto
-        {
-            Name = loginEmail.Split('@')[0],
-            Email = loginEmail,
-            Role = "دانش‌آموز",
-            ProfileImage = "https://i.pravatar.cc/150?img=5",
-            Coin = 0
-        };
-        await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user));
+        try { await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user)); } catch { }
         AuthState.SetUser(user);
         isLoading = false;
         Nav.NavigateTo("/");
@@ -323,34 +332,33 @@
     private async Task HandleRegister()
     {
         errorMessage = "";
-        if (string.IsNullOrWhiteSpace(regName))
-        {
-            errorMessage = "نام خود را وارد کنید.";
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(regEmail) || !regEmail.Contains('@'))
-        {
-            errorMessage = "یک ایمیل معتبر وارد کنید.";
-            return;
-        }
-        if (regPassword.Length < 6)
-        {
-            errorMessage = "رمز عبور باید حداقل ۶ کاراکتر باشد.";
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(regName)) { errorMessage = "نام خود را وارد کنید."; return; }
+        if (string.IsNullOrWhiteSpace(regEmail) || !regEmail.Contains('@')) { errorMessage = "یک ایمیل معتبر وارد کنید."; return; }
+        if (regPassword.Length < 6) { errorMessage = "رمز عبور باید حداقل ۶ کاراکتر باشد."; return; }
 
         isLoading = true;
+        StateHasChanged();
+
         var user = new UserCacheDto
         {
-            Name = regName,
-            Email = regEmail,
+            Name = regName.Trim(),
+            Email = regEmail.Trim(),
             Role = "دانش‌آموز",
             ProfileImage = "https://i.pravatar.cc/150?img=5",
-            Coin = 100  // سکه خوش‌آمدگویی
+            Coin = 100
         };
-        await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user));
+
+        try { await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user)); } catch { }
         AuthState.SetUser(user);
+
+        // Show welcome animation
+        welcomeName = user.Name;
+        GenerateConfetti();
+        showWelcome = true;
         isLoading = false;
+        StateHasChanged();
+
+        await Task.Delay(welcomeDuration + 400);
         Nav.NavigateTo("/");
     }
 

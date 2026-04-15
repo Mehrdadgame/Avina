@@ -39,7 +39,7 @@
         .btn-auth-sidebar {
             display: block;
             width: 100%;
-            padding: 0.6rem 1rem;
+            padding: 0.65rem 1rem;
             border: none;
             border-radius: 0.75rem;
             background: linear-gradient(135deg, #4248d4, #9197ff);
@@ -88,9 +88,59 @@
             margin-top: 0.5rem;
         }
         .btn-logout-sidebar:hover { background: rgba(255,180,171,0.1); }
+
+        .sidebar-coin-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            color: #ffb68c;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        /* Welcome toast */
+        .welcome-toast {
+            position: fixed;
+            top: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: linear-gradient(135deg, #1e2d42, #2e4770);
+            border: 1px solid rgba(170,199,255,0.3);
+            border-radius: 1rem;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: toastIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+            white-space: nowrap;
+            font-size: 0.9rem;
+            color: #e0e2ec;
+            font-weight: 600;
+        }
+        .welcome-toast.hiding { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
+        }
     </style>
 </head>
 <body>
+    <!-- Welcome toast -->
+    @if (showToast)
+    {
+        <div class="welcome-toast @(hidingToast ? "hiding" : "")">
+            <span style="font-size:1.2rem;">👋</span>
+            <span>خوش اومدی، <strong style="color:#aac7ff;">@toastName</strong>!</span>
+            <span style="font-size:0.8rem; color:#ffb68c;">🪙 +100 کوین</span>
+        </div>
+    }
+
     <div class="app-layout">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
@@ -140,6 +190,10 @@
                         <div class="user-info">
                             <p class="user-name">@AuthState.CurrentUser.Name</p>
                             <p class="user-role">@AuthState.CurrentUser.Role</p>
+                            <div class="sidebar-coin-row">
+                                <span>🪙</span>
+                                <span>@AuthState.CurrentUser.Coin.ToString("N0") کوین</span>
+                            </div>
                         </div>
                     </a>
                     <button class="btn-logout-sidebar" @onclick="HandleLogout">خروج از حساب</button>
@@ -216,27 +270,71 @@
 @code {
     private const string StorageKey = "avina_user";
 
+    // Toast state
+    private bool showToast = false;
+    private bool hidingToast = false;
+    private string toastName = "";
+    private bool _wasLoggedIn = false;
+
     protected override void OnInitialized()
     {
         AuthState.StateChanged += OnAuthChanged;
+        Nav.LocationChanged += OnLocationChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !AuthState.IsLoggedIn)
         {
-            try
-            {
-                var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
-                if (!string.IsNullOrEmpty(json))
-                {
-                    var user = JsonSerializer.Deserialize<UserCacheDto>(json);
-                    if (user != null)
-                        AuthState.SetUser(user);
-                }
-            }
-            catch { }
+            await TryRestoreFromStorage();
         }
+    }
+
+    private async Task TryRestoreFromStorage()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+                if (user != null)
+                    AuthState.SetUser(user);
+            }
+        }
+        catch { }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnAuthChanged()
+    {
+        // Show welcome toast when user logs in
+        if (AuthState.IsLoggedIn && !_wasLoggedIn)
+        {
+            _wasLoggedIn = true;
+            toastName = AuthState.CurrentUser?.Name ?? "";
+            showToast = true;
+            hidingToast = false;
+            _ = DismissToastAsync();
+        }
+        else if (!AuthState.IsLoggedIn)
+        {
+            _wasLoggedIn = false;
+            showToast = false;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task DismissToastAsync()
+    {
+        await Task.Delay(2800);
+        hidingToast = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(350);
+        showToast = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task HandleLogout()
@@ -246,10 +344,9 @@
         Nav.NavigateTo("/");
     }
 
-    private void OnAuthChanged() => InvokeAsync(StateHasChanged);
-
     public void Dispose()
     {
         AuthState.StateChanged -= OnAuthChanged;
+        Nav.LocationChanged -= OnLocationChanged;
     }
 }
