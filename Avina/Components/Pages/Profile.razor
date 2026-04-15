@@ -213,7 +213,7 @@
     <div class="profile-hero">
         <div class="profile-top-row">
             <div class="profile-avatar-wrap" @onclick="ToggleEditMode" style="flex-shrink:0;">
-                <img src="@(currentUser?.ProfileImage ?? "images/profiles/user1.jpg")" alt="@currentUser?.Name" />
+                <img src="@(currentUser?.ProfileImage ?? "https://i.pravatar.cc/150?img=5")" alt="@currentUser?.Name" />
                 <div class="avatar-edit-overlay">✏️</div>
             </div>
 
@@ -401,7 +401,7 @@
             Name = "علی محمدی",
             Email = "ali@example.com",
             Role = "دانش‌آموز",
-            ProfileImage = "images/profiles/user1.jpg",
+            ProfileImage = "https://i.pravatar.cc/150?img=5",
             Bio = "فعال و پرانرژی، علاقه‌مند به یادگیری و رشد شخصی. دوست‌دارِ ریاضی و علوم.",
             Coin = 2450,
             Followers = 125,
@@ -411,10 +411,10 @@
 
         enrolledCourses = new List<EnrolledCourse>
         {
-            new EnrolledCourse { Title = "ریاضی پایه - پایه هفتم", Instructor = "محمد علی‌زاده", ThumbnailImage = "images/courses/math.jpg", Progress = 65 },
-            new EnrolledCourse { Title = "علوم طبیعی", Instructor = "فاطمه احمدی", ThumbnailImage = "images/courses/science.jpg", Progress = 40 },
-            new EnrolledCourse { Title = "ادبیات فارسی", Instructor = "حسین رضایی", ThumbnailImage = "images/courses/literature.jpg", Progress = 90 },
-            new EnrolledCourse { Title = "زبان انگلیسی مقدماتی", Instructor = "سارا کریمی", ThumbnailImage = "images/courses/english.jpg", Progress = 25 },
+            new EnrolledCourse { Title = "ریاضی پایه - پایه هفتم", Instructor = "محمد علی‌زاده", ThumbnailImage = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80", Progress = 65 },
+            new EnrolledCourse { Title = "علوم طبیعی", Instructor = "فاطمه احمدی", ThumbnailImage = "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&q=80", Progress = 40 },
+            new EnrolledCourse { Title = "ادبیات فارسی", Instructor = "حسین رضایی", ThumbnailImage = "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=200&q=80", Progress = 90 },
+            new EnrolledCourse { Title = "زبان انگلیسی مقدماتی", Instructor = "سارا کریمی", ThumbnailImage = "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=200&q=80", Progress = 25 },
         };
 
         achievementsList = new List<AchievementItem>

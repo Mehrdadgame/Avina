@@ -558,34 +558,45 @@
 </style>
 
 <div class="home-container">
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <img class="hero-image" src="https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=1600&q=80" alt="درس هوم">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span>✨ نوظهور</span>
-                <span class="hero-badge-text">داغِ در مدرسه آنلاین</span>
-            </div>
-            <h1 class="hero-title">سمفونی مسیر زندگی</h1>
-            <p class="hero-description">
-                تجربه فیزیک و شعر را با هم کشف کن. ۴۵ ویدیوی آموزشی از استاد علی ریاضی‌دان
-            </p>
-            <div class="hero-buttons">
-                <button class="btn-hero btn-primary-hero">کاوش دوره‌ها</button>
-                <button class="btn-hero btn-secondary-hero" onclick="window.location='/profile'">پروفایل من</button>
-            </div>
+    <!-- Hero Carousel -->
+    <section class="carousel-section" style="position:relative; overflow:hidden; border-radius:1.5rem; height:420px; margin-bottom:2rem;">
+        <!-- Slides track -->
+        <div class="carousel-track" style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(heroIndex * -100)%);">
+            @foreach (var slide in heroSlides)
+            {
+                <div style="min-width:100%; height:100%; position:relative; flex-shrink:0;">
+                    <img src="@slide.Image" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                    <div style="position:absolute; inset:0; background:linear-gradient(to right, rgba(11,14,21,0.9) 0%, rgba(11,14,21,0.5) 50%, transparent 100%);"></div>
+                    <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:3rem; max-width:55%; z-index:10;">
+                        <div class="hero-badge" style="margin-bottom:1rem;">
+                            <span>@slide.Badge</span>
+                        </div>
+                        <h1 class="hero-title" style="font-size:2.5rem; font-weight:900; color:white; line-height:1.2; margin-bottom:1rem;">@slide.Title</h1>
+                        <p class="hero-description" style="color:rgba(224,226,236,0.85); font-size:0.95rem; margin-bottom:1.5rem; line-height:1.7;">@slide.Description</p>
+                        <div class="hero-buttons">
+                            <a href="@slide.PrimaryLink" class="btn-hero btn-primary-hero">@slide.PrimaryLabel</a>
+                            <a href="@slide.SecondaryLink" class="btn-hero btn-secondary-hero">@slide.SecondaryLabel</a>
+                        </div>
+                    </div>
+                    <!-- Stats badge -->
+                    <div class="hero-stats show" style="position:absolute; top:2rem; left:2rem; z-index:10;">
+                        <div class="stat-item"><div class="stat-number">@slide.Stat1</div><div class="stat-label">@slide.Stat1Label</div></div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item"><div class="stat-number">@slide.Stat2</div><div class="stat-label">@slide.Stat2Label</div></div>
+                    </div>
+                </div>
+            }
         </div>
-        <div class="hero-stats show">
-            <div class="stat-item">
-                <div class="stat-number">1.2M</div>
-                <div class="stat-label">نمایش</div>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-                <div class="stat-number">42K</div>
-                <div class="stat-label">ثبت‌نام</div>
-            </div>
+        <!-- Prev / Next buttons -->
+        <button onclick="@PrevHero" style="position:absolute; top:50%; right:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">‹</button>
+        <button onclick="@NextHero" style="position:absolute; top:50%; left:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);" onmouseenter="this.style.background='rgba(255,255,255,0.25)'" onmouseleave="this.style.background='rgba(255,255,255,0.12)'">›</button>
+        <!-- Dot indicators -->
+        <div style="position:absolute; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.5rem;">
+            @for (int i = 0; i < heroSlides.Count; i++)
+            {
+                int idx = i;
+                <button onclick="@(() => SetHeroSlide(idx))" style="width:@(heroIndex == idx ? "28px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(heroIndex == idx ? "rgba(170,199,255,0.9)" : "rgba(255,255,255,0.35)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
+            }
         </div>
     </section>
 
@@ -603,11 +614,14 @@
 
     <!-- Content Grid -->
     <section class="content-grid">
+        @{ int courseIdx = 0; }
         @foreach (var course in featuredCourses)
         {
+            var imgSrc = CourseImages[courseIdx % CourseImages.Length];
+            courseIdx++;
             <div class="content-card">
                 <div class="card-image-container">
-                    <img class="card-image" src="https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=600&q=80" alt="@course.Title">
+                    <img class="card-image" src="@imgSrc" alt="@course.Title">
                     <button class="card-bookmark">📌</button>
                     <div class="card-tag">@course.Category</div>
                 </div>
@@ -723,11 +737,81 @@
         public string BorderColor { get; set; } = "#aac7ff";
     }
 
+    private class HeroSlide
+    {
+        public string Image { get; set; } = "";
+        public string Badge { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string PrimaryLabel { get; set; } = "";
+        public string PrimaryLink { get; set; } = "";
+        public string SecondaryLabel { get; set; } = "";
+        public string SecondaryLink { get; set; } = "";
+        public string Stat1 { get; set; } = "";
+        public string Stat1Label { get; set; } = "";
+        public string Stat2 { get; set; } = "";
+        public string Stat2Label { get; set; } = "";
+    }
+
+    private static readonly string[] CourseImages = {
+        "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&q=80",
+        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&q=80",
+        "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
+    };
+
     private List<CourseItem> featuredCourses = new();
     private List<ChallengeItem> dailyChallenges = new();
+    private List<HeroSlide> heroSlides = new();
+    private int heroIndex = 0;
+    private System.Threading.Timer? _carouselTimer;
 
     protected override void OnInitialized()
     {
+        heroSlides = new List<HeroSlide>
+        {
+            new HeroSlide
+            {
+                Image = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1600&q=80",
+                Badge = "🎓 مدرسه آنلاین",
+                Title = "ماموریت امروز: راز کتیبه‌های باستانی",
+                Description = "با حل این معما، ۲۰ امتیاز تجربه و ۵ سکه طلا دریافت خواهی کرد. آماده‌ای؟",
+                PrimaryLabel = "شروع ماموریت", PrimaryLink = "/school",
+                SecondaryLabel = "پروفایل من", SecondaryLink = "/profile",
+                Stat1 = "1.2M", Stat1Label = "دانش‌آموز", Stat2 = "42K", Stat2Label = "دوره فعال"
+            },
+            new HeroSlide
+            {
+                Image = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=80",
+                Badge = "🔥 چالش روزانه",
+                Title = "استاد محاسبات: ۱۰ مسئله در ۵ دقیقه",
+                Description = "مهارت ریاضی‌ات را بسنج و در جدول رتبه‌بندی بالا برو. جایزه: ۵۰ امتیاز.",
+                PrimaryLabel = "شروع چالش", PrimaryLink = "/school",
+                SecondaryLabel = "جدول رتبه", SecondaryLink = "/school",
+                Stat1 = "۵۰", Stat1Label = "امتیاز جایزه", Stat2 = "۵ دقیقه", Stat2Label = "زمان"
+            },
+            new HeroSlide
+            {
+                Image = "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1600&q=80",
+                Badge = "🛍️ فروشگاه",
+                Title = "کیت خلاقیت نگهبانان: ابزار واقعی",
+                Description = "هر محصول یک کد مخفی دارد. با اسکن کد، مراحل جدید باز شده و کوین دریافت می‌کنی.",
+                PrimaryLabel = "مشاهده محصولات", PrimaryLink = "/store",
+                SecondaryLabel = "اطلاعات بیشتر", SecondaryLink = "/store",
+                Stat1 = "100K+", Stat1Label = "کاربر فعال", Stat2 = "۳۰۰+", Stat2Label = "محصول"
+            },
+            new HeroSlide
+            {
+                Image = "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80",
+                Badge = "🛤️ مسیر من",
+                Title = "استعداد واقعی‌ات را کشف کن",
+                Description = "با آزمون‌های روانشناسی و تحلیل رفتارت، مسیر زندگی متناسب با تو پیشنهاد می‌شود.",
+                PrimaryLabel = "شروع کشف استعداد", PrimaryLink = "/life-path",
+                SecondaryLabel = "پروفایل من", SecondaryLink = "/profile",
+                Stat1 = "۵+", Stat1Label = "آزمون", Stat2 = "۱۰۰٪", Stat2Label = "شخصی‌سازی"
+            },
+        };
+
         featuredCourses = new List<CourseItem>
         {
             new CourseItem { Title = "ریاضی پیشرفته", Category = "ریاضی", Creator = "علی احمدی", Price = 29000, Likes = 1200, Views = 45000 },
@@ -744,4 +828,25 @@
             new ChallengeItem { Title = "خواننده ماهر", Description = "یک فصل از کتاب ادبیات را بخوان و خلاصه‌ای بنویس.", Icon = "📖", Points = 40, BorderColor = "#7dd3a8" },
         };
     }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _carouselTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    heroIndex = (heroIndex + 1) % heroSlides.Count;
+                    StateHasChanged();
+                });
+            }, null, 5000, 5000);
+        }
+    }
+
+    private void NextHero() { heroIndex = (heroIndex + 1) % heroSlides.Count; }
+    private void PrevHero() { heroIndex = (heroIndex - 1 + heroSlides.Count) % heroSlides.Count; }
+    private void SetHeroSlide(int i) { heroIndex = i; }
+
+    public void Dispose() { _carouselTimer?.Dispose(); }
 }

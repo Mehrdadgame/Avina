@@ -3,28 +3,41 @@
 @using Avina.Services
 @inject ICourseService CourseService
 @rendermode InteractiveServer
+@implements IDisposable
 
 <div class="max-w-5xl mx-auto px-5 md:px-10 pt-6 pb-10">
 
-    <!-- Podcast Banner -->
-    <section class="mb-10 animate-page">
-        <div class="podcast-banner rounded-2xl p-7 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-            <div class="z-10 text-right space-y-3 max-w-lg">
-                <span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-xs font-bold">جدیدترین انتشار</span>
-                <h2 class="text-2xl md:text-3xl font-black text-white">پادکست «آخرین نگهبان»: هنر تفکر انتقادی</h2>
-                <p class="text-white/80 leading-relaxed text-sm">در این قسمت با آریا همراه شوید تا بیاموزیم چگونه در دنیای اطلاعات، حقیقت را از شایعه تشخیص دهیم.</p>
-                <button class="bg-white text-[#4248d4] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:scale-105 active:scale-95 transition-all duration-200 w-fit">
-                    <span>گوش دادن به اپیزود</span>
-                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">play_circle</span>
-                </button>
-            </div>
-            <div class="relative flex-shrink-0">
-                <div class="absolute inset-0 bg-white/10 blur-3xl scale-150 rounded-full"></div>
-                <div class="w-36 h-36 md:w-44 md:h-44 bg-white/20 rounded-full flex items-center justify-center relative z-10 backdrop-blur-sm">
-                    <span class="material-symbols-outlined text-white text-7xl" style="font-variation-settings:'FILL' 1;">headphones</span>
+    <!-- School Carousel Banner -->
+    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:280px;">
+        <div style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(schoolSlideIndex * -100)%);">
+            @foreach (var slide in schoolSlides)
+            {
+                <div style="min-width:100%; height:100%; position:relative; flex-shrink:0; overflow:hidden;">
+                    <img src="@slide.Image" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                    <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(11,14,21,0.88) 0%, rgba(66,72,212,0.4) 50%, transparent 100%);"></div>
+                    <div style="position:absolute; inset:0; padding:2rem 2.5rem; display:flex; align-items:center; justify-content:space-between; z-index:10;">
+                        <div style="max-width:500px; text-align:right;">
+                            <span style="background:rgba(175,199,247,0.2); color:#afc7f7; border:1px solid rgba(175,199,247,0.4); padding:0.25rem 0.875rem; border-radius:9999px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:0.75rem;">@slide.Badge</span>
+                            <h2 style="font-size:1.6rem; font-weight:900; color:white; line-height:1.3; margin-bottom:0.5rem;">@slide.Title</h2>
+                            <p style="color:rgba(224,226,236,0.8); font-size:0.875rem; margin-bottom:1.25rem; line-height:1.6;">@slide.Description</p>
+                            <button style="background:white; color:#4248d4; padding:0.5rem 1.5rem; border-radius:0.75rem; font-weight:700; border:none; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.875rem; transition:transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">@slide.BtnLabel</button>
+                        </div>
+                        <div style="width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:4rem; flex-shrink:0; backdrop-filter:blur(6px);">@slide.Icon</div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
+        <!-- Dots -->
+        <div style="position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.4rem;">
+            @for (int i = 0; i < schoolSlides.Count; i++)
+            {
+                int idx = i;
+                <button @onclick="@(() => schoolSlideIndex = idx)" style="width:@(schoolSlideIndex == idx ? "24px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(schoolSlideIndex == idx ? "rgba(170,199,255,0.9)" : "rgba(255,255,255,0.3)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
+            }
+        </div>
+        <!-- Arrows -->
+        <button @onclick="PrevSchool" style="position:absolute; top:50%; right:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:38px; height:38px; border-radius:50%; font-size:1rem; cursor:pointer; backdrop-filter:blur(4px);">‹</button>
+        <button @onclick="NextSchool" style="position:absolute; top:50%; left:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:38px; height:38px; border-radius:50%; font-size:1rem; cursor:pointer; backdrop-filter:blur(4px);">›</button>
     </section>
 
     <!-- Category Chips -->
@@ -47,9 +60,12 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @foreach (var (course, index) in enrolledCourses.Select((c, i) => (c, i)))
             {
+                var thumbImg = index == 0
+                    ? "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80"
+                    : "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&q=80";
                 <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-5 shadow-sm card-lift relative">
                     <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
-                        <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80" alt="@course.Title" class="w-full h-full object-cover" />
+                        <img src="@thumbImg" alt="@course.Title" class="w-full h-full object-cover" />
                     </div>
                     <div class="flex-1 text-right">
                         <h4 class="font-bold text-base mb-1">@course.Title</h4>
@@ -84,13 +100,22 @@
             </div>
         </div>
 
+        @{ var courseImgs = new[] {
+            "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=400&q=80",
+            "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&q=80",
+            "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
+            "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
+            "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
+            "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&q=80",
+        }; int ci = 0; }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach (var course in filteredCourses)
             {
+                var cImg = courseImgs[ci % courseImgs.Length]; ci++;
                 <div class="course-card group flex flex-col bg-surface-container-low rounded-2xl overflow-hidden card-lift cursor-pointer"
                      @onclick="() => EnrollCourse(course.Id)">
                     <div class="h-44 relative overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=400&q=80"
+                        <img src="@cImg"
                              alt="@course.Title" class="course-img w-full h-full object-cover" />
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <div class="absolute bottom-3 right-3 flex gap-1.5">
@@ -124,6 +149,20 @@
 </div>
 
 @code {
+    private class SchoolSlide
+    {
+        public string Image { get; set; } = "";
+        public string Badge { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string BtnLabel { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+
+    private List<SchoolSlide> schoolSlides = new();
+    private int schoolSlideIndex = 0;
+    private System.Threading.Timer? _schoolTimer;
+
     private List<Course> allCourses = new();
     private List<Course> filteredCourses = new();
     private List<Course> enrolledCourses = new();
@@ -132,10 +171,37 @@
 
     protected override async Task OnInitializedAsync()
     {
+        schoolSlides = new List<SchoolSlide>
+        {
+            new SchoolSlide { Image = "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1200&q=80", Badge = "🎙️ جدیدترین انتشار", Title = "پادکست «آخرین نگهبان»: هنر تفکر انتقادی", Description = "با آریا همراه شوید تا بیاموزیم چگونه در دنیای اطلاعات، حقیقت را از شایعه تشخیص دهیم.", BtnLabel = "گوش دادن به اپیزود ▶", Icon = "🎧" },
+            new SchoolSlide { Image = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&q=80", Badge = "📚 دوره جدید", Title = "ریاضی پایه: از پایه تا پیشرفته", Description = "با بهترین روش‌های آموزشی، مفاهیم ریاضی را به صورت کاملاً جذاب یاد بگیر.", BtnLabel = "مشاهده دوره", Icon = "🧮" },
+            new SchoolSlide { Image = "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=1200&q=80", Badge = "🔬 آزمایشگاه مجازی", Title = "علوم: آزمایش‌های شگفت‌انگیز", Description = "آزمایش‌های علوم را به صورت تعاملی در خانه انجام بده و نتایج شگفت‌انگیز ببین.", BtnLabel = "شروع آزمایش", Icon = "🔬" },
+        };
+
         allCourses = await CourseService.GetAllCoursesAsync();
         enrolledCourses = await CourseService.GetEnrolledCoursesAsync(1);
         filteredCourses = allCourses;
     }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _schoolTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    schoolSlideIndex = (schoolSlideIndex + 1) % schoolSlides.Count;
+                    StateHasChanged();
+                });
+            }, null, 4500, 4500);
+        }
+    }
+
+    private void NextSchool() => schoolSlideIndex = (schoolSlideIndex + 1) % schoolSlides.Count;
+    private void PrevSchool() => schoolSlideIndex = (schoolSlideIndex - 1 + schoolSlides.Count) % schoolSlides.Count;
+
+    public void Dispose() => _schoolTimer?.Dispose();
 
     private string GetChipClass(string category)
         => selectedCategory == category

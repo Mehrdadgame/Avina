@@ -1,25 +1,42 @@
 @page "/store"
 @using Avina.Models
 @rendermode InteractiveServer
+@implements IDisposable
 
 <div class="px-4 md:px-8 pt-6 pb-28 max-w-7xl">
 
-    <!-- Hero Banner -->
-    <section class="mb-10 animate-page">
-        <div class="hero-banner relative overflow-hidden rounded-2xl h-64 md:h-80 flex items-center">
-            <div class="absolute inset-0 bg-black/10"></div>
-            <div class="relative z-10 p-7 md:p-14 max-w-xl text-white">
-                <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold mb-3 inline-block">کیت جدید</span>
-                <h1 class="text-3xl md:text-5xl font-black mb-3 leading-tight">کیت خلاقیت:<br />نگهبانان کهن</h1>
-                <p class="text-base opacity-85 mb-6 leading-relaxed">با این مجموعه، ابزارهای جادویی خود را بسازید و به نبرد با تاریکی بروید.</p>
-                <button class="bg-white text-[#4248d4] px-7 py-3 rounded-xl font-bold text-base hover:scale-105 active:scale-95 transition-transform duration-200 shadow-lg">همین حالا دریافت کنید</button>
-            </div>
-            <div class="absolute left-0 bottom-0 top-0 w-2/5 hidden md:block overflow-hidden opacity-30">
-                <div class="w-full h-full bg-white/10 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-[160px]" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+    <!-- Store Carousel Banner -->
+    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:320px;">
+        <div style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(storeSlideIndex * -100)%);">
+            @foreach (var slide in storeSlides)
+            {
+                <div style="min-width:100%; height:100%; position:relative; flex-shrink:0;">
+                    <img src="@slide.Image" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                    <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(46,71,112,0.92) 0%, rgba(66,72,212,0.6) 50%, transparent 100%);"></div>
+                    <div style="position:absolute; inset:0; padding:2.5rem 3.5rem; display:flex; align-items:center; z-index:10;">
+                        <div style="text-align:right; max-width:520px;">
+                            <span style="background:rgba(255,182,140,0.25); color:#ffb68c; border:1px solid rgba(255,182,140,0.4); padding:0.25rem 0.875rem; border-radius:9999px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:0.875rem;">@slide.Badge</span>
+                            <h1 style="font-size:2rem; font-weight:900; color:white; line-height:1.25; margin-bottom:0.75rem;">@slide.Title</h1>
+                            <p style="color:rgba(224,226,236,0.85); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.65; max-width:420px;">@slide.Description</p>
+                            <button style="background:white; color:#4248d4; padding:0.625rem 1.75rem; border-radius:0.875rem; font-weight:800; border:none; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.9rem; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 16px rgba(0,0,0,0.2);" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">@slide.BtnLabel</button>
+                        </div>
+                    </div>
+                    <!-- Decorative icon -->
+                    <div style="position:absolute; left:3rem; top:50%; transform:translateY(-50%); font-size:6rem; opacity:0.15; z-index:5;">@slide.Icon</div>
                 </div>
-            </div>
+            }
         </div>
+        <!-- Dots -->
+        <div style="position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.4rem;">
+            @for (int i = 0; i < storeSlides.Count; i++)
+            {
+                int idx = i;
+                <button @onclick="@(() => storeSlideIndex = idx)" style="width:@(storeSlideIndex == idx ? "24px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(storeSlideIndex == idx ? "rgba(255,182,140,0.9)" : "rgba(255,255,255,0.3)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
+            }
+        </div>
+        <!-- Arrows -->
+        <button @onclick="PrevStore" style="position:absolute; top:50%; right:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; backdrop-filter:blur(4px);">‹</button>
+        <button @onclick="NextStore" style="position:absolute; top:50%; left:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; backdrop-filter:blur(4px);">›</button>
     </section>
 
     <!-- Categories & QR Hub -->
@@ -163,6 +180,20 @@
 }
 
 @code {
+    private class StoreSlide
+    {
+        public string Image { get; set; } = "";
+        public string Badge { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string BtnLabel { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+
+    private List<StoreSlide> storeSlides = new();
+    private int storeSlideIndex = 0;
+    private System.Threading.Timer? _storeTimer;
+
     private string activeFilter = "all";
     private int cartCount = 0;
 
@@ -177,6 +208,13 @@
 
     protected override void OnInitialized()
     {
+        storeSlides = new List<StoreSlide>
+        {
+            new StoreSlide { Image = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80", Badge = "🆕 کیت جدید", Title = "کیت خلاقیت نگهبانان کهن", Description = "با این مجموعه ابزارهای جادویی خود را بساز و به نبرد با تاریکی برو. هر محصول یک کد مخفی دارد!", BtnLabel = "همین الان دریافت کن", Icon = "🎒" },
+            new StoreSlide { Image = "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80", Badge = "📚 کتاب‌های ویژه", Title = "کتاب‌های آخرین نگهبان: طلوع", Description = "مجموعه کتاب‌های داستانی و آموزشی که دنیای آخرین نگهبان را زنده می‌کنند. هر کتاب = ۴۵۰ کوین.", BtnLabel = "مشاهده کتاب‌ها", Icon = "📖" },
+            new StoreSlide { Image = "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=1200&q=80", Badge = "🎮 بازی رومیزی", Title = "فتح دژ: بازی استراتژیک ۲-۴ نفره", Description = "یک بازی فکری هیجان‌انگیز برای کل خانواده. کد داخل بسته را اسکن کن تا مراحل دیجیتال باز بشه.", BtnLabel = "خرید بازی", Icon = "🎲" },
+        };
+
         allProducts = new List<Product>
         {
             new Product { Id = 1, Name = "آخرین نگهبان: طلوع", Description = "نویسنده: علیرضا پارسا", CoinPrice = 450,  Category = "کتاب‌ها",          IsNew = false, Price = 120000, Stock = 20 },
@@ -188,18 +226,32 @@
         };
     }
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _storeTimer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
+                    StateHasChanged();
+                });
+            }, null, 5500, 5500);
+        }
+    }
+
+    private void NextStore() => storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
+    private void PrevStore() => storeSlideIndex = (storeSlideIndex - 1 + storeSlides.Count) % storeSlides.Count;
+
+    public void Dispose() => _storeTimer?.Dispose();
+
     private string GetFilterClass(string filter)
         => activeFilter == filter ? "filter-active" : "text-on-surface-variant";
 
-    private void SetFilter(string filter)
-    {
-        activeFilter = filter;
-    }
+    private void SetFilter(string filter) { activeFilter = filter; }
 
-    private void AddToCart(int productId)
-    {
-        cartCount++;
-    }
+    private void AddToCart(int productId) { cartCount++; }
 
     private string GetProductIcon(string? category) => category switch
     {
