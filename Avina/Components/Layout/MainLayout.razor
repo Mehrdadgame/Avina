@@ -26,7 +26,14 @@
     <link rel="stylesheet" href="css/home.css" />
     <link rel="stylesheet" href="css/responsive-components.css" />
     <style>
-        body, html, * { font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important; }
+        body, html, *:not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp) {
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important;
+        }
+        .material-symbols-outlined,
+        .material-symbols-rounded,
+        .material-symbols-sharp {
+            font-family: 'Material Symbols Outlined' !important;
+        }
 
         .guest-avatar {
             width: 44px; height: 44px;
@@ -284,7 +291,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !AuthState.IsLoggedIn)
+        if (firstRender)
         {
             await TryRestoreFromStorage();
         }
@@ -298,7 +305,7 @@
             if (!string.IsNullOrEmpty(json))
             {
                 var user = JsonSerializer.Deserialize<UserCacheDto>(json);
-                if (user != null)
+                if (user != null && !AuthState.IsLoggedIn)
                     AuthState.SetUser(user);
             }
         }

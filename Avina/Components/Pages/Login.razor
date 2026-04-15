@@ -326,7 +326,7 @@ else
         try { await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user)); } catch { }
         AuthState.SetUser(user);
         isLoading = false;
-        Nav.NavigateTo("/");
+        Nav.NavigateTo("/", forceLoad: true);
     }
 
     private async Task HandleRegister()
@@ -359,7 +359,7 @@ else
         StateHasChanged();
 
         await Task.Delay(welcomeDuration + 400);
-        Nav.NavigateTo("/");
+        Nav.NavigateTo("/", forceLoad: true);
     }
 
     private void ContinueAsGuest()
