@@ -1,30 +1,69 @@
 @page "/games"
 @rendermode InteractiveServer
 
-<div class="container mt-5">
-    <!-- Header -->
-    <section class="mb-5">
-        <h1 class="display-5 fw-bold mb-3">بازی‌های آموزشی</h1>
-        <p class="lead text-muted">یادگیری از طریق بازی و رقابت سالم</p>
+<div class="px-4 md:px-10 py-8 space-y-10">
+
+    <!-- Page Header -->
+    <section class="animate-page">
+        <h1 class="text-3xl md:text-4xl font-black text-on-background mb-1">بازی‌های آموزشی</h1>
+        <p class="text-on-surface-variant">یادگیری از طریق بازی و رقابت سالم</p>
     </section>
 
-    <!-- Featured Games -->
-    <section class="mb-5">
-        <h3 class="mb-4">بازی‌های پیشنهادی</h3>
-        <div class="row g-4">
-            @foreach (var game in featuredGames)
+    <!-- Category Cards -->
+    <section class="animate-page delay-1">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            @foreach (var cat in gameCategories)
             {
-                <div class="col-lg-4">
-                    <div class="game-card rounded-4 overflow-hidden shadow-sm h-100">
-                        <img src="@game.Image" alt="@game.Title" style="width: 100%; height: 200px; object-fit: cover;">
-                        <div class="p-4">
-                            <h5 class="fw-bold mb-2">@game.Title</h5>
-                            <p class="text-muted mb-3">@game.Description</p>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge bg-info">@game.Category</span>
-                                <small>⭐ @game.Rating.ToString("F1")</small>
+                <button class="@GetCatClass(cat.Name) rounded-2xl p-5 flex flex-col items-center gap-3 card-lift transition-all"
+                        @onclick="() => SetCategory(cat.Name)">
+                    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">@cat.Icon</span>
+                    <div class="text-center">
+                        <h4 class="font-bold text-sm">@cat.Name</h4>
+                        <p class="text-xs text-on-surface-variant">@cat.Count بازی</p>
+                    </div>
+                </button>
+            }
+        </div>
+    </section>
+
+    <!-- Featured Games Grid -->
+    <section class="animate-page delay-2">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-black text-on-surface">بازی‌های پیشنهادی</h2>
+            <a href="#" class="text-primary text-sm font-bold hover:underline">مشاهده همه</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var game in visibleGames)
+            {
+                <div class="bg-surface-container-lowest rounded-2xl overflow-hidden card-lift cursor-pointer group"
+                     @onclick="() => PlayGame(game.Id)">
+                    <!-- Game Image / Icon Area -->
+                    <div class="h-44 relative overflow-hidden" style="background: @game.BgGradient;">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white/30 text-[120px]"
+                                  style="font-variation-settings:'FILL' 1;">@game.Icon</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        <div class="absolute bottom-3 right-3 flex gap-1.5">
+                            <span class="bg-white/20 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-lg">@game.Category</span>
+                        </div>
+                        <div class="absolute top-3 left-3 bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings:'FILL' 1;">grade</span>
+                            <span class="text-white text-xs font-bold">@game.Rating.ToString("F1")</span>
+                        </div>
+                    </div>
+                    <!-- Game Info -->
+                    <div class="p-5 text-right">
+                        <h3 class="font-bold text-base mb-1 text-on-surface">@game.Title</h3>
+                        <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">@game.Description</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                                <span class="material-symbols-outlined text-sm">group</span>
+                                <span>@game.Players.ToString("N0") بازیکن</span>
                             </div>
-                            <button class="btn btn-primary w-100" @onclick="() => PlayGame(game.Id)">شروع بازی</button>
+                            <button class="primary-gradient text-white px-4 py-1.5 rounded-xl text-xs font-bold hover:opacity-90 active:scale-95 transition-all">
+                                شروع بازی
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -33,175 +72,104 @@
     </section>
 
     <!-- Leaderboard -->
-    <section class="mb-5">
-        <h3 class="mb-4">جدول رتبه‌بندی</h3>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>رتبه</th>
-                        <th>بازیکن</th>
-                        <th>امتیاز</th>
-                        <th>بازی</th>
-                        <th>زمان</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (int i = 0; i < leaderboard.Count; i++)
-                    {
-                        <tr>
-                            <td><strong>@(i + 1)</strong></td>
-                            <td>@leaderboard[i].PlayerName</td>
-                            <td class="text-success fw-bold">@leaderboard[i].Score.ToString("N0")</td>
-                            <td>@leaderboard[i].GameName</td>
-                            <td>@leaderboard[i].PlayedAt.ToString("g")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Categories -->
-    <section>
-        <h3 class="mb-4">دسته‌بندی بازی‌ها</h3>
-        <div class="row g-4">
-            @foreach (var category in gameCategories)
+    <section class="animate-page delay-3">
+        <h2 class="text-xl font-black text-on-surface mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-tertiary" style="font-variation-settings:'FILL' 1;">leaderboard</span>
+            جدول رتبه‌بندی
+        </h2>
+        <div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm">
+            @for (int i = 0; i < leaderboard.Count; i++)
             {
-                <div class="col-md-6 col-lg-3">
-                    <div class="category-card p-4 rounded-4 border text-center" style="cursor: pointer;" @onclick="() => FilterByCategory(category.Name)">
-                        <div style="font-size: 2.5rem; margin-bottom: 1rem;">@category.Icon</div>
-                        <h6 class="fw-bold mb-2">@category.Name</h6>
-                        <small class="text-muted">@category.Count بازی</small>
+                var entry = leaderboard[i];
+                var rank = i + 1;
+                <div class="flex items-center gap-4 px-5 py-4 @(i < leaderboard.Count - 1 ? "border-b border-outline-variant/20" : "") hover:bg-surface-container-low transition-colors">
+                    <!-- Rank -->
+                    <div class="w-8 text-center flex-shrink-0">
+                        @if (rank <= 3)
+                        {
+                            <span class="material-symbols-outlined @RankColor(rank) text-xl" style="font-variation-settings:'FILL' 1;">@RankIcon(rank)</span>
+                        }
+                        else
+                        {
+                            <span class="font-black text-on-surface-variant text-sm">@rank</span>
+                        }
+                    </div>
+                    <!-- Avatar -->
+                    <div class="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-primary text-lg">person</span>
+                    </div>
+                    <!-- Name + Game -->
+                    <div class="flex-1 text-right">
+                        <h4 class="font-bold text-sm text-on-surface">@entry.PlayerName</h4>
+                        <p class="text-xs text-on-surface-variant">@entry.GameName</p>
+                    </div>
+                    <!-- Score -->
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <span class="font-black text-on-surface">@entry.Score.ToString("N0")</span>
+                        <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">stars</span>
                     </div>
                 </div>
             }
         </div>
     </section>
+
 </div>
 
 @code {
-    private class Game
-    {
-        public int Id { get; set; }
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public string? Category { get; set; }
-        public string? Image { get; set; }
-        public double Rating { get; set; }
-        public int Players { get; set; }
-    }
+    private string activeCategory = "";
 
-    private class LeaderboardEntry
-    {
-        public string? PlayerName { get; set; }
-        public int Score { get; set; }
-        public string? GameName { get; set; }
-        public DateTime PlayedAt { get; set; }
-    }
+    private record GameItem(int Id, string Title, string Description, string Category, string Icon, string BgGradient, double Rating, int Players);
+    private record LeaderboardEntry(string PlayerName, int Score, string GameName);
+    private record CategoryItem(string Name, string Icon, int Count);
 
-    private class GameCategory
-    {
-        public string? Name { get; set; }
-        public string? Icon { get; set; }
-        public int Count { get; set; }
-    }
-
-    private List<Game> featuredGames = new();
+    private List<GameItem> allGames = new();
     private List<LeaderboardEntry> leaderboard = new();
-    private List<GameCategory> gameCategories = new();
+    private List<CategoryItem> gameCategories = new();
+
+    private List<GameItem> visibleGames => string.IsNullOrEmpty(activeCategory)
+        ? allGames
+        : allGames.Where(g => g.Category == activeCategory).ToList();
 
     protected override void OnInitialized()
     {
-        featuredGames = new List<Game>
+        gameCategories = new()
         {
-            new Game 
-            { 
-                Id = 1,
-                Title = "ریاضی چالش",
-                Description = "چالش‌های ریاضی جذاب و سریع",
-                Category = "منطقی",
-                Image = "images/games/math-challenge.jpg",
-                Rating = 4.8,
-                Players = 1250
-            },
-            new Game 
-            { 
-                Id = 2,
-                Title = "کلمات هوشمند",
-                Description = "بازی حدس‌زدن کلمات و تقویت لغات",
-                Category = "زبان",
-                Image = "images/games/word-smart.jpg",
-                Rating = 4.7,
-                Players = 980
-            },
-            new Game 
-            { 
-                Id = 3,
-                Title = "پازل منطق",
-                Description = "حل پازل‌های منطقی و استراتژی",
-                Category = "منطقی",
-                Image = "images/games/logic-puzzle.jpg",
-                Rating = 4.9,
-                Players = 1450
-            },
-            new Game 
-            { 
-                Id = 4,
-                Title = "جغرافیا جهان",
-                Description = "یادگیری جغرافیا از طریق بازی",
-                Category = "دانش",
-                Image = "images/games/world-geo.jpg",
-                Rating = 4.6,
-                Players = 780
-            },
-            new Game 
-            { 
-                Id = 5,
-                Title = "دنباله‌ها",
-                Description = "شناسایی الگوها و دنباله‌ها",
-                Category = "منطقی",
-                Image = "images/games/sequences.jpg",
-                Rating = 4.8,
-                Players = 1100
-            },
-            new Game 
-            { 
-                Id = 6,
-                Title = "رنگین‌کمان",
-                Description = "بازی تطبیق رنگ‌ها و تمرکز",
-                Category = "تمرکز",
-                Image = "images/games/rainbow.jpg",
-                Rating = 4.5,
-                Players = 850
-            }
+            new("منطقی",  "psychology",    12),
+            new("زبان",   "translate",      8),
+            new("دانش",   "school",        15),
+            new("تمرکز",  "center_focus_strong", 6),
         };
 
-        leaderboard = new List<LeaderboardEntry>
+        allGames = new()
         {
-            new LeaderboardEntry { PlayerName = "علی محمدی", Score = 15450, GameName = "ریاضی چالش", PlayedAt = DateTime.Now.AddHours(-2) },
-            new LeaderboardEntry { PlayerName = "فاطمه احمدی", Score = 14820, GameName = "کلمات هوشمند", PlayedAt = DateTime.Now.AddHours(-1) },
-            new LeaderboardEntry { PlayerName = "محمود رضایی", Score = 14200, GameName = "پازل منطق", PlayedAt = DateTime.Now.AddHours(-3) },
-            new LeaderboardEntry { PlayerName = "سارا کریمی", Score = 13890, GameName = "جغرافیا جهان", PlayedAt = DateTime.Now.AddHours(-4) },
-            new LeaderboardEntry { PlayerName = "حسن سلیمی", Score = 13450, GameName = "دنباله‌ها", PlayedAt = DateTime.Now.AddHours(-5) }
+            new(1, "ریاضی چالش",    "چالش‌های ریاضی جذاب و سریع",        "منطقی", "calculate",  "linear-gradient(135deg,#2e4770,#4248d4)", 4.8, 1250),
+            new(2, "کلمات هوشمند", "بازی حدس‌زدن کلمات و تقویت لغات",    "زبان",  "spellcheck", "linear-gradient(135deg,#1a3a2a,#2e7d52)", 4.7, 980),
+            new(3, "پازل منطق",    "حل پازل‌های منطقی و استراتژی",        "منطقی", "extension",  "linear-gradient(135deg,#3d1f5e,#7c3aed)", 4.9, 1450),
+            new(4, "جغرافیا جهان","یادگیری جغرافیا از طریق بازی",         "دانش",  "public",     "linear-gradient(135deg,#1a3050,#2563eb)", 4.6, 780),
+            new(5, "دنباله‌ها",    "شناسایی الگوها و دنباله‌ها",          "منطقی", "pattern",    "linear-gradient(135deg,#1a2a3a,#0ea5e9)", 4.8, 1100),
+            new(6, "رنگین‌کمان",  "بازی تطبیق رنگ‌ها و تمرکز",           "تمرکز", "palette",    "linear-gradient(135deg,#3b1a4a,#e3711f)", 4.5, 850),
         };
 
-        gameCategories = new List<GameCategory>
+        leaderboard = new()
         {
-            new GameCategory { Name = "منطقی", Icon = "🧩", Count = 12 },
-            new GameCategory { Name = "زبان", Icon = "📚", Count = 8 },
-            new GameCategory { Name = "دانش", Icon = "🧠", Count = 15 },
-            new GameCategory { Name = "تمرکز", Icon = "👁️", Count = 6 }
+            new("علی محمدی",    15450, "ریاضی چالش"),
+            new("فاطمه احمدی",  14820, "کلمات هوشمند"),
+            new("محمود رضایی",  14200, "پازل منطق"),
+            new("سارا کریمی",   13890, "جغرافیا جهان"),
+            new("حسن سلیمی",    13450, "دنباله‌ها"),
         };
     }
 
-    private void PlayGame(int gameId)
-    {
-        Console.WriteLine($"شروع بازی {gameId}");
-    }
+    private string GetCatClass(string name) =>
+        activeCategory == name
+            ? "bg-primary/20 text-primary border-2 border-primary/30"
+            : "bg-surface-container-low text-on-surface hover:bg-surface-container-high";
 
-    private void FilterByCategory(string category)
-    {
-        Console.WriteLine($"فیلتر بر اساس دسته {category}");
-    }
+    private void SetCategory(string name) =>
+        activeCategory = activeCategory == name ? "" : name;
+
+    private void PlayGame(int id) => Console.WriteLine($"شروع بازی {id}");
+
+    private string RankIcon(int rank) => rank switch { 1 => "emoji_events", 2 => "military_tech", _ => "workspace_premium" };
+    private string RankColor(int rank) => rank switch { 1 => "text-yellow-400", 2 => "text-slate-400", _ => "text-amber-600" };
 }
