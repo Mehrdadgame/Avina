@@ -1,14 +1,65 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="dark" lang="fa" dir="rtl">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <title>آخرین نگهبان</title>
+
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Tailwind Config (Material 3 dark tokens) -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#10131a",
+                        "on-background": "#e0e2ec",
+                        "on-surface-variant": "#c1c6d5",
+                        "on-primary": "#002f64",
+                        "surface-container-highest": "#32353c",
+                        "primary-container": "#4090fe",
+                        "surface-container": "#1c2026",
+                        "surface-container-low": "#181c22",
+                        "on-secondary": "#153058",
+                        primary: "#aac7ff",
+                        tertiary: "#ffb68c",
+                        "surface-variant": "#32353c",
+                        secondary: "#afc7f7",
+                        "tertiary-container": "#e3711f",
+                        "error-container": "#93000a",
+                        surface: "#10131a",
+                        "secondary-container": "#2e4770",
+                        "outline-variant": "#414753",
+                        "on-tertiary-container": "#481d00",
+                        outline: "#8b919f",
+                        "on-surface": "#e0e2ec",
+                        "surface-container-lowest": "#0b0e15",
+                        "surface-container-high": "#272a31",
+                        "on-secondary-container": "#9db6e5",
+                        "tertiary-fixed": "#ffdbc9",
+                        "secondary-fixed": "#d6e3ff",
+                        "on-tertiary": "#532200",
+                        error: "#ffb4ab",
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Fonts -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["Avina.styles.css"]" />
+
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
@@ -17,6 +68,7 @@
 <body>
     <Routes />
     <ReconnectModal />
+    <script src="js/app.js"></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
