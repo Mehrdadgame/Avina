@@ -387,134 +387,135 @@
 
 <div class="upload-page">
     <div class="upload-header">
-        <div class="upload-title">📤 اپلود محتوا</div>
-        <div class="upload-subtitle">نیا محتوا بنائیں اور دنیا کے ساتھ شیئر کریں</div>
+        <div class="upload-title">📤 بارگذاری محتوا</div>
+        <div class="upload-subtitle">محتوای جدید بساز و با دنیا به اشتراک بگذار</div>
     </div>
 
     <div class="upload-wrapper">
         <div class="upload-content">
-            <!-- Left: Upload Zone -->
+            <!-- چپ: ناحیه آپلود -->
             <div class="upload-zone-wrapper">
-                <div class="zone-title">نیا اپلود</div>
+                <div class="zone-title">فایل جدید</div>
 
                 <div class="upload-zone" @ondrop="HandleDrop" @ondragover="HandleDragOver">
                     <span class="cloud-icon">☁️</span>
-                    <div class="upload-text">cloud_upload</div>
-                    <div class="upload-subtext">اپنی فائل یہاں ڈریگ کریں</div>
+                    <div class="upload-text">فایل را اینجا رها کن</div>
+                    <div class="upload-subtext">ویدیو، صدا یا تصویر با کیفیت بالا</div>
                     <div style="margin-top: 1rem; color: #94a3b8; font-size: 0.85rem;">
-                        High-resolution video, audio or image. Up to 100 per upload.
+                        حداکثر ۱۰۰ فایل در هر بار آپلود
                     </div>
                 </div>
 
-                <button class="select-btn">📁 Select File</button>
+                <button class="select-btn">📁 انتخاب فایل</button>
 
-                <!-- Content Types -->
+                <!-- نوع محتوا -->
                 <div style="margin-top: 2rem;">
-                    <div style="color: #f1f5f9; font-weight: 600; margin-bottom: 1rem;">Select Content Type</div>
+                    <div style="color: #f1f5f9; font-weight: 600; margin-bottom: 1rem;">نوع محتوا را انتخاب کن</div>
                     <div class="content-types">
                         <div class="content-type @(selectedType == "movie" ? "active" : "")" @onclick="@(() => SelectType("movie"))">
                             <div class="type-icon">🎬</div>
-                            <div class="type-label">movie</div>
+                            <div class="type-label">فیلم</div>
                         </div>
                         <div class="content-type @(selectedType == "audio" ? "active" : "")" @onclick="@(() => SelectType("audio"))">
                             <div class="type-icon">🎵</div>
-                            <div class="type-label">audio</div>
+                            <div class="type-label">صدا</div>
                         </div>
                         <div class="content-type @(selectedType == "image" ? "active" : "")" @onclick="@(() => SelectType("image"))">
                             <div class="type-icon">🖼️</div>
-                            <div class="type-label">image</div>
+                            <div class="type-label">تصویر</div>
                         </div>
                         <div class="content-type @(selectedType == "document" ? "active" : "")" @onclick="@(() => SelectType("document"))">
                             <div class="type-icon">📄</div>
-                            <div class="type-label">menu_book</div>
+                            <div class="type-label">سند</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Form -->
+            <!-- راست: فرم -->
             <div class="form-section">
-                <!-- Content Title -->
+                <!-- عنوان -->
                 <div class="form-group">
-                    <label class="form-label">Content Title</label>
-                    <input type="text" class="form-input" placeholder="e.g. The Future of Digital Art" @bind="contentTitle">
+                    <label class="form-label">عنوان محتوا</label>
+                    <input type="text" class="form-input" placeholder="مثلاً: درس ریاضی فصل اول" @bind="contentTitle">
                 </div>
 
-                <!-- Description -->
+                <!-- توضیحات -->
                 <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-textarea" placeholder="Tell your audience about this creation..." @bind="contentDescription"></textarea>
+                    <label class="form-label">توضیحات</label>
+                    <textarea class="form-textarea" placeholder="درباره این محتوا برای بینندگانت بنویس..." @bind="contentDescription"></textarea>
                 </div>
 
-                <!-- Tags -->
+                <!-- برچسب‌ها -->
                 <div class="form-group">
-                    <label class="form-label">Text & Discoverability</label>
+                    <label class="form-label">برچسب‌ها</label>
                     <div class="tags-section">
-                        @foreach (var tag in new[] { "important class", "material class", "Add tag" })
+                        @foreach (var tag in new[] { "درس مهم", "ماده امتحانی", "افزودن برچسب" })
                         {
                             <button class="tag-btn">@tag</button>
                         }
                     </div>
                 </div>
 
-                <!-- Access Type -->
+                <!-- نوع دسترسی -->
                 <div class="form-group">
-                    <label class="form-label">Access Type</label>
+                    <label class="form-label">نوع دسترسی</label>
                     <div class="access-types">
                         <div class="access-option @(accessType == "premium" ? "active" : "")" @onclick="@(() => SelectAccess("premium"))">
                             <div class="access-icon">💎</div>
-                            <div class="access-label">Premium Content</div>
-                            <div class="access-desc">Only available on the platform</div>
+                            <div class="access-label">محتوای ویژه</div>
+                            <div class="access-desc">فقط در پلتفرم در دسترس</div>
                         </div>
                         <div class="access-option @(accessType == "public" ? "active" : "")" @onclick="@(() => SelectAccess("public"))">
                             <div class="access-icon">🌐</div>
-                            <div class="access-label">Public</div>
-                            <div class="access-desc">Everyone can view</div>
+                            <div class="access-label">عمومی</div>
+                            <div class="access-desc">همه می‌توانند ببینند</div>
                         </div>
                         <div class="access-option @(accessType == "unlisted" ? "active" : "")" @onclick="@(() => SelectAccess("unlisted"))">
                             <div class="access-icon">🔗</div>
-                            <div class="access-label">Unlisted</div>
-                            <div class="access-desc">Only with the link</div>
+                            <div class="access-label">با لینک</div>
+                            <div class="access-desc">فقط با لینک مستقیم</div>
                         </div>
                         <div class="access-option @(accessType == "private" ? "active" : "")" @onclick="@(() => SelectAccess("private"))">
                             <div class="access-icon">🔒</div>
-                            <div class="access-label">Private</div>
-                            <div class="access-desc">Only you can see</div>
+                            <div class="access-label">خصوصی</div>
+                            <div class="access-desc">فقط خودت می‌بینی</div>
                         </div>
                     </div>
 
                     @if (accessType == "premium")
                     {
                         <div class="price-section">
-                            <label class="price-label">$ 19.99</label>
+                            <label class="price-label">قیمت (تومان)</label>
                             <div style="color: #94a3b8; font-size: 0.85rem;">
-                                Set your selling price for this premium content
+                                قیمت فروش این محتوای ویژه را تعیین کن
                             </div>
+                            <input type="number" class="price-input" placeholder="مثلاً: 50000" style="margin-top:0.5rem;" />
                         </div>
                     }
                 </div>
 
-                <!-- Buttons -->
+                <!-- دکمه‌ها -->
                 <div class="button-group">
                     <button class="btn-secondary-upload" @onclick="CancelUpload">
-                        🗑️ Discard
+                        🗑️ لغو
                     </button>
                     <button class="btn-primary-upload" @onclick="SubmitUpload">
-                        ✅ Create Tip
+                        ✅ انتشار محتوا
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Preview -->
+        <!-- پیش‌نمایش -->
         <div class="preview-section">
             <div class="preview-title">
-                <span>👁️</span> Preview
+                <span>👁️</span> پیش‌نمایش
             </div>
             @if (string.IsNullOrEmpty(contentTitle))
             {
                 <div style="text-align: center; padding: 2rem; color: #94a3b8;">
-                    <p>Add a title to see your creation's preview</p>
+                    <p>عنوان را وارد کن تا پیش‌نمایش نمایش داده شود</p>
                 </div>
             }
             else
@@ -526,10 +527,10 @@
                         <div class="preview-description">@contentDescription</div>
                     }
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #94a3b8; font-size: 0.9rem;">Type: @selectedType</span>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">نوع: @selectedType</span>
                         @if (accessType == "premium")
                         {
-                            <div class="preview-price">💰 $19.99</div>
+                            <div class="preview-price">💰 ویژه</div>
                         }
                     </div>
                 </div>

@@ -1,240 +1,469 @@
 @page "/profile"
 @using Avina.Models
-@using Avina.Services
-@inject IUserService UserService
 @rendermode InteractiveServer
 
-<div class="px-4 md:px-10 py-8 space-y-8 max-w-5xl">
+<style>
+.profile-page { padding: 1.5rem; animation: fadeSlideIn 0.5s ease both; }
 
-    <!-- Profile Header Card -->
-    <section class="animate-page">
-        <div class="bg-surface-container-lowest rounded-2xl p-7 shadow-sm">
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
-                <!-- Avatar -->
-                <div class="relative flex-shrink-0">
-                    <div class="w-24 h-24 rounded-2xl overflow-hidden ring-4 ring-primary/30 shadow-xl">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="@currentUser?.Name" class="w-full h-full object-cover" />
-                    </div>
-                    <div class="absolute -bottom-2 -right-2 bg-tertiary-container text-on-tertiary-container text-[10px] font-black px-2 py-0.5 rounded-full shadow">سطح ۱۲</div>
-                </div>
+@@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-                <!-- Info -->
-                <div class="flex-1 text-right">
-                    <h2 class="text-2xl font-black text-on-background mb-0.5">@(currentUser?.Name ?? "بارگذاری...")</h2>
-                    <p class="text-on-surface-variant text-sm mb-4">@(currentUser?.Role ?? "") · عضو از @(currentUser?.CreatedAt.ToString("MMMM yyyy") ?? "")</p>
-                    <p class="text-on-surface text-sm leading-relaxed mb-5 max-w-md">@(currentUser?.Bio ?? "")</p>
-                    <!-- Stats Row -->
-                    <div class="flex gap-6 flex-wrap">
-                        <div class="text-center">
-                            <p class="text-xl font-black text-on-surface">@(currentUser?.Followers ?? 0)</p>
-                            <p class="text-xs text-on-surface-variant">دنبال‌کننده</p>
-                        </div>
-                        <div class="w-px h-10 bg-outline-variant self-center"></div>
-                        <div class="text-center">
-                            <p class="text-xl font-black text-on-surface">@(currentUser?.Following ?? 0)</p>
-                            <p class="text-xs text-on-surface-variant">دنبال‌شونده</p>
-                        </div>
-                        <div class="w-px h-10 bg-outline-variant self-center"></div>
-                        <div class="text-center">
-                            <p class="text-xl font-black text-yellow-400">@(currentUser?.Coin ?? 0)</p>
-                            <p class="text-xs text-on-surface-variant">سکه</p>
-                        </div>
-                    </div>
-                </div>
+.profile-hero {
+    background: linear-gradient(135deg, #1c2026 0%, #181c22 100%);
+    border: 1px solid #414753;
+    border-radius: 1.25rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.profile-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(170,199,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
 
-                <!-- Actions -->
-                <div class="flex flex-col gap-2 flex-shrink-0">
-                    <button class="primary-gradient text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-95 transition-all"
-                            @onclick="EditProfile">
-                        ویرایش پروفایل
-                    </button>
-                    <button class="bg-surface-container-low text-on-surface px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-surface-container-high active:scale-95 transition-all"
-                            @onclick="Logout">
-                        خروج از حساب
-                    </button>
-                </div>
+.profile-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.profile-avatar-wrap {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    border: 3px solid #aac7ff;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+}
+.profile-avatar-wrap:hover { border-color: #9197ff; box-shadow: 0 0 0 6px rgba(170,199,255,0.15); }
+.profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-edit-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s ease;
+    border-radius: 50%; font-size: 1.5rem;
+}
+.profile-avatar-wrap:hover .avatar-edit-overlay { opacity: 1; }
+
+.profile-info { flex: 1; min-width: 200px; }
+.profile-name-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
+.profile-name { font-size: 1.6rem; font-weight: 800; color: #e0e2ec; margin: 0; }
+.profile-role-badge {
+    background: rgba(170,199,255,0.15); color: #aac7ff;
+    border: 1px solid rgba(170,199,255,0.3);
+    padding: 0.25rem 0.75rem; border-radius: 9999px;
+    font-size: 0.8rem; font-weight: 600;
+}
+.profile-bio { color: #c1c6d5; font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5; }
+
+.edit-input {
+    background: #0b0e15; border: 1px solid #414753; border-radius: 0.625rem;
+    color: #e0e2ec; padding: 0.5rem 0.875rem; font-size: 0.9rem; width: 100%;
+    font-family: 'Vazirmatn', sans-serif; transition: border-color 0.2s; margin-bottom: 0.75rem;
+    display: block;
+}
+.edit-input:focus { outline: none; border-color: #aac7ff; box-shadow: 0 0 0 3px rgba(170,199,255,0.1); }
+.edit-input::placeholder { color: #8b919f; }
+.edit-textarea { resize: vertical; min-height: 70px; }
+.edit-btns { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+.btn-save, .btn-cancel-edit, .btn-edit-profile, .btn-logout-profile, .btn-save-settings {
+    font-family: 'Vazirmatn', sans-serif; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-save, .btn-edit-profile, .btn-save-settings {
+    background: linear-gradient(135deg, #4248d4, #9197ff);
+    color: white; border: none; border-radius: 0.75rem; font-weight: 700;
+}
+.btn-save { padding: 0.5rem 1.25rem; font-size: 0.875rem; border-radius: 0.625rem; }
+.btn-save:hover, .btn-edit-profile:hover, .btn-save-settings:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-edit-profile { padding: 0.625rem 1.5rem; font-size: 0.9rem; }
+.btn-save-settings { padding: 0.625rem 1.75rem; font-size: 0.9rem; margin-top: 1rem; }
+.btn-cancel-edit {
+    background: transparent; color: #c1c6d5; border: 1px solid #414753;
+    padding: 0.5rem 1.25rem; border-radius: 0.625rem; font-size: 0.875rem;
+}
+.btn-cancel-edit:hover { border-color: #aac7ff; color: #aac7ff; }
+.btn-logout-profile {
+    background: transparent; color: #ffb4ab; border: 1px solid rgba(255,180,171,0.3);
+    padding: 0.625rem 1.5rem; border-radius: 0.75rem; font-size: 0.9rem; font-weight: 600;
+}
+.btn-logout-profile:hover { background: rgba(255,180,171,0.1); }
+.profile-action-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.profile-stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem; margin-top: 1.5rem;
+}
+.profile-stat-card {
+    background: #272a31; border: 1px solid #414753; border-radius: 0.875rem;
+    padding: 1rem 1.25rem; text-align: center; transition: all 0.2s ease;
+}
+.profile-stat-card:hover { border-color: #aac7ff; background: rgba(170,199,255,0.06); }
+.stat-value { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem; }
+.coin-val { color: #ffb68c; }
+.followers-val { color: #aac7ff; }
+.following-val { color: #afc7f7; }
+.score-val { color: #7dd3a8; }
+.stat-label-text { font-size: 0.8rem; color: #8b919f; font-weight: 500; }
+
+.profile-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@@media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+.quick-info-card {
+    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
+    padding: 1.5rem; position: sticky; top: 1.5rem;
+}
+.quick-info-title { font-size: 1rem; font-weight: 700; color: #e0e2ec; margin-bottom: 1.25rem; }
+.quick-info-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.625rem 0; border-bottom: 1px solid #414753;
+    color: #c1c6d5; font-size: 0.875rem;
+}
+.quick-info-item:last-child { border-bottom: none; }
+.quick-info-item strong { color: #e0e2ec; font-weight: 700; }
+
+.profile-tabs {
+    display: flex; gap: 0; border-bottom: 2px solid #414753;
+    margin-bottom: 1.5rem; overflow-x: auto;
+}
+.profile-tab-btn {
+    background: transparent; border: none; color: #8b919f;
+    padding: 0.75rem 1.25rem; font-weight: 600; font-size: 0.875rem;
+    cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+    transition: all 0.2s ease; white-space: nowrap; font-family: 'Vazirmatn', sans-serif;
+}
+.profile-tab-btn:hover { color: #aac7ff; }
+.profile-tab-btn.active-tab { color: #aac7ff; border-bottom-color: #aac7ff; }
+
+.tab-panel { display: none; }
+.tab-panel.active-panel { display: block; }
+
+.achievements-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem;
+}
+.achievement-item {
+    background: #1c2026; border: 2px solid #414753; border-radius: 1rem;
+    padding: 1.25rem 1rem; text-align: center; transition: all 0.25s ease;
+}
+.achievement-item:hover {
+    border-color: #aac7ff; background: rgba(170,199,255,0.06);
+    transform: translateY(-3px); box-shadow: 0 8px 24px rgba(170,199,255,0.12);
+}
+.achievement-emoji { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+.achievement-name { font-size: 0.8rem; color: #c1c6d5; font-weight: 600; }
+
+.courses-list { display: flex; flex-direction: column; gap: 1rem; }
+.course-row {
+    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
+    padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: center;
+    transition: all 0.2s ease;
+}
+.course-row:hover { border-color: #aac7ff; }
+.course-thumb {
+    width: 80px; height: 80px; border-radius: 0.75rem; object-fit: cover;
+    flex-shrink: 0; background: #272a31;
+}
+.course-row-info { flex: 1; min-width: 0; }
+.course-row-title { font-size: 0.95rem; font-weight: 700; color: #e0e2ec; margin-bottom: 0.25rem; }
+.course-row-instructor { font-size: 0.8rem; color: #8b919f; margin-bottom: 0.625rem; }
+.progress-bar-bg { background: #32353c; border-radius: 9999px; height: 6px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #4248d4, #aac7ff); }
+.progress-label { font-size: 0.75rem; color: #aac7ff; font-weight: 600; margin-top: 0.25rem; }
+
+.activities-list { display: flex; flex-direction: column; gap: 1rem; }
+.activity-item {
+    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
+    padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+    transition: all 0.2s ease;
+}
+.activity-item:hover { border-color: #aac7ff; }
+.activity-dot { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #4248d4, #aac7ff); flex-shrink: 0; }
+.activity-text { font-size: 0.875rem; color: #c1c6d5; flex: 1; }
+.activity-time { font-size: 0.75rem; color: #8b919f; white-space: nowrap; }
+
+.settings-form { max-width: 550px; }
+.settings-group { margin-bottom: 1.25rem; }
+.settings-label { display: block; color: #e0e2ec; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.settings-input {
+    width: 100%; background: #0b0e15; border: 1px solid #414753; border-radius: 0.625rem;
+    color: #e0e2ec; padding: 0.625rem 0.875rem; font-family: 'Vazirmatn', sans-serif;
+    font-size: 0.9rem; transition: border-color 0.2s; display: block;
+}
+.settings-input:focus { outline: none; border-color: #aac7ff; box-shadow: 0 0 0 3px rgba(170,199,255,0.1); }
+.settings-textarea { resize: vertical; min-height: 90px; }
+.settings-toggle {
+    display: flex; align-items: center; gap: 0.75rem; color: #c1c6d5;
+    font-size: 0.875rem; padding: 0.75rem 0; border-bottom: 1px solid #414753; cursor: pointer;
+}
+.settings-toggle:last-of-type { border-bottom: none; }
+.toggle-label { flex: 1; }
+</style>
+
+<div class="profile-page">
+    <!-- Profile Hero -->
+    <div class="profile-hero">
+        <div class="profile-top-row">
+            <div class="profile-avatar-wrap" @onclick="ToggleEditMode" style="flex-shrink:0;">
+                <img src="@(currentUser?.ProfileImage ?? "images/profiles/user1.jpg")" alt="@currentUser?.Name" />
+                <div class="avatar-edit-overlay">✏️</div>
             </div>
-        </div>
-    </section>
 
-    <!-- Quick Stats -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-page delay-1">
-        @foreach (var stat in quickStats)
-        {
-            <div class="bg-surface-container-low rounded-2xl p-5 text-right card-lift">
-                <div class="w-10 h-10 rounded-xl mb-3 flex items-center justify-center" style="background: @stat.BgColor;">
-                    <span class="material-symbols-outlined text-xl" style="color: @stat.IconColor; font-variation-settings:'FILL' 1;">@stat.Icon</span>
-                </div>
-                <p class="text-2xl font-black text-on-surface">@stat.Value</p>
-                <p class="text-xs text-on-surface-variant">@stat.Label</p>
-            </div>
-        }
-    </section>
-
-    <!-- Tabs -->
-    <section class="animate-page delay-2">
-        <div class="flex gap-2 border-b border-outline-variant/30 mb-6 overflow-x-auto hide-scrollbar">
-            @foreach (var tab in tabs)
-            {
-                <button class="@GetTabClass(tab) whitespace-nowrap px-5 py-2.5 font-bold text-sm transition-all rounded-t-xl"
-                        @onclick="() => SetTab(tab)">@tab</button>
-            }
-        </div>
-
-        <!-- Achievements Tab -->
-        @if (activeTab == "دستاوردها")
-        {
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                @foreach (var achievement in achievements)
+            <div class="profile-info">
+                @if (!isEditing)
                 {
-                    <div class="bg-surface-container-lowest rounded-2xl p-5 flex flex-col items-center gap-3 card-lift shadow-sm">
-                        <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings:'FILL' 1;">@achievement.Icon</span>
-                        </div>
-                        <div class="text-center">
-                            <h4 class="font-bold text-sm text-on-surface">@achievement.Title</h4>
-                            <p class="text-xs text-on-surface-variant">@achievement.Desc</p>
-                        </div>
+                    <div class="profile-name-row">
+                        <h2 class="profile-name">@currentUser?.Name</h2>
+                        <span class="profile-role-badge">@currentUser?.Role</span>
+                    </div>
+                    <p class="profile-bio">@currentUser?.Bio</p>
+                    <div class="profile-action-btns">
+                        <button class="btn-edit-profile" @onclick="ToggleEditMode">✏️ ویرایش پروفایل</button>
+                        <button class="btn-logout-profile" @onclick="Logout">خروج از حساب</button>
+                    </div>
+                }
+                else
+                {
+                    <input class="edit-input" type="text" placeholder="نام کاربری" @bind="editName" />
+                    <input class="edit-input" type="text" placeholder="نقش (مثلاً دانش‌آموز)" @bind="editRole" />
+                    <textarea class="edit-input edit-textarea" placeholder="درباره خودت بنویس..." @bind="editBio"></textarea>
+                    <div class="edit-btns">
+                        <button class="btn-save" @onclick="SaveProfile">✅ ذخیره</button>
+                        <button class="btn-cancel-edit" @onclick="CancelEdit">لغو</button>
                     </div>
                 }
             </div>
-        }
+        </div>
 
-        <!-- My Courses Tab -->
-        @if (activeTab == "دوره‌های من")
-        {
-            <div class="space-y-4">
-                @foreach (var (course, pct) in enrolledCourses)
-                {
-                    <div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center gap-5 card-lift shadow-sm">
-                        <div class="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center flex-shrink-0">
-                            <span class="material-symbols-outlined text-2xl text-on-surface-variant">play_lesson</span>
+        <!-- Stats Row -->
+        <div class="profile-stats-row">
+            <div class="profile-stat-card">
+                <div class="stat-value coin-val">@currentUser?.Coin.ToString("N0")</div>
+                <div class="stat-label-text">🪙 کوین</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-value followers-val">@currentUser?.Followers</div>
+                <div class="stat-label-text">دنبال‌کننده</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-value following-val">@currentUser?.Following</div>
+                <div class="stat-label-text">دنبال‌شونده</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-value score-val">۲,۴۵۰</div>
+                <div class="stat-label-text">⭐ امتیاز کل</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="profile-grid">
+        <div>
+            <!-- Tabs -->
+            <div class="profile-tabs">
+                <button class="profile-tab-btn @(activeTab == "achievements" ? "active-tab" : "")" @onclick='() => SetTab("achievements")'>🏆 دستاوردها</button>
+                <button class="profile-tab-btn @(activeTab == "courses" ? "active-tab" : "")" @onclick='() => SetTab("courses")'>📚 دوره‌های من</button>
+                <button class="profile-tab-btn @(activeTab == "activities" ? "active-tab" : "")" @onclick='() => SetTab("activities")'>⚡ فعالیت‌ها</button>
+                <button class="profile-tab-btn @(activeTab == "settings" ? "active-tab" : "")" @onclick='() => SetTab("settings")'>⚙️ تنظیمات</button>
+            </div>
+
+            <!-- Achievements -->
+            <div class="tab-panel @(activeTab == "achievements" ? "active-panel" : "")">
+                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">مدال‌های کسب‌شده (8)</p>
+                <div class="achievements-grid">
+                    @foreach (var a in achievementsList)
+                    {
+                        <div class="achievement-item">
+                            <span class="achievement-emoji">@a.Emoji</span>
+                            <div class="achievement-name">@a.Name</div>
                         </div>
-                        <div class="flex-1 text-right">
-                            <h4 class="font-bold text-on-surface mb-0.5">@course.Title</h4>
-                            <p class="text-xs text-on-surface-variant mb-2">@course.Instructor</p>
-                            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                                <div class="h-full primary-gradient rounded-full progress-bar" style="width:@pct%;"></div>
+                    }
+                </div>
+            </div>
+
+            <!-- Courses -->
+            <div class="tab-panel @(activeTab == "courses" ? "active-panel" : "")">
+                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">دوره‌های ثبت‌نام‌شده</p>
+                <div class="courses-list">
+                    @foreach (var course in enrolledCourses)
+                    {
+                        <div class="course-row">
+                            <img class="course-thumb" src="@course.ThumbnailImage" alt="@course.Title"
+                                 onerror="this.style.background='#272a31'; this.style.border='1px solid #414753';" />
+                            <div class="course-row-info">
+                                <div class="course-row-title">@course.Title</div>
+                                <div class="course-row-instructor">👨‍🏫 @course.Instructor</div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: @(course.Progress)%;"></div>
+                                </div>
+                                <div class="progress-label">@(course.Progress)٪ کامل شده</div>
                             </div>
-                            <p class="text-xs text-on-surface-variant mt-1">@pct٪ تکمیل شده</p>
                         </div>
-                    </div>
-                }
+                    }
+                </div>
             </div>
-        }
 
-        <!-- Activities Tab -->
-        @if (activeTab == "فعالیت‌ها")
-        {
-            <div class="space-y-3">
-                @foreach (var (activity, index) in recentActivities.Select((a, i) => (a, i)))
-                {
-                    <div class="flex items-center gap-4 bg-surface-container-lowest rounded-2xl p-4 shadow-sm">
-                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings:'FILL' 1;">@activity.Icon</span>
+            <!-- Activities -->
+            <div class="tab-panel @(activeTab == "activities" ? "active-panel" : "")">
+                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">فعالیت‌های اخیر</p>
+                <div class="activities-list">
+                    @foreach (var act in recentActivities)
+                    {
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div class="activity-text">@act.Text</div>
+                            <div class="activity-time">@act.Time</div>
                         </div>
-                        <div class="flex-1 text-right">
-                            <h4 class="font-bold text-sm text-on-surface">@activity.Title</h4>
-                            <p class="text-xs text-on-surface-variant">@activity.Time</p>
-                        </div>
-                        <div class="flex items-center gap-1 text-tertiary flex-shrink-0">
-                            <span class="font-black text-sm">+@activity.Points</span>
-                            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">monetization_on</span>
-                        </div>
-                    </div>
-                }
+                    }
+                </div>
             </div>
-        }
 
-        <!-- Settings Tab -->
-        @if (activeTab == "تنظیمات")
-        {
-            <div class="bg-surface-container-lowest rounded-2xl p-7 shadow-sm space-y-5">
-                <div>
-                    <label class="block text-sm font-bold text-on-surface mb-2">ایمیل</label>
-                    <input type="email"
-                           class="w-full bg-surface-container-low rounded-xl px-4 py-3 text-on-surface border border-outline-variant/30 focus:outline-none focus:border-primary text-right"
-                           value="@(currentUser?.Email ?? "")" />
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-on-surface mb-2">بیوگرافی</label>
-                    <textarea class="w-full bg-surface-container-low rounded-xl px-4 py-3 text-on-surface border border-outline-variant/30 focus:outline-none focus:border-primary text-right resize-none"
-                              rows="3">@(currentUser?.Bio ?? "")</textarea>
-                </div>
-                <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
-                    <span class="text-sm font-bold">اطلاع‌رسانی‌های پوش</span>
-                    <div class="w-12 h-6 bg-primary rounded-full relative cursor-pointer">
-                        <div class="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 shadow transition-all"></div>
+            <!-- Settings -->
+            <div class="tab-panel @(activeTab == "settings" ? "active-panel" : "")">
+                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">تنظیمات حساب کاربری</p>
+                <div class="settings-form">
+                    <div class="settings-group">
+                        <label class="settings-label">ایمیل</label>
+                        <input type="email" class="settings-input" value="@currentUser?.Email" />
                     </div>
+                    <div class="settings-group">
+                        <label class="settings-label">بیوگرافی</label>
+                        <textarea class="settings-input settings-textarea">@currentUser?.Bio</textarea>
+                    </div>
+                    <div class="settings-group">
+                        <label class="settings-label">اعلان‌ها</label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" checked />
+                            <span class="toggle-label">پوش‌نوتیفیکیشن</span>
+                        </label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" checked />
+                            <span class="toggle-label">ایمیل برای دوره‌های جدید</span>
+                        </label>
+                        <label class="settings-toggle">
+                            <input type="checkbox" />
+                            <span class="toggle-label">اطلاع‌رسانی پیام‌های خصوصی</span>
+                        </label>
+                    </div>
+                    <button class="btn-save-settings" @onclick="SaveSettings">ذخیره تغییرات</button>
                 </div>
-                <button class="primary-gradient text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-95 transition-all"
-                        @onclick="SaveSettings">
-                    ذخیره تغییرات
-                </button>
             </div>
-        }
-    </section>
+        </div>
+
+        <!-- Quick Info Sidebar -->
+        <div class="quick-info-card">
+            <div class="quick-info-title">📊 آمار سریع</div>
+            <div class="quick-info-item"><span>دوره‌های تکمیل‌شده</span><strong>12</strong></div>
+            <div class="quick-info-item"><span>مدال کسب‌شده</span><strong>8</strong></div>
+            <div class="quick-info-item"><span>روز بدون قطع</span><strong>24</strong></div>
+            <div class="quick-info-item"><span>آزمون‌های پاس‌شده</span><strong>31</strong></div>
+            <div class="quick-info-item"><span>ساعت مطالعه</span><strong>148</strong></div>
+            <div class="quick-info-item"><span>رتبه در بین همسالان</span><strong style="color:#ffb68c;">#7</strong></div>
+            <div class="quick-info-item"><span>عضویت از</span><strong>فروردین ۱۴۰۳</strong></div>
+        </div>
+    </div>
 </div>
 
 @code {
-    private User? currentUser;
-    private string activeTab = "دستاوردها";
-    private string[] tabs = { "دستاوردها", "دوره‌های من", "فعالیت‌ها", "تنظیمات" };
-
-    private record StatItem(string Icon, string Value, string Label, string BgColor, string IconColor);
-    private record AchievementItem(string Icon, string Title, string Desc);
-    private record ActivityItem(string Icon, string Title, string Time, int Points);
-
-    private List<StatItem> quickStats = new();
-    private List<AchievementItem> achievements = new();
-    private List<(Course course, int pct)> enrolledCourses = new();
-    private List<ActivityItem> recentActivities = new();
-
-    protected override async Task OnInitializedAsync()
+    private class AchievementItem { public string Emoji { get; set; } = ""; public string Name { get; set; } = ""; }
+    private class ActivityItem { public string Text { get; set; } = ""; public string Time { get; set; } = ""; }
+    private class EnrolledCourse
     {
-        currentUser = await UserService.GetCurrentUserAsync();
+        public string Title { get; set; } = "";
+        public string Instructor { get; set; } = "";
+        public string ThumbnailImage { get; set; } = "";
+        public int Progress { get; set; }
+    }
 
-        quickStats = new()
+    private User? currentUser;
+    private List<EnrolledCourse> enrolledCourses = new();
+    private List<AchievementItem> achievementsList = new();
+    private List<ActivityItem> recentActivities = new();
+    private string activeTab = "achievements";
+    private bool isEditing = false;
+    private string editName = "";
+    private string editRole = "";
+    private string editBio = "";
+
+    protected override void OnInitialized()
+    {
+        currentUser = new User
         {
-            new("school",       "۱۲", "دوره تکمیل‌شده",  "rgba(170,199,255,0.1)", "#aac7ff"),
-            new("military_tech","۸",  "مدال کسب‌شده",   "rgba(255,182,140,0.1)", "#ffb68c"),
-            new("local_fire_department","۲۴","روز پیاپی", "rgba(231,65,31,0.1)",  "#e3711f"),
-            new("monetization_on","۲,۴۵۰","امتیاز کل",   "rgba(255,200,0,0.1)",  "#fbbf24"),
+            Id = 1,
+            Name = "علی محمدی",
+            Email = "ali@example.com",
+            Role = "دانش‌آموز",
+            ProfileImage = "images/profiles/user1.jpg",
+            Bio = "فعال و پرانرژی، علاقه‌مند به یادگیری و رشد شخصی. دوست‌دارِ ریاضی و علوم.",
+            Coin = 2450,
+            Followers = 125,
+            Following = 89,
+            CreatedAt = DateTime.Now.AddMonths(-3)
         };
 
-        achievements = new()
+        enrolledCourses = new List<EnrolledCourse>
         {
-            new("emoji_events",    "قهرمان اول",     "اولین مکان در رقابت"),
-            new("science",         "دانشمند کوچک",   "۵ آزمایش علمی"),
-            new("local_fire_department","۷ روز پیاپی","یک هفته بدون وقفه"),
-            new("translate",       "سفیر زبان",      "۱۰۰ لغت یاد گرفته"),
-            new("calculate",       "استاد ریاضی",    "۵۰ مسئله حل شده"),
-            new("history_edu",     "کاوشگر تاریخ",   "۱۰ درس تاریخ"),
+            new EnrolledCourse { Title = "ریاضی پایه - پایه هفتم", Instructor = "محمد علی‌زاده", ThumbnailImage = "images/courses/math.jpg", Progress = 65 },
+            new EnrolledCourse { Title = "علوم طبیعی", Instructor = "فاطمه احمدی", ThumbnailImage = "images/courses/science.jpg", Progress = 40 },
+            new EnrolledCourse { Title = "ادبیات فارسی", Instructor = "حسین رضایی", ThumbnailImage = "images/courses/literature.jpg", Progress = 90 },
+            new EnrolledCourse { Title = "زبان انگلیسی مقدماتی", Instructor = "سارا کریمی", ThumbnailImage = "images/courses/english.jpg", Progress = 25 },
         };
 
-        enrolledCourses = new()
+        achievementsList = new List<AchievementItem>
         {
-            (new Course { Title = "ریاضی پایه",       Instructor = "محمد علی"    }, 68),
-            (new Course { Title = "علوم طبیعی",       Instructor = "فاطمه احمدی" }, 32),
-            (new Course { Title = "مهارت‌های زندگی",  Instructor = "علی رضائی"  }, 15),
+            new AchievementItem { Emoji = "🥇", Name = "اول شدن" },
+            new AchievementItem { Emoji = "🏆", Name = "قهرمان هفته" },
+            new AchievementItem { Emoji = "⭐", Name = "ستاره درخشان" },
+            new AchievementItem { Emoji = "🎖️", Name = "مدال افتخار" },
+            new AchievementItem { Emoji = "🌟", Name = "سوپراستار" },
+            new AchievementItem { Emoji = "🔥", Name = "آتش‌نشین" },
+            new AchievementItem { Emoji = "💎", Name = "الماس" },
+            new AchievementItem { Emoji = "🚀", Name = "فضانورد" },
         };
 
-        recentActivities = new()
+        recentActivities = new List<ActivityItem>
         {
-            new("school",          "دوره 'ریاضی پایه' شروع شد",       "۲ ساعت پیش",  50),
-            new("military_tech",   "مدال 'درخشندگی' کسب شد",          "دیروز",       100),
-            new("quiz",            "آزمون 'فصل اول' با ۹۵٪ قبول",     "۲ روز پیش",  80),
-            new("group",           "در ماموریت اجتماعی شرکت شد",      "۳ روز پیش",  30),
+            new ActivityItem { Text = "دوره 'ریاضی پایه' را شروع کردی", Time = "۲ ساعت پیش" },
+            new ActivityItem { Text = "مدال 'درخشندگی' را کسب کردی", Time = "دیروز" },
+            new ActivityItem { Text = "در آزمون 'فصل اول' ۹۵٪ کسب کردی", Time = "۳ روز پیش" },
+            new ActivityItem { Text = "در ماموریت اجتماعی شرکت کردی", Time = "هفته پیش" },
+            new ActivityItem { Text = "دوره 'علوم طبیعی' ثبت‌نام کردی", Time = "۱۰ روز پیش" },
         };
     }
 
-    private string GetTabClass(string tab) =>
-        activeTab == tab
-            ? "border-b-2 border-primary text-primary bg-primary/5"
-            : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low";
-
     private void SetTab(string tab) => activeTab = tab;
-    private void EditProfile()     => Console.WriteLine("ویرایش پروفایل");
-    private void Logout()          => Console.WriteLine("خروج");
-    private void SaveSettings()    => Console.WriteLine("ذخیره تنظیمات");
+
+    private void ToggleEditMode()
+    {
+        isEditing = !isEditing;
+        if (isEditing && currentUser != null)
+        {
+            editName = currentUser.Name ?? "";
+            editRole = currentUser.Role ?? "";
+            editBio = currentUser.Bio ?? "";
+        }
+    }
+
+    private void SaveProfile()
+    {
+        if (currentUser != null)
+        {
+            if (!string.IsNullOrWhiteSpace(editName)) currentUser.Name = editName;
+            if (!string.IsNullOrWhiteSpace(editRole)) currentUser.Role = editRole;
+            currentUser.Bio = editBio;
+        }
+        isEditing = false;
+    }
+
+    private void CancelEdit() => isEditing = false;
+    private void Logout() { }
+    private void SaveSettings() { }
 }

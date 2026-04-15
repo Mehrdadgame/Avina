@@ -1,187 +1,182 @@
-/* ===========================
-   Global Base
-   =========================== */
-* { box-sizing: border-box; }
+/* app.css - minimal overrides, main styles in app-custom.css */
 
-body {
-    font-family: 'Vazirmatn', sans-serif;
-    -webkit-font-smoothing: antialiased;
+/* NavLink deep overrides */
+::deep .nav-link {
+    color: var(--on-surface-variant, #c1c6d5) !important;
+    padding: 0.5rem 1rem !important;
 }
+::deep .nav-link:hover { color: var(--primary, #aac7ff) !important; }
+::deep .nav-link.active { color: var(--primary, #aac7ff) !important; }
 
-.material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    vertical-align: middle;
-}
+.container, .container-fluid { background-color: transparent !important; }
 
-/* ===========================
-   Gradient
-   =========================== */
-.primary-gradient {
-    background: linear-gradient(135deg, #4248d4 0%, #9197ff 100%);
-}
-
-/* ===========================
-   Scrollbar
-   =========================== */
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* ===========================
-   Animations
-   =========================== */
-@keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.animate-page { animation: fadeSlideIn 0.5s ease both; }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-
-@keyframes growWidth { from { width: 0; } }
-.progress-bar { animation: growWidth 1.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-@keyframes wiggle {
-    0%,100% { transform: rotate(6deg); }
-    50%      { transform: rotate(10deg) scale(1.05); }
-}
-.badge-float { animation: wiggle 3s ease-in-out infinite; }
-
-@keyframes pulseGlow {
-    0%,100% { box-shadow: 0 0 0 0 rgba(170,199,255,0.3); }
-    50%      { box-shadow: 0 0 0 12px rgba(170,199,255,0); }
-}
-.pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
-
-@keyframes fabPulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(170,199,255,0.4); }
-    50%      { box-shadow: 0 0 0 10px rgba(170,199,255,0); }
-}
-.fab-pulse { animation: fabPulse 2s ease-in-out infinite; }
-
-@keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
-}
-
-/* ===========================
-   Sidebar Nav Active State
-   =========================== */
-.nav-active {
-    background: white !important;
-    color: #4248d4 !important;
-    font-weight: 700 !important;
-    box-shadow: 0 2px 8px rgba(66,72,212,0.15);
-}
-.dark .nav-active {
-    background: #1e293b !important;
-    color: #9197ff !important;
-}
-
-/* Top nav active state */
-.top-nav-active {
-    color: #4248d4 !important;
-    background: white !important;
+/* Stat boxes (profile) */
+.stat {
+    background-color: var(--surface-high, #272a31) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    color: var(--on-surface, #e0e2ec) !important;
+    transition: all 0.3s ease;
     border-radius: 0.75rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
-.dark .top-nav-active {
-    background: #1e293b !important;
-    color: #9197ff !important;
+.stat:hover {
+    border-color: var(--primary, #aac7ff) !important;
+    background-color: rgba(170, 199, 255, 0.08) !important;
 }
+.stat h5 { color: var(--primary, #aac7ff) !important; }
 
-/* ===========================
-   Card Hover
-   =========================== */
-.card-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.card-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
-
-/* ===========================
-   Header
-   =========================== */
-header { transition: box-shadow 0.3s ease; }
-header.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
-
-/* ===========================
-   Scroll Snap
-   =========================== */
-.snap-scroll { scroll-snap-type: x mandatory; }
-.snap-item   { scroll-snap-align: start; }
-
-/* ===========================
-   Filter / Chip Active
-   =========================== */
-.filter-active {
-    background: #aac7ff !important;
-    color: #002f64 !important;
-    font-weight: 700 !important;
+.quick-stats {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    border-radius: 1rem !important;
+    color: var(--on-surface, #e0e2ec) !important;
 }
-.chip-active {
-    background: #aac7ff !important;
-    color: #002f64 !important;
-    font-weight: 700 !important;
+.quick-stats .stat-item {
+    padding-bottom: 0.875rem;
+    border-bottom: 1px solid var(--outline-variant, #414753) !important;
+    color: var(--on-surface-variant, #c1c6d5);
+}
+.quick-stats .stat-item strong { color: var(--on-surface, #e0e2ec); }
+.quick-stats .stat-item:last-child { border-bottom: none !important; }
+
+/* Achievement Card */
+.achievement-card {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 2px solid var(--outline-variant, #414753) !important;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    color: var(--on-surface, #e0e2ec) !important;
+}
+.achievement-card:hover {
+    border-color: var(--primary, #aac7ff) !important;
+    box-shadow: 0 10px 30px rgba(170, 199, 255, 0.15) !important;
+    transform: scale(1.05);
 }
 
-/* ===========================
-   Course Card
-   =========================== */
-.course-img { transition: transform 0.5s ease; }
-.course-card:hover .course-img { transform: scale(1.07); }
-
-/* ===========================
-   Product Card
-   =========================== */
-.product-img { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-.product-card:hover .product-img { transform: scale(1.1); }
-
-.product-card .buy-btn {
-    background: rgba(255,255,255,0.08);
-    transition: background 0.25s ease, color 0.25s ease;
+/* Course Item */
+.course-item {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    color: var(--on-surface, #e0e2ec) !important;
 }
-.product-card:hover .buy-btn {
-    background: linear-gradient(135deg, #4248d4, #9197ff);
-    color: white;
+.course-item:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    border-color: var(--primary, #aac7ff) !important;
 }
 
-/* ===========================
-   Podcast Banner
-   =========================== */
-.podcast-banner {
-    background: linear-gradient(135deg, #2e4770 0%, #4248d4 50%, #2e4770 100%);
-    background-size: 200% auto;
-    animation: shimmer 6s linear infinite;
+/* Timeline */
+.timeline { position: relative; padding-right: 1.5rem; }
+.timeline-item { position: relative; }
+.timeline-marker { position: relative; }
+.marker-circle {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #4248d4, var(--primary, #aac7ff));
+    border-radius: 50%;
+    margin-top: 0.5rem;
 }
-
-/* ===========================
-   Store Hero Banner
-   =========================== */
-.hero-banner {
-    background: linear-gradient(135deg, #2e4770 0%, #4248d4 60%, #9197ff 100%);
-}
-
-/* ===========================
-   Badge Rotate
-   =========================== */
-.badge-rotate { transform: rotate(12deg); }
-
-/* ===========================
-   Blazor Error UI
-   =========================== */
-#blazor-error-ui {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 0 rgba(0,0,0,0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-#blazor-error-ui .dismiss {
-    cursor: pointer;
+.timeline-item:not(:last-child) .timeline-marker::after {
+    content: '';
     position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
+    width: 2px;
+    height: 55px;
+    background-color: var(--outline-variant, #414753);
+    top: 18px;
+    right: 8px;
 }
+.timeline-content {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    border-radius: 0.75rem;
+    color: var(--on-surface, #e0e2ec) !important;
+}
+.timeline-content h6 { color: var(--on-surface, #e0e2ec) !important; }
+.timeline-content small { color: var(--on-surface-variant, #c1c6d5) !important; }
+
+/* Profile header card */
+.profile-header .profile-card {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    color: var(--on-surface, #e0e2ec) !important;
+}
+.profile-header img.rounded-circle {
+    border: 3px solid var(--primary, #aac7ff) !important;
+}
+
+/* Course cards */
+.course-card {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    color: var(--on-surface, #e0e2ec) !important;
+    transition: all 0.3s ease;
+}
+.course-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-5px);
+}
+
+/* Product card */
+.product-card {
+    background-color: var(--surface-container, #1c2026) !important;
+    border: 1px solid var(--outline-variant, #414753) !important;
+    color: var(--on-surface, #e0e2ec) !important;
+}
+
+/* Hero */
+.hero-section {
+    background: linear-gradient(135deg, var(--surface-container) 0%, var(--surface-lowest) 100%);
+    border-radius: var(--border-radius, 1rem);
+    overflow: hidden;
+}
+
+/* CTA */
+.cta-section { background: linear-gradient(135deg, #4248d4, #9197ff); }
+
+/* Progress */
+.progress { background-color: var(--surface-highest, #32353c) !important; border-radius: 0.5rem !important; }
+.progress-bar { background: linear-gradient(90deg, #4248d4, var(--primary, #aac7ff)) !important; }
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #4248d4 0%, var(--primary, #aac7ff) 100%) !important;
+    border-color: transparent !important;
+    color: #002f64 !important;
+    font-weight: 700 !important;
+}
+.btn-primary:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(66, 72, 212, 0.3) !important;
+}
+.btn-outline-primary {
+    color: var(--primary, #aac7ff) !important;
+    border-color: var(--primary, #aac7ff) !important;
+}
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #4248d4, var(--primary, #aac7ff)) !important;
+    color: #002f64 !important;
+}
+.btn-danger { background-color: rgba(255, 180, 171, 0.2) !important; color: var(--error, #ffb4ab) !important; border-color: rgba(255, 180, 171, 0.4) !important; }
+.btn-danger:hover { background-color: rgba(255, 180, 171, 0.3) !important; }
+
+/* Section headings */
+h1, h2, h3, h4, h5, h6 { color: var(--on-surface, #e0e2ec) !important; }
+p { color: var(--on-surface-variant, #c1c6d5); }
+.lead { color: var(--on-surface-variant, #c1c6d5) !important; }
+
+/* Forms */
+label { color: var(--on-surface, #e0e2ec) !important; }
+.form-check-label { color: var(--on-surface-variant, #c1c6d5) !important; }
+
+/* Responsive utility */
+.rounded-4 { border-radius: 1rem !important; }
+.shadow-sm { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important; }
+
+@media (max-width: 768px) {
+    .profile-header .col-md-3 { margin-bottom: 1.5rem; }
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease-in-out; }

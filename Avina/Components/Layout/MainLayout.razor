@@ -1,155 +1,131 @@
 @inherits LayoutComponentBase
 
-<!-- ===== Top Navigation ===== -->
-<header id="topbar" class="bg-[#f5f7f9] dark:bg-slate-950 flex flex-row-reverse justify-between items-center w-full px-5 py-3 sticky top-0 z-50">
-
-    <!-- Left: Coins + Level -->
-    <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm">
-            <span class="material-symbols-outlined text-yellow-400 text-lg" style="font-variation-settings:'FILL' 1;">monetization_on</span>
-            <span class="font-bold text-on-surface text-sm">۲,۴۵۰</span>
-        </div>
-        <div class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest rounded-full shadow-sm">
-            <span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings:'FILL' 1;">stars</span>
-            <span class="font-bold text-on-surface text-sm">۱۲</span>
-        </div>
-    </div>
-
-    <!-- Center: Logo + Nav (desktop) -->
-    <div class="flex items-center gap-6">
-        <span class="text-xl font-black text-[#2c2f31] dark:text-slate-100">آخرین نگهبان</span>
-        <nav class="hidden md:flex items-center gap-1 text-sm font-bold">
-            <NavLink href="/" Match="NavLinkMatch.All"
-                     class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl"
-                     ActiveClass="top-nav-active">خانه</NavLink>
-            <NavLink href="/school"
-                     class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl"
-                     ActiveClass="top-nav-active">مدرسه</NavLink>
-            <NavLink href="/life-path"
-                     class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl"
-                     ActiveClass="top-nav-active">مسیر من</NavLink>
-            <NavLink href="/store"
-                     class="text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-colors px-3 py-1.5 rounded-xl"
-                     ActiveClass="top-nav-active">فروشگاه</NavLink>
-        </nav>
-    </div>
-
-    <!-- Right: Notifications + Avatar -->
-    <div class="flex items-center gap-2">
-        <button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-[#dfe3e6] dark:hover:bg-slate-800 rounded-full transition-colors">notifications</button>
-        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-primary-container pulse-glow cursor-pointer">
-            <img src="https://i.pravatar.cc/150?img=1" alt="avatar" class="w-full h-full object-cover" />
-        </div>
-    </div>
-</header>
-
-<!-- ===== Body (Sidebar + Content) ===== -->
-<div class="flex">
-
-    <!-- Sidebar (desktop only) -->
-    <aside class="hidden md:flex flex-col items-end pt-6 px-3 h-[calc(100vh-60px)] sticky top-[60px] right-0 w-60 bg-[#eef1f3] dark:bg-slate-900 transition-all duration-300">
-
-        <!-- User Info -->
-        <div class="flex flex-col items-center w-full mb-5 px-2 text-center">
-            <div class="w-14 h-14 rounded-full overflow-hidden mb-2 ring-4 ring-white shadow">
-                <img src="https://i.pravatar.cc/150?img=1" alt="avatar" class="w-full h-full object-cover" />
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>آخرین نگهبان</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app-custom.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/school.css" />
+    <link rel="stylesheet" href="css/games.css" />
+    <link rel="stylesheet" href="css/store.css" />
+    <link rel="stylesheet" href="css/profile.css" />
+    <link rel="stylesheet" href="css/upload.css" />
+    <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/responsive-components.css" />
+    <style>
+        body, html, * { font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">آخرین نگهبان</h1>
+                <p class="logo-subtitle">Avina</p>
             </div>
-            <h3 class="font-bold text-on-background text-sm">آریا قهرمان</h3>
-            <p class="text-xs text-on-surface-variant">سطح ۱۲ - نبردآموز</p>
+
+            <nav class="sidebar-nav">
+                <NavLink href="/" class="nav-item" Match="NavLinkMatch.All">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">خانه</span>
+                </NavLink>
+
+                <NavLink href="/school" class="nav-item">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-label">مدرسه آنلاین</span>
+                </NavLink>
+
+                <NavLink href="/games" class="nav-item">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-label">بازی‌های آموزشی</span>
+                </NavLink>
+
+                <NavLink href="/life-path" class="nav-item">
+                    <span class="nav-icon">🛤️</span>
+                    <span class="nav-label">مسیر من</span>
+                </NavLink>
+
+                <NavLink href="/store" class="nav-item">
+                    <span class="nav-icon">🛍️</span>
+                    <span class="nav-label">فروشگاه</span>
+                </NavLink>
+
+                <NavLink href="/profile" class="nav-item">
+                    <span class="nav-icon">👤</span>
+                    <span class="nav-label">پروفایل</span>
+                </NavLink>
+            </nav>
+
+            <!-- Today's Challenge Button -->
+            <a href="/school" class="btn-today-challenge">
+                <span>⚡</span>
+                <span>چالش امروز</span>
+            </a>
+
+            <div class="sidebar-footer">
+                <a href="/profile" class="user-profile">
+                    <img src="images/profiles/user1.jpg" alt="کاربر" class="user-avatar">
+                    <div class="user-info">
+                        <p class="user-name">علی محمدی</p>
+                        <p class="user-role">دانش‌آموز</p>
+                    </div>
+                </a>
+                <button class="btn-logout">خروج</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-layout">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="btn-menu" id="toggleSidebar">☰</button>
+                    <div class="search-box">
+                        <input type="text" placeholder="جستجو...">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <a href="/upload" class="btn-upload" title="بارگذاری محتوا">
+                        <span class="upload-icon">📤</span>
+                        <span>اپلود</span>
+                    </a>
+                    <button class="btn-notification">
+                        <span class="notification-icon">🔔</span>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <a href="/profile" class="header-profile-link" title="پروفایل">
+                        <img src="images/profiles/user1.jpg" alt="پروفایل" class="header-avatar">
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="main-content">
+                @Body
+            </main>
         </div>
+    </div>
 
-        <!-- Nav Items -->
-        <div class="w-full space-y-1">
-            <NavLink href="/" Match="NavLinkMatch.All"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>خانه</span>
-                <span class="material-symbols-outlined">home</span>
-            </NavLink>
-            <NavLink href="/school"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>مدرسه</span>
-                <span class="material-symbols-outlined">school</span>
-            </NavLink>
-            <NavLink href="/games"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>بازی</span>
-                <span class="material-symbols-outlined">sports_esports</span>
-            </NavLink>
-            <NavLink href="/life-path"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>مسیر من</span>
-                <span class="material-symbols-outlined">auto_graph</span>
-            </NavLink>
-            <NavLink href="/store"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>فروشگاه</span>
-                <span class="material-symbols-outlined">shopping_bag</span>
-            </NavLink>
-            <NavLink href="/profile"
-                     class="flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#2c2f31] dark:text-slate-400 hover:bg-[#dfe3e6] dark:hover:bg-slate-800 transition-all duration-200"
-                     ActiveClass="nav-active">
-                <span>شبکه اجتماعی</span>
-                <span class="material-symbols-outlined">group</span>
-            </NavLink>
-        </div>
+    <!-- Music Player -->
+    <MusicPlayer />
 
-        <!-- Challenge Button -->
-        <div class="mt-auto mb-6 w-full">
-            <button class="w-full primary-gradient text-white py-2.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all duration-200">
-                <span class="material-symbols-outlined text-lg">bolt</span>
-                <span>شروع چالش امروز</span>
-            </button>
-        </div>
-    </aside>
+    <div id="blazor-error-ui" data-nosnippet>
+        خطای برنامه رخ داد.
+        <a href="." class="reload">بارگذاری مجدد</a>
+        <span class="dismiss">🗙</span>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-x-hidden pb-24 md:pb-8">
-        @Body
-    </main>
-</div>
-
-<!-- ===== Mobile Bottom Navigation ===== -->
-<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/20 flex justify-around items-center py-3 px-2 z-50">
-    <NavLink href="/" Match="NavLinkMatch.All"
-             class="flex flex-col items-center gap-0.5 text-on-surface-variant"
-             ActiveClass="!text-[#4248d4]">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px]">خانه</span>
-    </NavLink>
-    <NavLink href="/school"
-             class="flex flex-col items-center gap-0.5 text-on-surface-variant"
-             ActiveClass="!text-[#4248d4]">
-        <span class="material-symbols-outlined">school</span>
-        <span class="text-[10px]">مدرسه</span>
-    </NavLink>
-    <NavLink href="/games"
-             class="flex flex-col items-center gap-0.5 text-on-surface-variant"
-             ActiveClass="!text-[#4248d4]">
-        <span class="material-symbols-outlined">sports_esports</span>
-        <span class="text-[10px]">بازی</span>
-    </NavLink>
-    <NavLink href="/store"
-             class="flex flex-col items-center gap-0.5 text-on-surface-variant"
-             ActiveClass="!text-[#4248d4]">
-        <span class="material-symbols-outlined">shopping_bag</span>
-        <span class="text-[10px]">فروشگاه</span>
-    </NavLink>
-    <NavLink href="/life-path"
-             class="flex flex-col items-center gap-0.5 text-on-surface-variant"
-             ActiveClass="!text-[#4248d4]">
-        <span class="material-symbols-outlined">auto_graph</span>
-        <span class="text-[10px]">مسیر من</span>
-    </NavLink>
-</nav>
-
-<!-- Blazor Error UI -->
-<div id="blazor-error-ui" data-nosnippet>
-    خطای برنامه رخ داد.
-    <a href="." class="reload">بارگذاری مجدد</a>
-    <span class="dismiss">🗙</span>
-</div>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
