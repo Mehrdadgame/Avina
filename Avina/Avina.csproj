@@ -8,4 +8,8 @@
     <UserSecretsId>0a761103-a43e-4bf8-a720-f1ec3bc662f3</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.6" />
+  </ItemGroup>
+
 </Project>
