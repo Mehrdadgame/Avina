@@ -5,6 +5,7 @@
 @inject AuthStateService AuthState
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject IAuthService AuthApi
 
 <style>
 .login-page {
@@ -299,34 +300,42 @@ else
         isLoading = true;
         StateHasChanged();
 
-        UserCacheDto? user = null;
-
-        // Try to load existing user from localStorage
         try
         {
-            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
-            if (!string.IsNullOrEmpty(json))
-                user = JsonSerializer.Deserialize<UserCacheDto>(json);
-        }
-        catch { }
+            var result = await AuthApi.LoginAsync(loginEmail, loginPassword);
 
-        if (user == null || user.Email != loginEmail)
-        {
-            // Create user from email
-            user = new UserCacheDto
+            if (result.Success && result.User != null)
             {
-                Name = loginEmail.Split('@')[0],
-                Email = loginEmail,
-                Role = "دانش‌آموز",
-                ProfileImage = "https://i.pravatar.cc/150?img=5",
-                Coin = 0
-            };
-        }
+                var user = new UserCacheDto
+                {
+                    Id = result.User.Id,
+                    Name = result.User.Name,
+                    Email = result.User.Email,
+                    Role = result.User.Role,
+                    ProfileImage = result.User.ProfileImage ?? "",
+                    Coin = result.User.Coin
+                };
 
-        try { await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user)); } catch { }
-        AuthState.SetUser(user);
-        isLoading = false;
-        Nav.NavigateTo("/", forceLoad: true);
+                // Save to localStorage and redirect via browser (bypasses all Blazor DI/scope issues)
+                await JS.InvokeVoidAsync("loginUser",
+                    JsonSerializer.Serialize(user),
+                    result.AccessToken ?? "",
+                    result.RefreshToken ?? "");
+                // loginUser calls window.location.href='/' → page fully reloads
+            }
+            else
+            {
+                errorMessage = result.Message;
+                isLoading = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"خطا: {ex.Message}";
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleRegister()
@@ -339,27 +348,51 @@ else
         isLoading = true;
         StateHasChanged();
 
-        var user = new UserCacheDto
+        try
         {
-            Name = regName.Trim(),
-            Email = regEmail.Trim(),
-            Role = "دانش‌آموز",
-            ProfileImage = "https://i.pravatar.cc/150?img=5",
-            Coin = 100
-        };
+            var result = await AuthApi.RegisterAsync(regName, regEmail, regPassword);
 
-        try { await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(user)); } catch { }
-        AuthState.SetUser(user);
+            if (result.Success && result.User != null)
+            {
+                var user = new UserCacheDto
+                {
+                    Id = result.User.Id,
+                    Name = result.User.Name,
+                    Email = result.User.Email,
+                    Role = result.User.Role,
+                    ProfileImage = result.User.ProfileImage ?? "",
+                    Coin = result.User.Coin
+                };
 
-        // Show welcome animation
-        welcomeName = user.Name;
-        GenerateConfetti();
-        showWelcome = true;
-        isLoading = false;
-        StateHasChanged();
+                // Show welcome animation first
+                welcomeName = user.Name;
+                GenerateConfetti();
+                showWelcome = true;
+                isLoading = false;
+                StateHasChanged();
 
-        await Task.Delay(welcomeDuration + 400);
-        Nav.NavigateTo("/", forceLoad: true);
+                await Task.Delay(welcomeDuration + 400);
+
+                // Save to localStorage and redirect via browser (bypasses all Blazor DI/scope issues)
+                await JS.InvokeVoidAsync("loginUser",
+                    JsonSerializer.Serialize(user),
+                    result.AccessToken ?? "",
+                    result.RefreshToken ?? "");
+                // loginUser calls window.location.href='/' → page fully reloads
+            }
+            else
+            {
+                errorMessage = result.Message;
+                isLoading = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"خطا: {ex.Message}";
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void ContinueAsGuest()

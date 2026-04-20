@@ -1,0 +1,87 @@
+@rendermode InteractiveServer
+@using Avina.Services
+@using System.Text.Json
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@implements IDisposable
+
+@if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
+{
+    <a href="/profile" class="user-profile">
+        <img src="@AuthState.CurrentUser.ProfileImage" alt="@AuthState.CurrentUser.Name" class="user-avatar">
+        <div class="user-info">
+            <p class="user-name">@AuthState.CurrentUser.Name</p>
+            <p class="user-role">@AuthState.CurrentUser.Role</p>
+            <div class="sidebar-coin-row">
+                <span>🪙</span>
+                <span>@AuthState.CurrentUser.Coin.ToString("N0") کوین</span>
+            </div>
+        </div>
+    </a>
+    <button class="btn-logout-sidebar" @onclick="HandleLogout">خروج از حساب</button>
+}
+else
+{
+    <div class="user-profile" style="cursor:default;">
+        <div class="guest-avatar">👤</div>
+        <div class="user-info">
+            <p class="user-name">مهمان</p>
+            <p class="user-role">وارد نشده</p>
+        </div>
+    </div>
+    <a href="/login" class="btn-auth-sidebar">ثبت نام / ورود</a>
+}
+
+@code {
+    private const string StorageKey = "avina_user";
+
+    protected override void OnInitialized()
+    {
+        AuthState.StateChanged += OnAuthChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await TryRestoreFromStorage();
+        }
+    }
+
+    private async Task TryRestoreFromStorage()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+                if (user != null && !AuthState.IsLoggedIn)
+                {
+                    Console.WriteLine($"[SidebarAuth] Restoring: {user.Name}");
+                    AuthState.SetUser(user);
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SidebarAuth] Error: {ex.Message}");
+        }
+    }
+
+    private async Task OnAuthChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleLogout()
+    {
+        await JS.InvokeVoidAsync("logoutUser");
+    }
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= OnAuthChanged;
+    }
+}

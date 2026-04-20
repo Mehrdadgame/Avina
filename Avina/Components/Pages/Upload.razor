@@ -1,578 +1,637 @@
 @page "/upload"
 @rendermode InteractiveServer
+@using Avina.Services
+@using Avina.Data
+@using Avina.Models
+@using Microsoft.EntityFrameworkCore
+@inject AvinaDbContext Db
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 
 <style>
-.upload-page {
-    padding: 2rem;
-    animation: fadeIn 0.6s ease-out;
+.my-content-page { padding: 1.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+.section-card { background: #1c2026; border: 1px solid #2a3040; border-radius: 1.25rem; padding: 1.75rem; margin-bottom: 2rem; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; cursor:pointer; }
+.section-title { font-size:1.1rem; font-weight:800; color:#f1f5f9; }
+.fld-label { display:block; color:#e2e8f0; font-weight:600; margin-bottom:0.5rem; font-size:0.875rem; }
+.fld-input, .fld-select, .fld-textarea {
+    width:100%; background:#10131a; border:1px solid #2a3040; border-radius:0.75rem;
+    color:#e0e2ec; padding:0.75rem 1rem; font-family:'Vazirmatn',sans-serif; font-size:0.9rem;
+    transition:border-color 0.2s; box-sizing:border-box;
 }
-
-.upload-header {
-    margin-bottom: 3rem;
+.fld-input:focus, .fld-select:focus, .fld-textarea:focus { outline:none; border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,0.15); }
+.fld-input::placeholder, .fld-textarea::placeholder { color:#64748b; }
+.fld-textarea { resize:vertical; min-height:80px; }
+.fld-select option { background:#1c2026; }
+.fld-group { margin-bottom:1.25rem; }
+.toggle-btn {
+    display:flex; align-items:center; gap:0.5rem; padding:0.625rem 1.25rem;
+    border-radius:0.75rem; border:1px solid #2a3040; background:transparent;
+    color:#94a3b8; font-family:'Vazirmatn',sans-serif; font-size:0.875rem; font-weight:600; cursor:pointer; transition:all 0.2s;
 }
-
-.upload-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 0.25rem;
+.toggle-btn.active { background:rgba(124,58,237,0.2); border-color:#7c3aed; color:#a78bfa; }
+.btn-primary-act {
+    padding:0.875rem 2rem; border-radius:0.875rem; border:none;
+    background:linear-gradient(135deg,#7c3aed,#ec4899); color:white;
+    font-size:0.95rem; font-weight:700; font-family:'Vazirmatn',sans-serif; cursor:pointer; transition:all 0.2s;
 }
-
-.upload-subtitle {
-    color: #cbd5e1;
-    font-size: 0.95rem;
+.btn-primary-act:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,0.3); }
+.btn-primary-act:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-outline-sm {
+    padding:0.375rem 0.875rem; border-radius:0.625rem; border:1px solid #2a3040;
+    background:transparent; color:#94a3b8; font-family:'Vazirmatn',sans-serif; font-size:0.8rem; cursor:pointer; transition:all 0.2s;
 }
-
-.upload-wrapper {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
-    border-radius: 1.5rem;
-    padding: 2.5rem;
+.btn-outline-sm:hover { border-color:#7c3aed; color:#a78bfa; }
+.btn-danger-sm {
+    padding:0.375rem 0.875rem; border-radius:0.625rem; border:1px solid rgba(248,113,113,0.3);
+    background:transparent; color:#f87171; font-family:'Vazirmatn',sans-serif; font-size:0.8rem; cursor:pointer; transition:all 0.2s;
 }
-
-.upload-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
+.btn-danger-sm:hover { background:rgba(248,113,113,0.1); }
+.content-item-card {
+    background:#10131a; border:1px solid #2a3040; border-radius:1rem; padding:1rem 1.25rem;
+    display:flex; align-items:center; gap:1rem; margin-bottom:0.875rem; transition:border-color 0.2s;
 }
-
-/* Upload Zone */
-.upload-zone-wrapper {
-    display: flex;
-    flex-direction: column;
+.content-item-card:hover { border-color:#2a3050; }
+.content-type-badge {
+    width:48px; height:48px; border-radius:0.75rem; display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; flex-shrink:0; background:rgba(124,58,237,0.1);
 }
-
-.zone-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 1.5rem;
+.file-zone {
+    border:2px dashed #2a3040; border-radius:1rem; padding:2.5rem; text-align:center;
+    cursor:pointer; transition:all 0.3s; margin-bottom:1rem; position:relative;
 }
-
-.upload-zone {
-    border: 3px dashed #7c3aed;
-    border-radius: 1rem;
-    padding: 3rem 2rem;
-    text-align: center;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(244, 114, 182, 0.05) 100%);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: 1.5rem;
-}
-
-.upload-zone:hover {
-    border-color: #a78bfa;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%);
-}
-
-.cloud-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.upload-text {
-    color: #cbd5e1;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.upload-subtext {
-    color: #94a3b8;
-    font-size: 0.9rem;
-}
-
-.select-btn {
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    color: white;
-    border: none;
-    padding: 0.875rem 1.5rem;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    font-weight: 600;
-    width: 100%;
-    transition: all 0.3s ease;
-    margin-bottom: 1.5rem;
-}
-
-.select-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-}
-
-.content-types {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-}
-
-.content-type {
-    background-color: rgba(124, 58, 237, 0.1);
-    border: 2px solid #7c3aed;
-    border-radius: 0.875rem;
-    padding: 1rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.content-type:hover {
-    background-color: rgba(124, 58, 237, 0.2);
-    border-color: #a78bfa;
-}
-
-.content-type.active {
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(244, 114, 182, 0.2));
-    border-color: #a78bfa;
-}
-
-.type-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.type-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #a78bfa;
-}
-
-/* Form Section */
-.form-section {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-label {
-    display: block;
-    color: #f1f5f9;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-}
-
-.form-input, .form-textarea, .form-select {
-    width: 100%;
-    background-color: rgba(15, 23, 42, 0.5);
-    border: 1px solid #334155;
-    color: #f1f5f9;
-    padding: 0.875rem 1rem;
-    border-radius: 0.75rem;
-    font-family: inherit;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-}
-
-.form-input:focus, .form-textarea:focus, .form-select:focus {
-    outline: none;
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
-    background-color: rgba(15, 23, 42, 0.8);
-}
-
-.form-textarea {
-    resize: vertical;
-    min-height: 120px;
-    font-family: inherit;
-}
-
-.form-input::placeholder {
-    color: #94a3b8;
-}
-
-.form-textarea::placeholder {
-    color: #94a3b8;
-}
-
-/* Tags */
-.tags-section {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-top: 0.75rem;
-}
-
-.tag-btn {
-    background-color: rgba(124, 58, 237, 0.2);
-    color: #a78bfa;
-    border: 1px solid #7c3aed;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.tag-btn:hover {
-    background-color: rgba(124, 58, 237, 0.3);
-    border-color: #a78bfa;
-}
-
-.tag-btn.active {
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    color: white;
-    border-color: transparent;
-}
-
-/* Access Type */
-.access-types {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-}
-
-.access-option {
-    background-color: rgba(30, 41, 59, 0.5);
-    border: 2px solid #334155;
-    border-radius: 0.875rem;
-    padding: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.access-option:hover {
-    border-color: #7c3aed;
-    background-color: rgba(124, 58, 237, 0.1);
-}
-
-.access-option.active {
-    border-color: #a78bfa;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(244, 114, 182, 0.1));
-}
-
-.access-icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.access-label {
-    color: #f1f5f9;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.access-desc {
-    color: #94a3b8;
-    font-size: 0.8rem;
-}
-
-/* Price Section */
-.price-section {
-    background-color: rgba(124, 58, 237, 0.1);
-    border: 1px solid #7c3aed;
-    border-radius: 0.875rem;
-    padding: 1rem;
-    margin-top: 1rem;
-}
-
-.price-label {
-    color: #a78bfa;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-.price-input {
-    width: 100%;
-    background-color: rgba(15, 23, 42, 0.5);
-    border: 1px solid #334155;
-    color: #f1f5f9;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.price-input:focus {
-    outline: none;
-    border-color: #7c3aed;
-}
-
-/* Buttons */
-.button-group {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #334155;
-}
-
-.btn-primary-upload {
-    flex: 1;
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    color: white;
-    border: none;
-    padding: 1rem;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.btn-primary-upload:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.3);
-}
-
-.btn-secondary-upload {
-    flex: 1;
-    background-color: transparent;
-    color: #cbd5e1;
-    border: 1px solid #334155;
-    padding: 1rem;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-secondary-upload:hover {
-    border-color: #7c3aed;
-    color: #a78bfa;
-}
-
-/* Preview */
-.preview-section {
-    background-color: rgba(30, 41, 59, 0.5);
-    border: 1px solid #334155;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-top: 3rem;
-}
-
-.preview-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.preview-card {
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(244, 114, 182, 0.05));
-    border: 1px solid #7c3aed;
-    border-radius: 0.875rem;
-    padding: 1.5rem;
-}
-
-.preview-title-text {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #a78bfa;
-    margin-bottom: 0.5rem;
-}
-
-.preview-description {
-    color: #cbd5e1;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-    line-height: 1.5;
-}
-
-.preview-price {
-    color: #fbbf24;
-    font-weight: 700;
-    font-size: 1rem;
-}
+.file-zone:hover, .file-zone.has-file { border-color:#7c3aed; background:rgba(124,58,237,0.05); }
+.file-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
 </style>
 
-<div class="upload-page">
-    <div class="upload-header">
-        <div class="upload-title">📤 بارگذاری محتوا</div>
-        <div class="upload-subtitle">محتوای جدید بساز و با دنیا به اشتراک بگذار</div>
+<div class="my-content-page">
+    <div style="margin-bottom:2rem;">
+        <h1 style="font-size:1.75rem; font-weight:900; color:#f1f5f9; margin-bottom:0.375rem;">📁 محتوای من</h1>
+        <p style="color:#94a3b8; font-size:0.9rem;">محتوای خود را مدیریت کن، آپلود کن و با دیگران به اشتراک بگذار</p>
     </div>
 
-    <div class="upload-wrapper">
-        <div class="upload-content">
-            <!-- چپ: ناحیه آپلود -->
-            <div class="upload-zone-wrapper">
-                <div class="zone-title">فایل جدید</div>
-
-                <div class="upload-zone" @ondrop="HandleDrop" @ondragover="HandleDragOver">
-                    <span class="cloud-icon">☁️</span>
-                    <div class="upload-text">فایل را اینجا رها کن</div>
-                    <div class="upload-subtext">ویدیو، صدا یا تصویر با کیفیت بالا</div>
-                    <div style="margin-top: 1rem; color: #94a3b8; font-size: 0.85rem;">
-                        حداکثر ۱۰۰ فایل در هر بار آپلود
-                    </div>
-                </div>
-
-                <button class="select-btn">📁 انتخاب فایل</button>
-
-                <!-- نوع محتوا -->
-                <div style="margin-top: 2rem;">
-                    <div style="color: #f1f5f9; font-weight: 600; margin-bottom: 1rem;">نوع محتوا را انتخاب کن</div>
-                    <div class="content-types">
-                        <div class="content-type @(selectedType == "movie" ? "active" : "")" @onclick="@(() => SelectType("movie"))">
-                            <div class="type-icon">🎬</div>
-                            <div class="type-label">فیلم</div>
-                        </div>
-                        <div class="content-type @(selectedType == "audio" ? "active" : "")" @onclick="@(() => SelectType("audio"))">
-                            <div class="type-icon">🎵</div>
-                            <div class="type-label">صدا</div>
-                        </div>
-                        <div class="content-type @(selectedType == "image" ? "active" : "")" @onclick="@(() => SelectType("image"))">
-                            <div class="type-icon">🖼️</div>
-                            <div class="type-label">تصویر</div>
-                        </div>
-                        <div class="content-type @(selectedType == "document" ? "active" : "")" @onclick="@(() => SelectType("document"))">
-                            <div class="type-icon">📄</div>
-                            <div class="type-label">سند</div>
-                        </div>
-                    </div>
-                </div>
+    @if (AuthState.CurrentUser == null)
+    {
+        <div style="background:#1c2026; border:1px solid #2a3040; border-radius:1.25rem; padding:3rem; text-align:center;">
+            <div style="font-size:3rem; margin-bottom:1rem;">🔒</div>
+            <p style="color:#94a3b8; margin-bottom:1.25rem;">برای آپلود و مدیریت محتوا باید وارد شوید</p>
+            <a href="/login" style="background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.75rem 2rem; border-radius:0.875rem; font-weight:700; text-decoration:none; font-size:0.95rem;">ورود به حساب</a>
+        </div>
+    }
+    else
+    {
+        <!-- ===== UPLOAD NEW CONTENT ===== -->
+        <div class="section-card">
+            <div class="section-header" @onclick="() => showUploadForm = !showUploadForm">
+                <div class="section-title">➕ آپلود محتوای جدید</div>
+                <span style="color:#94a3b8; font-size:1.25rem;">@(showUploadForm ? "▲" : "▼")</span>
             </div>
 
-            <!-- راست: فرم -->
-            <div class="form-section">
-                <!-- عنوان -->
-                <div class="form-group">
-                    <label class="form-label">عنوان محتوا</label>
-                    <input type="text" class="form-input" placeholder="مثلاً: درس ریاضی فصل اول" @bind="contentTitle">
-                </div>
-
-                <!-- توضیحات -->
-                <div class="form-group">
-                    <label class="form-label">توضیحات</label>
-                    <textarea class="form-textarea" placeholder="درباره این محتوا برای بینندگانت بنویس..." @bind="contentDescription"></textarea>
-                </div>
-
-                <!-- برچسب‌ها -->
-                <div class="form-group">
-                    <label class="form-label">برچسب‌ها</label>
-                    <div class="tags-section">
-                        @foreach (var tag in new[] { "درس مهم", "ماده امتحانی", "افزودن برچسب" })
-                        {
-                            <button class="tag-btn">@tag</button>
-                        }
-                    </div>
-                </div>
-
-                <!-- نوع دسترسی -->
-                <div class="form-group">
-                    <label class="form-label">نوع دسترسی</label>
-                    <div class="access-types">
-                        <div class="access-option @(accessType == "premium" ? "active" : "")" @onclick="@(() => SelectAccess("premium"))">
-                            <div class="access-icon">💎</div>
-                            <div class="access-label">محتوای ویژه</div>
-                            <div class="access-desc">فقط در پلتفرم در دسترس</div>
-                        </div>
-                        <div class="access-option @(accessType == "public" ? "active" : "")" @onclick="@(() => SelectAccess("public"))">
-                            <div class="access-icon">🌐</div>
-                            <div class="access-label">عمومی</div>
-                            <div class="access-desc">همه می‌توانند ببینند</div>
-                        </div>
-                        <div class="access-option @(accessType == "unlisted" ? "active" : "")" @onclick="@(() => SelectAccess("unlisted"))">
-                            <div class="access-icon">🔗</div>
-                            <div class="access-label">با لینک</div>
-                            <div class="access-desc">فقط با لینک مستقیم</div>
-                        </div>
-                        <div class="access-option @(accessType == "private" ? "active" : "")" @onclick="@(() => SelectAccess("private"))">
-                            <div class="access-icon">🔒</div>
-                            <div class="access-label">خصوصی</div>
-                            <div class="access-desc">فقط خودت می‌بینی</div>
+            @if (showUploadForm)
+            {
+                @if (uploadSuccess)
+                {
+                    <div style="background:rgba(125,211,168,0.1); border:1px solid rgba(125,211,168,0.3); border-radius:1rem; padding:1.5rem; text-align:center;">
+                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">✅</div>
+                        <div style="color:#7dd3a8; font-weight:700; font-size:1rem; margin-bottom:0.5rem;">محتوا با موفقیت آپلود شد!</div>
+                        <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1rem; flex-wrap:wrap;">
+                            <a href="@uploadedContentUrl" style="background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.625rem 1.5rem; border-radius:0.75rem; font-weight:700; text-decoration:none; font-size:0.875rem;">مشاهده محتوا</a>
+                            <button @onclick="ResetUpload" class="btn-outline-sm">آپلود محتوای جدید</button>
                         </div>
                     </div>
-
-                    @if (accessType == "premium")
-                    {
-                        <div class="price-section">
-                            <label class="price-label">قیمت (تومان)</label>
-                            <div style="color: #94a3b8; font-size: 0.85rem;">
-                                قیمت فروش این محتوای ویژه را تعیین کن
+                }
+                else
+                {
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem;">
+                        <!-- Left: File zone -->
+                        <div>
+                            <div class="file-zone @(selectedFile != null ? "has-file" : "")">
+                                <InputFile OnChange="@HandleFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.mp3,.wav,.mp4,.mov,.webm" />
+                                @if (selectedFile == null)
+                                {
+                                    <div style="font-size:3rem; margin-bottom:0.75rem; pointer-events:none;">☁️</div>
+                                    <div style="color:#e2e8f0; font-weight:600; margin-bottom:0.375rem; pointer-events:none;">فایل را اینجا رها کن یا کلیک کن</div>
+                                    <div style="color:#64748b; font-size:0.8rem; pointer-events:none;">ویدیو • صدا • تصویر • PDF</div>
+                                }
+                                else
+                                {
+                                    <div style="font-size:2rem; margin-bottom:0.5rem; pointer-events:none;">@FileTypeIcon()</div>
+                                    <div style="color:#7dd3a8; font-weight:700; pointer-events:none;">@selectedFile.Name</div>
+                                    <div style="color:#64748b; font-size:0.8rem; pointer-events:none;">@FormatSize(selectedFile.Size)</div>
+                                }
                             </div>
-                            <input type="number" class="price-input" placeholder="مثلاً: 50000" style="margin-top:0.5rem;" />
-                        </div>
-                    }
-                </div>
 
-                <!-- دکمه‌ها -->
-                <div class="button-group">
-                    <button class="btn-secondary-upload" @onclick="CancelUpload">
-                        🗑️ لغو
-                    </button>
-                    <button class="btn-primary-upload" @onclick="SubmitUpload">
-                        ✅ انتشار محتوا
-                    </button>
-                </div>
-            </div>
+                            @if (!string.IsNullOrEmpty(uploadError))
+                            {
+                                <div style="background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:0.75rem; padding:0.875rem; color:#f87171; font-size:0.875rem; margin-bottom:1rem;">@uploadError</div>
+                            }
+                        </div>
+
+                        <!-- Right: Form -->
+                        <div>
+                            <div class="fld-group">
+                                <label class="fld-label">عنوان محتوا *</label>
+                                <input class="fld-input" placeholder="مثلاً: آموزش Python مقدماتی" @bind="uploadTitle" />
+                            </div>
+                            <div class="fld-group">
+                                <label class="fld-label">توضیحات</label>
+                                <textarea class="fld-textarea" placeholder="درباره این محتوا بنویسید..." @bind="uploadDesc"></textarea>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                <div class="fld-group">
+                                    <label class="fld-label">دسته‌بندی</label>
+                                    <select class="fld-select" @bind="uploadCategory">
+                                        <option value="فناوری">فناوری</option>
+                                        <option value="علوم">علوم</option>
+                                        <option value="ادبیات">ادبیات</option>
+                                        <option value="هنر">هنر</option>
+                                        <option value="موسیقی">موسیقی</option>
+                                        <option value="برنامه‌نویسی">برنامه‌نویسی</option>
+                                        <option value="ورزش">ورزش</option>
+                                        <option value="سلامت">سلامت</option>
+                                        <option value="کسب و کار">کسب و کار</option>
+                                        <option value="سایر">سایر</option>
+                                    </select>
+                                </div>
+                                <div class="fld-group">
+                                    <label class="fld-label">برچسب‌ها</label>
+                                    <input class="fld-input" placeholder="آموزش, مقدماتی, ..." @bind="uploadTags" />
+                                </div>
+                            </div>
+
+                            <div class="fld-group">
+                                <label class="fld-label">نوع دسترسی</label>
+                                <div style="display:flex; gap:0.75rem;">
+                                    <button type="button" class="toggle-btn @(uploadIsFree ? "active" : "")" @onclick="() => uploadIsFree = true">🌐 رایگان</button>
+                                    <button type="button" class="toggle-btn @(!uploadIsFree ? "active" : "")" @onclick="() => uploadIsFree = false">💎 پولی</button>
+                                </div>
+                                @if (!uploadIsFree)
+                                {
+                                    <div style="margin-top:0.875rem;">
+                                        <label class="fld-label">قیمت (کوین)</label>
+                                        <input class="fld-input" type="number" min="1" placeholder="مثلاً: 200" @bind="uploadCoinPrice" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.25rem; display:flex; justify-content:flex-end; gap:1rem; border-top:1px solid #2a3040; padding-top:1.25rem;">
+                        <button class="btn-outline-sm" @onclick="ResetUpload" style="padding:0.75rem 1.5rem;">لغو</button>
+                        <button class="btn-primary-act" @onclick="SubmitUpload" disabled="@uploading">
+                            @(uploading ? $"در حال آپلود... {uploadProgress}%" : "📤 انتشار محتوا")
+                        </button>
+                    </div>
+                }
+            }
         </div>
 
-        <!-- پیش‌نمایش -->
-        <div class="preview-section">
-            <div class="preview-title">
-                <span>👁️</span> پیش‌نمایش
+        <!-- ===== MY CONTENT LIST ===== -->
+        <div class="section-card">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                <div class="section-title">📋 محتواهای آپلود شده (@myContents.Count)</div>
+                <button class="btn-outline-sm" @onclick="LoadMyContent" style="padding:0.5rem 1rem;">🔄 بروزرسانی</button>
             </div>
-            @if (string.IsNullOrEmpty(contentTitle))
+
+            @if (myContents.Count == 0)
             {
-                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
-                    <p>عنوان را وارد کن تا پیش‌نمایش نمایش داده شود</p>
+                <div style="text-align:center; padding:2rem; color:#64748b;">
+                    <div style="font-size:2.5rem; margin-bottom:0.75rem;">📂</div>
+                    <p>هنوز محتوایی آپلود نکرده‌اید</p>
                 </div>
             }
             else
             {
-                <div class="preview-card">
-                    <div class="preview-title-text">@contentTitle</div>
-                    @if (!string.IsNullOrEmpty(contentDescription))
+                @foreach (var item in myContents)
+                {
+                    var contentUrl = $"/content/{item.Id}";
+                    @if (editingContentId == item.Id)
                     {
-                        <div class="preview-description">@contentDescription</div>
+                        <!-- Inline edit form -->
+                        <div style="background:#1e2430; border:1px solid #7c3aed; border-radius:1rem; padding:1.25rem; margin-bottom:0.875rem;">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                                <div>
+                                    <label class="fld-label">عنوان</label>
+                                    <input class="fld-input" @bind="editTitle" />
+                                </div>
+                                <div>
+                                    <label class="fld-label">دسته‌بندی</label>
+                                    <select class="fld-select" @bind="editCategory">
+                                        <option value="فناوری">فناوری</option>
+                                        <option value="علوم">علوم</option>
+                                        <option value="ادبیات">ادبیات</option>
+                                        <option value="هنر">هنر</option>
+                                        <option value="موسیقی">موسیقی</option>
+                                        <option value="برنامه‌نویسی">برنامه‌نویسی</option>
+                                        <option value="ورزش">ورزش</option>
+                                        <option value="سلامت">سلامت</option>
+                                        <option value="کسب و کار">کسب و کار</option>
+                                        <option value="سایر">سایر</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="fld-label">برچسب‌ها</label>
+                                    <input class="fld-input" @bind="editTags" />
+                                </div>
+                                <div>
+                                    <label class="fld-label">قیمت کوین (0 = رایگان)</label>
+                                    <input class="fld-input" type="number" min="0" @bind="editCoinPrice" />
+                                </div>
+                            </div>
+                            <div class="fld-group">
+                                <label class="fld-label">توضیحات</label>
+                                <textarea class="fld-textarea" @bind="editDesc"></textarea>
+                            </div>
+                            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                                <button class="btn-outline-sm" @onclick="CancelEdit">لغو</button>
+                                <button class="btn-primary-act" style="padding:0.625rem 1.5rem; font-size:0.875rem;" @onclick="() => SaveEdit(item.Id)">ذخیره</button>
+                            </div>
+                        </div>
                     }
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #94a3b8; font-size: 0.9rem;">نوع: @selectedType</span>
-                        @if (accessType == "premium")
-                        {
-                            <div class="preview-price">💰 ویژه</div>
-                        }
-                    </div>
-                </div>
+                    else
+                    {
+                        <div class="content-item-card">
+                            <div class="content-type-badge">@ContentTypeEmoji(item.Type)</div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:700; color:#e2e8f0; font-size:0.9rem; margin-bottom:0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@item.Title</div>
+                                <div style="font-size:0.75rem; color:#64748b; display:flex; gap:0.875rem; flex-wrap:wrap;">
+                                    <span>@item.Category</span>
+                                    <span>👁 @item.ViewCount</span>
+                                    <span>@(item.IsFree ? "رایگان" : $"{item.CoinPrice} 🪙")</span>
+                                    <span>@item.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:0.5rem; flex-shrink:0;">
+                                <button class="btn-outline-sm" @onclick="() => Nav.NavigateTo(contentUrl)">مشاهده</button>
+                                <button class="btn-outline-sm" @onclick="() => StartEdit(item)">✏️</button>
+                                <button class="btn-danger-sm" @onclick="() => DeleteContent(item.Id)">🗑️</button>
+                            </div>
+                        </div>
+                    }
+                }
             }
         </div>
-    </div>
+
+        <!-- ===== TEACHER PANEL ===== -->
+        @if (IsTeacher)
+        {
+            <div class="section-card" style="border-color:rgba(124,58,237,0.4);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <div class="section-title" style="color:#a78bfa;">🎓 پنل معلم — دوره‌های من</div>
+                    <button class="toggle-btn @(showCourseForm ? "active" : "")" @onclick="() => showCourseForm = !showCourseForm">+ اضافه کردن دوره</button>
+                </div>
+
+                @if (showCourseForm)
+                {
+                    <div style="background:#10131a; border:1px solid #2a3040; border-radius:1rem; padding:1.5rem; margin-bottom:1.5rem;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                            <div>
+                                <label class="fld-label">عنوان دوره *</label>
+                                <input class="fld-input" placeholder="مثلاً: آموزش Python" @bind="newCourseTitle" />
+                            </div>
+                            <div>
+                                <label class="fld-label">دسته‌بندی</label>
+                                <select class="fld-select" @bind="newCourseCategory">
+                                    <option value="برنامه‌نویسی">برنامه‌نویسی</option>
+                                    <option value="طراحی">طراحی</option>
+                                    <option value="کسب و کار">کسب و کار</option>
+                                    <option value="علوم">علوم</option>
+                                    <option value="ریاضی">ریاضی</option>
+                                    <option value="زبان">زبان</option>
+                                    <option value="هنر">هنر</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="fld-label">سطح</label>
+                                <select class="fld-select" @bind="newCourseLevel">
+                                    <option value="مقدماتی">مقدماتی</option>
+                                    <option value="متوسط">متوسط</option>
+                                    <option value="پیشرفته">پیشرفته</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="fld-label">قیمت (کوین، 0 = رایگان)</label>
+                                <input class="fld-input" type="number" min="0" @bind="newCourseCoinPrice" />
+                            </div>
+                        </div>
+                        <div class="fld-group">
+                            <label class="fld-label">توضیحات</label>
+                            <textarea class="fld-textarea" placeholder="توضیح کوتاهی از محتوای دوره..." @bind="newCourseDesc"></textarea>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="fld-group">
+                                <label class="fld-label">چه یاد می‌گیرید (هر خط یک مورد)</label>
+                                <textarea class="fld-textarea" placeholder="مفاهیم پایه&#10;پروژه عملی&#10;..." @bind="newCourseLearn"></textarea>
+                            </div>
+                            <div class="fld-group">
+                                <label class="fld-label">پیش‌نیازها (هر خط یک مورد)</label>
+                                <textarea class="fld-textarea" placeholder="هیچ پیش‌نیازی لازم نیست" @bind="newCourseReq"></textarea>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:0.75rem;">
+                            <button class="btn-outline-sm" @onclick="() => showCourseForm = false">لغو</button>
+                            <button class="btn-primary-act" style="padding:0.75rem 1.5rem; font-size:0.875rem;" @onclick="CreateCourse" disabled="@creatingCourse">
+                                @(creatingCourse ? "در حال ذخیره..." : "ایجاد دوره")
+                            </button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(courseCreateMsg))
+                        {
+                            <div style="color:#7dd3a8; font-size:0.875rem; text-align:center; margin-top:0.75rem;">@courseCreateMsg</div>
+                        }
+                    </div>
+                }
+
+                @if (myCourses.Count == 0)
+                {
+                    <div style="text-align:center; padding:1.5rem; color:#64748b;">
+                        <p>هنوز دوره‌ای ایجاد نکرده‌اید</p>
+                    </div>
+                }
+                else
+                {
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem;">
+                        @foreach (var c in myCourses)
+                        {
+                            var cUrl = $"/course/{c.Id}";
+                            <div style="background:#10131a; border:1px solid #2a3040; border-radius:1rem; padding:1.25rem;">
+                                <div style="font-weight:700; color:#e2e8f0; margin-bottom:0.375rem;">@c.Title</div>
+                                <div style="font-size:0.8rem; color:#64748b; margin-bottom:0.75rem;">@c.Category • @c.Level</div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.8rem; color:#7dd3a8;">👥 @c.StudentCount دانش‌آموز</span>
+                                    <button class="btn-outline-sm" @onclick="() => Nav.NavigateTo(cUrl)">مشاهده</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
 </div>
 
 @code {
-    private string selectedType = "movie";
-    private string accessType = "public";
-    private string contentTitle = "";
-    private string contentDescription = "";
+    // Upload state
+    private bool showUploadForm = false;
+    private IBrowserFile? selectedFile;
+    private string uploadTitle = "";
+    private string uploadDesc = "";
+    private string uploadCategory = "فناوری";
+    private string uploadTags = "";
+    private bool uploadIsFree = true;
+    private int uploadCoinPrice = 0;
+    private bool uploading = false;
+    private int uploadProgress = 0;
+    private bool uploadSuccess = false;
+    private string? uploadError;
+    private string uploadedContentUrl = "";
 
-    private void SelectType(string type)
+    // My content
+    private List<ContentMedia> myContents = new();
+    private int editingContentId = 0;
+    private string editTitle = "";
+    private string editDesc = "";
+    private string editCategory = "";
+    private string editTags = "";
+    private int editCoinPrice = 0;
+
+    // Teacher / courses
+    private bool showCourseForm = false;
+    private List<Course> myCourses = new();
+    private string newCourseTitle = "";
+    private string newCourseDesc = "";
+    private string newCourseCategory = "برنامه‌نویسی";
+    private string newCourseLevel = "مقدماتی";
+    private int newCourseCoinPrice = 0;
+    private string newCourseLearn = "";
+    private string newCourseReq = "";
+    private bool creatingCourse = false;
+    private string? courseCreateMsg;
+    private bool IsTeacher => IsTeacherRole(AuthState.CurrentUser?.Role);
+
+    protected override async Task OnInitializedAsync()
     {
-        selectedType = type;
+        await LoadMyContent();
+        if (IsTeacher)
+            await LoadMyCourses();
     }
 
-    private void SelectAccess(string access)
+    private async Task LoadMyContent()
     {
-        accessType = access;
+        var userId = AuthState.CurrentUser?.Id ?? 0;
+        if (userId == 0) return;
+        myContents = await Db.Contents
+            .Where(c => c.UploaderId == userId)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
     }
 
-    private void HandleDrop(DragEventArgs e)
+    private async Task LoadMyCourses()
     {
-        Console.WriteLine("File dropped");
+        var name = AuthState.CurrentUser?.Name ?? "";
+        myCourses = await Db.Courses
+            .Where(c => c.Instructor == name)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
     }
 
-    private void HandleDragOver(DragEventArgs e)
+    private void HandleFileSelected(InputFileChangeEventArgs e)
     {
-        e.DataTransfer.DropEffect = "copy";
+        selectedFile = e.File;
+        uploadError = null;
     }
 
-    private void SubmitUpload()
+    private async Task SubmitUpload()
     {
-        Console.WriteLine($"Upload: {contentTitle}, Type: {selectedType}, Access: {accessType}");
+        uploadError = null;
+        if (selectedFile == null) { uploadError = "لطفاً یک فایل انتخاب کنید."; return; }
+        if (string.IsNullOrWhiteSpace(uploadTitle)) { uploadError = "عنوان محتوا ضروری است."; return; }
+
+        var ext = Path.GetExtension(selectedFile.Name).ToLower();
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".mp3", ".wav", ".mp4", ".mov", ".webm" };
+        if (!allowed.Contains(ext)) { uploadError = "فرمت فایل مجاز نیست."; return; }
+
+        uploading = true;
+        try
+        {
+            var type = ext switch
+            {
+                ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" => ContentMediaType.Image,
+                ".pdf" => ContentMediaType.PDF,
+                ".mp3" or ".wav" => ContentMediaType.Audio,
+                _ => ContentMediaType.Video
+            };
+
+            var dir = Path.Combine(Env.WebRootPath, "uploads", type.ToString().ToLower() + "s");
+            Directory.CreateDirectory(dir);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(dir, fileName);
+            var relPath = $"/uploads/{type.ToString().ToLower()}s/{fileName}";
+
+            await using (var stream = selectedFile.OpenReadStream(maxAllowedSize: 512_000_000L))
+            await using (var fs = new FileStream(filePath, FileMode.Create))
+            {
+                await stream.CopyToAsync(fs);
+            }
+
+            var learn = string.Join("|", (newCourseLearn ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries));
+
+            var content = new ContentMedia
+            {
+                Title = uploadTitle.Trim(),
+                Description = uploadDesc.Trim(),
+                Type = type,
+                FilePath = relPath,
+                Category = uploadCategory,
+                Tags = uploadTags.Trim(),
+                IsFree = uploadIsFree,
+                CoinPrice = uploadIsFree ? 0 : uploadCoinPrice,
+                FileSizeBytes = selectedFile.Size,
+                UploaderId = AuthState.CurrentUser?.Id,
+                IsPublished = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            Db.Contents.Add(content);
+            await Db.SaveChangesAsync();
+
+            uploadedContentUrl = $"/content/{content.Id}";
+            uploadSuccess = true;
+            await LoadMyContent();
+        }
+        catch (Exception ex)
+        {
+            uploadError = $"خطا در آپلود: {ex.Message}";
+        }
+        finally { uploading = false; }
     }
 
-    private void CancelUpload()
+    private void ResetUpload()
     {
-        contentTitle = "";
-        contentDescription = "";
+        selectedFile = null;
+        uploadTitle = uploadDesc = uploadTags = "";
+        uploadCategory = "فناوری";
+        uploadIsFree = true;
+        uploadCoinPrice = 0;
+        uploadSuccess = false;
+        uploadError = null;
+        uploadedContentUrl = "";
+    }
+
+    private void StartEdit(ContentMedia item)
+    {
+        editingContentId = item.Id;
+        editTitle = item.Title;
+        editDesc = item.Description;
+        editCategory = item.Category;
+        editTags = item.Tags;
+        editCoinPrice = item.CoinPrice;
+    }
+
+    private void CancelEdit() => editingContentId = 0;
+
+    private async Task SaveEdit(int id)
+    {
+        var item = await Db.Contents.FindAsync(id);
+        if (item == null) return;
+        item.Title = editTitle.Trim();
+        item.Description = editDesc.Trim();
+        item.Category = editCategory;
+        item.Tags = editTags.Trim();
+        item.IsFree = editCoinPrice <= 0;
+        item.CoinPrice = editCoinPrice <= 0 ? 0 : editCoinPrice;
+        item.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+        editingContentId = 0;
+        await LoadMyContent();
+    }
+
+    private async Task DeleteContent(int id)
+    {
+        var item = await Db.Contents.FindAsync(id);
+        if (item != null)
+        {
+            Db.Contents.Remove(item);
+            await Db.SaveChangesAsync();
+            await LoadMyContent();
+        }
+    }
+
+    private async Task CreateCourse()
+    {
+        if (string.IsNullOrWhiteSpace(newCourseTitle)) return;
+        creatingCourse = true;
+        courseCreateMsg = null;
+        try
+        {
+            var learn = string.Join("|", newCourseLearn.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+            var req = string.Join("|", newCourseReq.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+
+            Db.Courses.Add(new Course
+            {
+                Title = newCourseTitle.Trim(),
+                Description = newCourseDesc.Trim(),
+                Category = newCourseCategory,
+                Level = newCourseLevel,
+                Instructor = AuthState.CurrentUser!.Name,
+                CoinPrice = newCourseCoinPrice,
+                IsFree = newCourseCoinPrice <= 0,
+                WhatYouLearn = learn,
+                Requirements = string.IsNullOrWhiteSpace(req) ? "هیچ پیش‌نیازی لازم نیست" : req,
+                IsPublished = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await Db.SaveChangesAsync();
+
+            courseCreateMsg = "دوره با موفقیت ایجاد شد!";
+            newCourseTitle = newCourseDesc = newCourseLearn = newCourseReq = "";
+            newCourseCoinPrice = 0;
+            showCourseForm = false;
+            await LoadMyCourses();
+        }
+        finally { creatingCourse = false; }
+    }
+
+    private string FileTypeIcon() => selectedFile == null ? "📁" :
+        Path.GetExtension(selectedFile.Name).ToLower() switch
+        {
+            ".mp4" or ".mov" or ".webm" => "🎬",
+            ".mp3" or ".wav" => "🎵",
+            ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" => "🖼️",
+            ".pdf" => "📄",
+            _ => "📁"
+        };
+
+    private static string ContentTypeEmoji(ContentMediaType t) => t switch
+    {
+        ContentMediaType.Video => "🎬",
+        ContentMediaType.Audio => "🎵",
+        ContentMediaType.Image => "🖼️",
+        ContentMediaType.PDF => "📄",
+        _ => "📁"
+    };
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1_048_576 => $"{bytes / 1024.0:F1} KB",
+        < 1_073_741_824 => $"{bytes / 1_048_576.0:F1} MB",
+        _ => $"{bytes / 1_073_741_824.0:F1} GB"
+    };
+
+    private static bool IsTeacherRole(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return false;
+        }
+
+        var normalized = role.Trim()
+            .Replace("‌", string.Empty)
+            .Replace(" ", string.Empty)
+            .ToLowerInvariant();
+
+        return normalized is "معلم" or "teacher";
     }
 }

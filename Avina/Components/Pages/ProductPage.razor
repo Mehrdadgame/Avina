@@ -1,0 +1,230 @@
+@page "/product/{Id:int}"
+@rendermode InteractiveServer
+@using Avina.Services
+@using Avina.Data
+@using Avina.Models
+@using Microsoft.EntityFrameworkCore
+@inject AvinaDbContext Db
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+
+<style>
+.product-page { max-width: 960px; margin: 0 auto; padding: 1.5rem 2rem; }
+.product-hero {
+    display: grid; grid-template-columns: 1fr 320px; gap: 2rem;
+    background: #1c2026; border-radius: 1.25rem; overflow: hidden; padding: 2rem; margin-bottom: 1.5rem;
+}
+@@media (max-width: 768px) { .product-hero { grid-template-columns: 1fr; } }
+.product-image-box {
+    aspect-ratio: 4/3; border-radius: 1rem; overflow: hidden;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    display: flex; align-items: center; justify-content: center; font-size: 6rem;
+}
+.buy-card { background: #10131a; border: 1px solid #2a3040; border-radius: 1rem; padding: 1.5rem; }
+.btn-buy-prod {
+    width: 100%; padding: 0.875rem; border-radius: 0.875rem; border: none;
+    background: linear-gradient(135deg, #7c3aed, #ec4899); color: white;
+    font-size: 1rem; font-weight: 700; font-family: 'Vazirmatn', sans-serif;
+    cursor: pointer; transition: all 0.2s; margin-top: 0.75rem;
+}
+.btn-buy-prod:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(124,58,237,0.3); }
+.btn-buy-prod:disabled { opacity: 0.5; cursor: default; }
+.btn-back {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: #94a3b8; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; margin-bottom: 1.25rem;
+    background: none; border: none; font-family: 'Vazirmatn', sans-serif;
+}
+.btn-back:hover { color: #a78bfa; }
+.detail-row { display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #2a3040; font-size: 0.875rem; }
+.detail-row:last-child { border-bottom: none; }
+</style>
+
+<div class="product-page">
+    <button class="btn-back" @onclick="@(() => Nav.NavigateTo("/store"))">← بازگشت به فروشگاه</button>
+
+    @if (loading)
+    {
+        <div style="text-align:center; padding:4rem; color:#64748b;">در حال بارگذاری...</div>
+    }
+    else if (product == null)
+    {
+        <div style="text-align:center; padding:4rem; color:#f87171;">محصول یافت نشد.</div>
+    }
+    else
+    {
+        <div class="product-hero">
+            <!-- Left: Image + info -->
+            <div>
+                <div class="product-image-box">@CategoryIcon(product.Category)</div>
+                <h1 style="font-size:1.5rem; font-weight:900; color:#f1f5f9; margin:1.25rem 0 0.625rem;">@product.Name</h1>
+                <p style="color:#94a3b8; font-size:0.9rem; line-height:1.7; margin-bottom:1.25rem;">@product.Description</p>
+
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                    <span style="background:rgba(124,58,237,0.15); color:#a78bfa; border:1px solid rgba(124,58,237,0.3); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700;">@product.Category</span>
+                    <span style="background:rgba(30,41,59,0.8); color:#94a3b8; padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem;">@TypeLabel(product.Type)</span>
+                    @if (product.IsNew)
+                    {
+                        <span style="background:rgba(125,211,168,0.15); color:#7dd3a8; border:1px solid rgba(125,211,168,0.3); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700;">جدید</span>
+                    }
+                </div>
+
+                <!-- Details table -->
+                <div style="background:#10131a; border:1px solid #2a3040; border-radius:1rem; padding:1rem;">
+                    <div class="detail-row"><span style="color:#94a3b8;">نوع محصول</span><strong style="color:#e2e8f0;">@TypeLabel(product.Type)</strong></div>
+                    <div class="detail-row"><span style="color:#94a3b8;">دسته‌بندی</span><strong style="color:#e2e8f0;">@product.Category</strong></div>
+                    @if (product.Stock < 9999)
+                    {
+                        <div class="detail-row"><span style="color:#94a3b8;">موجودی</span><strong style="color:@(product.Stock > 0 ? "#7dd3a8" : "#f87171");">@product.Stock عدد</strong></div>
+                    }
+                    @if (!string.IsNullOrEmpty(product.FilePath) && purchased)
+                    {
+                        <div class="detail-row"><span style="color:#94a3b8;">دانلود</span><a href="@product.FilePath" target="_blank" style="color:#7c3aed; font-weight:700; font-size:0.875rem;">دانلود فایل →</a></div>
+                    }
+                </div>
+            </div>
+
+            <!-- Right: Buy card -->
+            <div class="buy-card">
+                <div style="font-size:2.25rem; font-weight:900; color:#a78bfa; margin-bottom:0.25rem; text-align:center;">@product.CoinPrice <span style="font-size:1.5rem;">🪙</span></div>
+                @if (product.Price > 0)
+                {
+                    <div style="text-align:center; color:#64748b; font-size:0.85rem; margin-bottom:1rem;">معادل $@product.Price.ToString("F0")</div>
+                }
+
+                @if (purchased)
+                {
+                    <div style="background:rgba(125,211,168,0.1); border:1px solid rgba(125,211,168,0.3); border-radius:0.75rem; padding:1rem; text-align:center; margin-top:0.75rem;">
+                        <div style="font-size:1.5rem; margin-bottom:0.375rem;">✅</div>
+                        <div style="color:#7dd3a8; font-weight:700;">خریداری شده</div>
+                        @if (!string.IsNullOrEmpty(product.FilePath))
+                        {
+                            <a href="@product.FilePath" target="_blank" style="display:block; margin-top:0.75rem; color:#7c3aed; font-weight:700; font-size:0.875rem;">دانلود محصول →</a>
+                        }
+                    </div>
+                }
+                else if (AuthState.CurrentUser == null)
+                {
+                    <a href="/login" style="display:block; text-align:center; margin-top:0.75rem; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.875rem; border-radius:0.875rem; font-weight:700; font-size:0.95rem; text-decoration:none;">ورود برای خرید</a>
+                }
+                else
+                {
+                    <div style="background:#1c2026; border-radius:0.75rem; padding:0.875rem; margin-top:0.5rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.5rem;">
+                            <span style="color:#94a3b8;">قیمت</span>
+                            <span style="color:#a78bfa; font-weight:700;">@product.CoinPrice 🪙</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+                            <span style="color:#94a3b8;">موجودی</span>
+                            <span style="color:@(AuthState.CurrentUser.Coin >= product.CoinPrice ? "#7dd3a8" : "#f87171"); font-weight:700;">@AuthState.CurrentUser.Coin 🪙</span>
+                        </div>
+                    </div>
+                    <button class="btn-buy-prod" @onclick="BuyProduct" disabled="@buying">
+                        @(buying ? "در حال پردازش..." : $"خرید محصول — {product.CoinPrice} 🪙")
+                    </button>
+                    @if (!string.IsNullOrEmpty(buyError))
+                    {
+                        <div style="color:#f87171; font-size:0.8rem; text-align:center; margin-top:0.5rem;">@buyError</div>
+                    }
+                }
+
+                <div style="margin-top:1.5rem; border-top:1px solid #2a3040; padding-top:1rem;">
+                    <div style="font-size:0.8rem; color:#64748b; text-align:center; line-height:1.6;">
+                        💳 پرداخت امن با کوین<br/>
+                        🔄 ضمانت بازگشت وجه
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Product? product;
+    private bool loading = true;
+    private bool purchased = false;
+    private bool buying = false;
+    private string? buyError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        loading = true;
+        try
+        {
+            product = await Db.Products.FindAsync(Id);
+            if (product != null && AuthState.CurrentUser != null)
+            {
+                purchased = await Db.UserPurchases
+                    .AnyAsync(p => p.UserId == AuthState.CurrentUser.Id && p.ProductId == Id);
+            }
+        }
+        finally { loading = false; }
+    }
+
+    private async Task BuyProduct()
+    {
+        var user = AuthState.CurrentUser;
+        if (user == null || product == null) return;
+
+        buying = true;
+        buyError = null;
+
+        try
+        {
+            if (user.Coin < product.CoinPrice)
+            {
+                buyError = $"کوین کافی نیست. نیاز: {product.CoinPrice}، موجودی: {user.Coin}";
+                return;
+            }
+
+            var dbUser = await Db.Users.FindAsync(user.Id);
+            if (dbUser == null) return;
+
+            dbUser.Coin -= product.CoinPrice;
+
+            Db.UserPurchases.Add(new UserPurchase
+            {
+                UserId = user.Id,
+                ProductId = Id,
+                CoinSpent = product.CoinPrice,
+                AmountSpent = product.Price
+            });
+
+            await Db.SaveChangesAsync();
+            user.Coin = dbUser.Coin;
+            if (AuthState.CurrentUser != null) AuthState.CurrentUser.Coin = dbUser.Coin;
+            purchased = true;
+        }
+        catch
+        {
+            buyError = "خطا در پردازش خرید.";
+        }
+        finally { buying = false; }
+    }
+
+    private static string CategoryIcon(string? cat) => cat switch
+    {
+        "کتاب" => "📚",
+        "پادکست" => "🎙️",
+        "کیت مهارتی" => "🔧",
+        "دوره ویدیویی" => "🎬",
+        "بازی" => "🎮",
+        _ => "🛍️"
+    };
+
+    private static string TypeLabel(string? t) => t switch
+    {
+        "Physical" => "فیزیکی",
+        "Digital" => "دیجیتال",
+        "Podcast" => "پادکست",
+        "Pdf" => "PDF",
+        _ => t ?? "نامشخص"
+    };
+}

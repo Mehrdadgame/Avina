@@ -1,0 +1,389 @@
+@page "/course/{CourseId:int}/exam"
+@rendermode InteractiveServer
+@using Avina.Services
+@using Avina.Data
+@using Microsoft.EntityFrameworkCore
+@inject AvinaDbContext Db
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<style>
+.exam-container { max-width: 780px; margin: 0 auto; padding: 2rem; }
+.exam-header {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+.exam-timer {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #f1f5f9;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+}
+.exam-timer.warning { color: #f87171; animation: pulse 1s infinite; }
+@@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.question-card {
+    background: #1c2026;
+    border-radius: 1.25rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #2a3040;
+    transition: border-color 0.2s;
+}
+.question-card.answered { border-color: #7c3aed; }
+.question-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+.question-num {
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #7c3aed;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.options-grid { display: grid; gap: 0.75rem; }
+.option-btn {
+    width: 100%;
+    text-align: right;
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.875rem;
+    border: 1px solid #2a3040;
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    font-family: 'Vazirmatn', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.option-btn:hover:not(:disabled) { background: rgba(124,58,237,0.1); border-color: #7c3aed; }
+.option-btn.selected { background: rgba(124,58,237,0.2); border-color: #7c3aed; color: #a78bfa; font-weight: 700; }
+.option-btn.correct { background: rgba(125,211,168,0.2); border-color: #7dd3a8; color: #7dd3a8; font-weight: 700; }
+.option-btn.wrong { background: rgba(248,113,113,0.15); border-color: #f87171; color: #f87171; }
+.option-label {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.08);
+}
+.result-card {
+    background: linear-gradient(135deg, #1c2026, #0f172a);
+    border-radius: 1.5rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    border: 1px solid #2a3040;
+}
+.result-score {
+    font-size: 5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+.result-score.pass { color: #7dd3a8; }
+.result-score.fail { color: #f87171; }
+.cert-box {
+    background: rgba(125,211,168,0.1);
+    border: 1px solid rgba(125,211,168,0.3);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+</style>
+
+@if (loading)
+{
+    <div style="padding:4rem; text-align:center; color:#64748b;">در حال بارگذاری آزمون...</div>
+}
+else if (AuthState.CurrentUser == null)
+{
+    <div style="padding:4rem; text-align:center;">
+        <p style="color:#94a3b8; margin-bottom:1rem;">برای شرکت در آزمون باید وارد شوید.</p>
+        <a href="/login" style="color:#7c3aed; font-weight:700;">ورود به حساب</a>
+    </div>
+}
+else if (exam == null)
+{
+    <div style="padding:4rem; text-align:center; color:#f87171;">آزمونی برای این دوره یافت نشد.</div>
+}
+else if (submitted)
+{
+    <!-- Result Screen -->
+    <div class="exam-container">
+        <div class="result-card">
+            <div style="font-size:4rem; margin-bottom:1rem;">@(passed ? "🏆" : "😔")</div>
+            <div class="result-score @(passed ? "pass" : "fail")">@scorePercent٪</div>
+            <div style="font-size:1rem; color:#94a3b8; margin-bottom:0.5rem;">نمره شما</div>
+            <div style="color:#64748b; font-size:0.875rem; margin-bottom:2rem;">نمره قبولی: @exam.PassingScore٪</div>
+
+            @if (passed)
+            {
+                <div style="font-size:1.5rem; font-weight:900; color:#7dd3a8; margin-bottom:0.5rem;">قبول شدید! 🎉</div>
+
+                @if (!string.IsNullOrEmpty(certNumber))
+                {
+                    <div class="cert-box">
+                        <div style="font-size:1.25rem; margin-bottom:0.5rem;">🏅</div>
+                        <div style="font-weight:700; color:#7dd3a8; margin-bottom:0.25rem;">گواهینامه صادر شد</div>
+                        <div style="font-size:0.875rem; color:#94a3b8; margin-bottom:0.25rem;">شماره گواهینامه:</div>
+                        <div style="font-size:1rem; font-weight:700; color:#e2e8f0; font-family:monospace; letter-spacing:0.05em;">@certNumber</div>
+                        @if (bonusCoins > 0)
+                        {
+                            <div style="margin-top:0.75rem; font-size:0.85rem; color:#fbbf24;">+@bonusCoins 🪙 کوین جایزه دریافت کردید!</div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="font-size:1.25rem; font-weight:700; color:#94a3b8; margin-bottom:1rem;">مجدداً تلاش کنید</div>
+            }
+
+            <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1.5rem;">
+                <button @onclick="@(() => Nav.NavigateTo($"/course/{CourseId}"))"
+                        style="padding:0.75rem 1.5rem; border-radius:0.875rem; background:rgba(124,58,237,0.2); border:1px solid #7c3aed; color:#a78bfa; font-weight:700; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.875rem;">
+                    بازگشت به دوره
+                </button>
+                @if (!passed)
+                {
+                    <button @onclick="Restart"
+                            style="padding:0.75rem 1.5rem; border-radius:0.875rem; background:linear-gradient(135deg,#7c3aed,#ec4899); border:none; color:white; font-weight:700; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.875rem;">
+                        تلاش مجدد
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="exam-container">
+        <!-- Header with timer -->
+        <div class="exam-header">
+            <div style="font-size:0.875rem; color:#94a3b8; margin-bottom:0.5rem;">آزمون</div>
+            <h1 style="font-size:1.5rem; font-weight:900; color:#f1f5f9; margin-bottom:1.5rem;">@exam.Title</h1>
+            <div class="exam-timer @(timerSeconds <= 60 ? "warning" : "")">
+                @($"{timerSeconds / 60:D2}:{timerSeconds % 60:D2}")
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">زمان باقی‌مانده</div>
+            <div style="margin-top:1rem; font-size:0.85rem; color:#94a3b8;">
+                @answers.Count از @questions.Count سوال پاسخ داده شده
+            </div>
+            <!-- Progress bar -->
+            <div style="margin-top:0.75rem; height:6px; background:#2a3040; border-radius:9999px; overflow:hidden;">
+                <div style="height:100%; background:linear-gradient(90deg,#7c3aed,#ec4899); border-radius:9999px; width:@(questions.Count > 0 ? (answers.Count * 100 / questions.Count) : 0)%; transition:width 0.3s;"></div>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        @{ int qIdx = 0; }
+        @foreach (var q in questions)
+        {
+            int qi = qIdx++;
+            bool isAnswered = answers.ContainsKey(q.Id);
+            <div class="question-card @(isAnswered ? "answered" : "")">
+                <div class="question-num">سوال @(qi + 1) از @questions.Count • @q.Points امتیاز</div>
+                <div class="question-text">@q.QuestionText</div>
+                <div class="options-grid">
+                    @foreach (var opt in new[] { ("A", q.OptionA), ("B", q.OptionB), ("C", q.OptionC), ("D", q.OptionD) })
+                    {
+                        string key = opt.Item1;
+                        string label = opt.Item2;
+                        bool isSelected = answers.TryGetValue(q.Id, out var sel) && sel == key;
+                        <button class="option-btn @(isSelected ? "selected" : "")"
+                                @onclick="@(() => SelectAnswer(q.Id, key))">
+                            <span class="option-label">@key</span>
+                            @label
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Submit -->
+        <div style="text-align:center; margin-top:2rem; padding-bottom:2rem;">
+            <button @onclick="Submit" disabled="@submitting"
+                    style="padding:1rem 3rem; border-radius:1rem; background:linear-gradient(135deg,#7c3aed,#ec4899); border:none; color:white; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Vazirmatn',sans-serif; transition:all 0.2s;"
+                    onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+                @(submitting ? "در حال ثبت..." : "ثبت پاسخ‌ها")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+
+    private Avina.Models.Exam? exam;
+    private List<Avina.Models.ExamQuestion> questions = new();
+    private Dictionary<int, string> answers = new();
+    private bool loading = true;
+    private bool submitting = false;
+    private bool submitted = false;
+    private int scorePercent;
+    private bool passed;
+    private string? certNumber;
+    private int bonusCoins;
+    private int timerSeconds;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        exam = await Db.Exams
+            .Include(e => e.Questions.OrderBy(q => q.Order))
+            .FirstOrDefaultAsync(e => e.CourseId == CourseId);
+
+        if (exam != null)
+        {
+            questions = exam.Questions.ToList();
+            timerSeconds = exam.TimeLimitMinutes * 60;
+        }
+        loading = false;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && exam != null && !submitted)
+        {
+            _timer = new System.Threading.Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    if (timerSeconds > 0)
+                    {
+                        timerSeconds--;
+                        StateHasChanged();
+                        if (timerSeconds == 0) _ = Submit();
+                    }
+                });
+            }, null, 1000, 1000);
+        }
+    }
+
+    private void SelectAnswer(int questionId, string answer)
+    {
+        answers[questionId] = answer;
+    }
+
+    private async Task Submit()
+    {
+        if (submitting || submitted) return;
+        submitting = true;
+        _timer?.Dispose();
+
+        var user = AuthState.CurrentUser;
+        if (user == null || exam == null) { submitting = false; return; }
+
+        try
+        {
+            // Grade
+            int totalPoints = questions.Sum(q => q.Points);
+            int earned = 0;
+            foreach (var q in questions)
+            {
+                if (answers.TryGetValue(q.Id, out var ans) &&
+                    ans.Equals(q.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
+                    earned += q.Points;
+            }
+
+            scorePercent = totalPoints > 0 ? (int)Math.Round(earned * 100.0 / totalPoints) : 0;
+            passed = scorePercent >= exam.PassingScore;
+
+            int attempt = await Db.ExamResults
+                .Where(r => r.UserId == user.Id && r.ExamId == exam.Id)
+                .CountAsync() + 1;
+
+            Db.ExamResults.Add(new Avina.Models.UserExamResult
+            {
+                UserId = user.Id,
+                ExamId = exam.Id,
+                Score = scorePercent,
+                Passed = passed,
+                AttemptNumber = attempt
+            });
+
+            if (passed)
+            {
+                var existingCert = await Db.Certificates
+                    .FirstOrDefaultAsync(c => c.UserId == user.Id && c.CourseId == CourseId);
+
+                if (existingCert == null)
+                {
+                    certNumber = $"AV-{DateTime.UtcNow:yyyyMMdd}-{user.Id:D4}-{CourseId:D3}";
+                    Db.Certificates.Add(new Avina.Models.Certificate
+                    {
+                        UserId = user.Id,
+                        CourseId = CourseId,
+                        ExamScore = scorePercent,
+                        CertificateNumber = certNumber
+                    });
+
+                    var dbUser = await Db.Users.FindAsync(user.Id);
+                    if (dbUser != null)
+                    {
+                        dbUser.Coin += 50;
+                        bonusCoins = 50;
+                        user.Coin = dbUser.Coin;
+                    }
+
+                    var enrollment = await Db.CourseEnrollments
+                        .FirstOrDefaultAsync(e => e.UserId == user.Id && e.CourseId == CourseId);
+                    if (enrollment != null)
+                    {
+                        enrollment.ProgressPercent = 100;
+                        enrollment.CompletedAt = DateTime.UtcNow;
+                    }
+                }
+                else
+                {
+                    certNumber = existingCert.CertificateNumber;
+                }
+            }
+
+            await Db.SaveChangesAsync();
+            submitted = true;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private void Restart()
+    {
+        answers.Clear();
+        submitted = false;
+        scorePercent = 0;
+        passed = false;
+        certNumber = null;
+        bonusCoins = 0;
+        timerSeconds = exam?.TimeLimitMinutes * 60 ?? 1800;
+
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                if (timerSeconds > 0) { timerSeconds--; StateHasChanged(); }
+                else _ = Submit();
+            });
+        }, null, 1000, 1000);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

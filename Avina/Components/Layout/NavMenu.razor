@@ -1,40 +1,101 @@
-﻿<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <span class="brand-logo">آخرین نگهبان</span>
+﻿@using Avina.Services
+@using System.Text.Json
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1c2026 0%, #0f172a 100%); padding: 1rem 0; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 1000;">
+    <div class="container-fluid" style="max-width: 100%; padding: 0 2rem;">
+        <a class="navbar-brand" href="/" style="font-size: 1.5rem; font-weight: 900; color: #aac7ff;">
+            ⚔️ آخرین نگهبان
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto" style="align-items: center; gap: 1rem;">
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                        <span class="me-2">🏠</span>خانه
+                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All" style="color: #c1c6d5;">
+                        <span style="font-size: 1.2rem;">🏠</span> خانه
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="/school">
-                        <span class="me-2">📚</span>مدرسه
+                    <NavLink class="nav-link" href="/school" style="color: #c1c6d5;">
+                        <span style="font-size: 1.2rem;">📚</span> مدرسه
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="/games">
-                        <span class="me-2">🎮</span>بازی‌ها
+                    <NavLink class="nav-link" href="/games" style="color: #c1c6d5;">
+                        <span style="font-size: 1.2rem;">🎮</span> بازی‌ها
                     </NavLink>
                 </li>
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="/store">
-                        <span class="me-2">🛍️</span>فروشگاه
+                    <NavLink class="nav-link" href="/store" style="color: #c1c6d5;">
+                        <span style="font-size: 1.2rem;">🛍️</span> فروشگاه
                     </NavLink>
                 </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/profile">
-                        <span class="me-2">👤</span>پروفایل
-                    </NavLink>
-                </li>
+
+                <li style="height: 1px; background: #334155; margin: 0 1rem;"></li>
+
+                @if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
+                {
+                    <li class="nav-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(170, 199, 255, 0.1); border-radius: 0.75rem; border: 1px solid rgba(170, 199, 255, 0.3);">
+                        <span style="font-size: 1.1rem;">👤</span>
+                        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                            <span style="color: #aac7ff; font-weight: 700; font-size: 0.9rem;">@AuthState.CurrentUser.Name</span>
+                            <span style="color: #8b919f; font-size: 0.75rem;">🪙 @AuthState.CurrentUser.Coin کوین</span>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/profile" style="color: #c1c6d5;">
+                            <span style="font-size: 1.2rem;">⚙️</span> تنظیمات
+                        </NavLink>
+                    </li>
+
+                    <li class="nav-item">
+                        <button @onclick="Logout" style="background: transparent; border: none; color: #ffb4ab; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+                            خروج
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/login" style="background: linear-gradient(135deg, #7c3aed, #ec4899); color: white; padding: 0.6rem 1.2rem; border-radius: 0.75rem; font-weight: 700;">
+                            ورود / ثبت نام
+                        </NavLink>
+                    </li>
+                }
             </ul>
         </div>
     </div>
 </nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthState.StateChanged += HandleStateChange;
+    }
+
+    private async Task HandleStateChange()
+    {
+        Console.WriteLine("[NavMenu] State changed, calling StateHasChanged");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Logout()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("lsSet", "accessToken", "");
+            AuthState.Logout();
+        }
+        catch { }
+    }
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= HandleStateChange;
+    }
+}
 

@@ -1,6 +1,9 @@
+using Avina.Data;
 using Avina.Models;
 using Avina.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Avina.Controllers;
 
@@ -8,64 +11,187 @@ namespace Avina.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly AvinaDbContext _context;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService)
+    public UsersController(AvinaDbContext context, ILogger<UsersController> logger)
     {
-        _userService = userService;
+        _context = context;
+        _logger = logger;
     }
 
-    // GET api/users/me
-    [HttpGet("me")]
-    public async Task<ActionResult<User>> GetCurrentUser()
-    {
-        var user = await _userService.GetCurrentUserAsync();
-        if (user is null)
-            return NotFound(new { message = "کاربری یافت نشد" });
-
-        return Ok(user);
-    }
-
-    // GET api/users/5
+    // GET api/users/{id}
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<User>> GetById(int id)
+    public async Task<ActionResult<UserProfileDto>> GetById(int id)
     {
-        var user = await _userService.GetUserByIdAsync(id);
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
         if (user is null)
             return NotFound(new { message = $"کاربر با شناسه {id} یافت نشد" });
 
-        return Ok(user);
+        return Ok(MapToProfileDto(user));
     }
 
-    // PUT api/users/5
+    // GET api/users/email/{email}
+    [HttpGet("email/{email}")]
+    public async Task<ActionResult<UserProfileDto>> GetByEmail(string email)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user is null)
+            return NotFound(new { message = "کاربر یافت نشد" });
+
+        return Ok(MapToProfileDto(user));
+    }
+
+    // GET api/users/me (Authorized)
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<UserProfileDto>> GetCurrentUser()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            return Unauthorized();
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is null)
+            return NotFound();
+
+        return Ok(MapToProfileDto(user));
+    }
+
+    // PUT api/users/{id} (Authorized)
+    [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] User user)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
-        if (id != user.Id)
-            return BadRequest(new { message = "شناسه کاربر مطابقت ندارد" });
+        var user = await _context.Users.FindAsync(id);
+        if (user is null)
+            return NotFound();
 
-        await _userService.UpdateUserAsync(user);
-        return NoContent();
+        // Verify user is updating their own profile
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId) || currentUserId != id)
+            return Forbid();
+
+        // Update fields
+        if (!string.IsNullOrWhiteSpace(request.Name))
+            user.Name = request.Name.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.Bio))
+            user.Bio = request.Bio.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.ProfileImage))
+            user.ProfileImage = request.ProfileImage;
+
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "پروفایل به‌روزرسانی شد", user = MapToProfileDto(user) });
     }
 
-    // POST api/users/login
-    [HttpPost("login")]
-    public async Task<ActionResult<object>> Login([FromBody] LoginRequest request)
+    // GET api/users/leaderboard
+    [HttpGet("leaderboard")]
+    [HttpGet("leaderboard/{top:int}")]
+    public async Task<ActionResult<List<UserLeaderboardDto>>> GetLeaderboard(int top = 10)
     {
-        var success = await _userService.LoginAsync(request.Email, request.Password);
-        if (!success)
-            return Unauthorized(new { message = "ایمیل یا رمز عبور اشتباه است" });
+        var users = await _context.Users
+            .AsNoTracking()
+            .Where(u => u.IsActive)
+            .OrderByDescending(u => u.Coin)
+            .ThenByDescending(u => u.Level)
+            .Take(top)
+            .Select(u => new UserLeaderboardDto(
+                u.Id,
+                u.Name,
+                u.Coin,
+                u.Level,
+                u.Experience,
+                u.ProfileImage,
+                u.Followers
+            ))
+            .ToListAsync();
 
-        return Ok(new { message = "ورود موفق" });
+        return Ok(users);
     }
 
-    // POST api/users/logout
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
+    // GET api/users/{id}/coins
+    [HttpGet("{id:int}/coins")]
+    public async Task<ActionResult<CoinBalanceDto>> GetCoinBalance(int id)
     {
-        await _userService.LogoutAsync();
-        return Ok(new { message = "خروج موفق" });
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user is null)
+            return NotFound();
+
+        return Ok(new CoinBalanceDto(user.Coin, user.Level, user.Experience));
+    }
+
+    // Private helper method
+    private UserProfileDto MapToProfileDto(User user)
+    {
+        return new UserProfileDto(
+            Id: user.Id,
+            Name: user.Name,
+            Email: user.Email,
+            Role: user.Role,
+            Coin: user.Coin,
+            Level: user.Level,
+            Experience: user.Experience,
+            ProfileImage: user.ProfileImage,
+            Bio: user.Bio,
+            Followers: user.Followers,
+            Following: user.Following,
+            Achievements: user.Achievements,
+            CreatedAt: user.CreatedAt
+        );
     }
 }
 
-public record LoginRequest(string Email, string Password);
+// DTOs
+public record UpdateUserRequest(
+    string? Name,
+    string? Bio,
+    string? ProfileImage
+);
+
+public record UserProfileDto(
+    int Id,
+    string Name,
+    string Email,
+    string Role,
+    int Coin,
+    int Level,
+    int Experience,
+    string? ProfileImage,
+    string? Bio,
+    int Followers,
+    int Following,
+    List<string> Achievements,
+    DateTime CreatedAt
+);
+
+public record UserLeaderboardDto(
+    int Id,
+    string Name,
+    int Coin,
+    int Level,
+    int Experience,
+    string? ProfileImage,
+    int Followers
+);
+
+public record CoinBalanceDto(
+    int Coin,
+    int Level,
+    int Experience
+);

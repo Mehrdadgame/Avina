@@ -1,7 +1,12 @@
 @page "/store"
 @using Avina.Models
+@using Avina.Services
+@using System.Net.Http.Json
 @rendermode InteractiveServer
 @implements IDisposable
+@inject HttpClient Http
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
 
 <div class="px-4 md:px-8 pt-6 pb-28 max-w-7xl">
 
@@ -111,7 +116,10 @@
             @foreach (var product in visibleProducts)
             {
                 var pImg = productImgs[pi % productImgs.Length]; pi++;
-                <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift">
+                var productId = product.Id;
+                var productUrl = $"/product/{productId}";
+                <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift"
+                     @onclick="() => Nav.NavigateTo(productUrl)" style="cursor:pointer;">
                     <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
                         <img src="@pImg" alt="@product.Name" class="product-img w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
@@ -126,7 +134,8 @@
                     <h3 class="font-bold text-base mb-0.5 px-1">@product.Name</h3>
                     <p class="text-on-surface-variant text-xs mb-4 px-1">@product.Description</p>
                     <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm"
-                            @onclick="() => AddToCart(product.Id)">
+                            @onclick:stopPropagation="true"
+                            @onclick="() => Nav.NavigateTo(productUrl)">
                         <span>خرید محصول</span>
                         <span class="material-symbols-outlined text-lg">shopping_cart</span>
                     </button>
@@ -213,7 +222,7 @@
         _          => allProducts
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         storeSlides = new List<StoreSlide>
         {
@@ -222,15 +231,45 @@
             new StoreSlide { Image = "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=1200&q=80", Badge = "🎮 بازی رومیزی", Title = "فتح دژ: بازی استراتژیک ۲-۴ نفره", Description = "یک بازی فکری هیجان‌انگیز برای کل خانواده. کد داخل بسته را اسکن کن تا مراحل دیجیتال باز بشه.", BtnLabel = "خرید بازی", Icon = "🎲" },
         };
 
-        allProducts = new List<Product>
+        // Load products from API
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
         {
-            new Product { Id = 1, Name = "آخرین نگهبان: طلوع", Description = "نویسنده: علیرضا پارسا", CoinPrice = 450,  Category = "کتاب‌ها",          IsNew = false, Price = 120000, Stock = 20 },
-            new Product { Id = 2, Name = "دوره جامع پایتون",   Description = "مدرس: سارا احمدی",  CoinPrice = 1200, Category = "دوره‌های ویدیویی",    IsNew = true,  Price = 350000, Stock = 999 },
-            new Product { Id = 3, Name = "بازی رومیزی: فتح دژ", Description = "تعداد بازیکن: ۲-۴ نفر", CoinPrice = 890, Category = "بازی‌های فکری", IsNew = false, Price = 180000, Stock = 15 },
-            new Product { Id = 4, Name = "افسانه‌های شاهنامه", Description = "مناسب سنین ۷ تا ۱۲ سال", CoinPrice = 300, Category = "کتاب‌ها",          IsNew = true,  Price = 85000,  Stock = 30 },
-            new Product { Id = 5, Name = "کیت خلاقیت نگهبانان", Description = "ابزارهای ساخت و خلاقیت", CoinPrice = 1250, Category = "کیت‌های آموزشی", IsNew = true, Price = 250000, Stock = 10 },
-            new Product { Id = 6, Name = "دسترسی ویژه دوره‌ها", Description = "تمام دوره‌های پرمیوم",  CoinPrice = 2250, Category = "دوره‌های ویدیویی", IsNew = false, Price = 450000, Stock = 999 },
-        };
+            var response = await Http.GetAsync("http://localhost:5105/api/products");
+            if (response.IsSuccessStatusCode)
+            {
+                var apiProducts = await response.Content.ReadFromJsonAsync<List<ProductApiDto>>();
+                if (apiProducts != null)
+                {
+                    allProducts = apiProducts.Select(p => new Product
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        CoinPrice = p.CoinPrice,
+                        Category = p.Category,
+                        IsNew = p.IsNew,
+                        Price = p.Price,
+                        Stock = p.Stock
+                    }).ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading products: {ex.Message}");
+            // Fallback to default products if API fails
+            allProducts = new List<Product>
+            {
+                new Product { Id = 1, Name = "کتاب: شروع برنامه‌نویسی", Description = "یک کتاب جامع برای یادگیری برنامه‌نویسی از صفر", CoinPrice = 500,  Category = "کتاب", IsNew = true, Price = 15.0m, Stock = 9999 },
+                new Product { Id = 2, Name = "پادکست: مسیریابی شغلی", Description = "پادکست هفتگی درباره انتخاب شغل و رشد حرفه‌ای", CoinPrice = 100, Category = "پادکست", IsNew = true, Price = 5.0m, Stock = 9999 },
+                new Product { Id = 3, Name = "کیت مهارت: ساخت رباتیک", Description = "کیت فیزیکی برای یادگیری رباتیک و الکترونیک", CoinPrice = 1000, Category = "کیت", IsNew = true, Price = 50.0m, Stock = 25 },
+            };
+        }
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -258,7 +297,50 @@
 
     private void SetFilter(string filter) { activeFilter = filter; }
 
-    private void AddToCart(int productId) { cartCount++; }
+    private async Task AddToCart(int productId)
+    {
+        if (!AuthState.IsLoggedIn)
+        {
+            // Navigate to login
+            return;
+        }
+
+        var product = allProducts.FirstOrDefault(p => p.Id == productId);
+        if (product == null) return;
+
+        try
+        {
+            var request = new { productId = productId, coinAmount = product.CoinPrice };
+            var response = await Http.PostAsJsonAsync("http://localhost:5105/api/products/purchases", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                cartCount++;
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Purchase failed: {content}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during purchase: {ex.Message}");
+        }
+    }
+
+    private record ProductApiDto(
+        int Id,
+        string Name,
+        string Description,
+        string? Image,
+        decimal Price,
+        int CoinPrice,
+        string Category,
+        string Type,
+        bool IsNew,
+        int Stock
+    );
 
     private string GetProductIcon(string? category) => category switch
     {

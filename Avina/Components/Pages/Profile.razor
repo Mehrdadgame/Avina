@@ -1,8 +1,11 @@
 @page "/profile"
 @using Avina.Models
 @using Avina.Services
+@using Avina.Data
 @using System.Text.Json
+@using Microsoft.EntityFrameworkCore
 @inject AuthStateService AuthState
+@inject AvinaDbContext Db
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @rendermode InteractiveServer
@@ -275,6 +278,7 @@
             <!-- Tabs -->
             <div class="profile-tabs">
                 <button class="profile-tab-btn @(activeTab == "achievements" ? "active-tab" : "")" @onclick='() => SetTab("achievements")'>🏆 دستاوردها</button>
+                <button class="profile-tab-btn @(activeTab == "myContent" ? "active-tab" : "")" @onclick='() => SetTab("myContent")'>📁 محتوای من</button>
                 <button class="profile-tab-btn @(activeTab == "courses" ? "active-tab" : "")" @onclick='() => SetTab("courses")'>📚 دوره‌های من</button>
                 <button class="profile-tab-btn @(activeTab == "activities" ? "active-tab" : "")" @onclick='() => SetTab("activities")'>⚡ فعالیت‌ها</button>
                 <button class="profile-tab-btn @(activeTab == "settings" ? "active-tab" : "")" @onclick='() => SetTab("settings")'>⚙️ تنظیمات</button>
@@ -294,26 +298,82 @@
                 </div>
             </div>
 
+            <!-- My Content Tab -->
+            <div class="tab-panel @(activeTab == "myContent" ? "active-panel" : "")">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <p style="color:#e0e2ec; font-weight:700; font-size:1rem; margin:0;">محتوای آپلود شده (@myUploadedContents.Count)</p>
+                    <a href="/upload" style="background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.5rem 1.25rem; border-radius:0.75rem; font-weight:700; font-size:0.8rem; text-decoration:none;">+ آپلود جدید</a>
+                </div>
+                @if (myUploadedContents.Count == 0)
+                {
+                    <div style="text-align:center; padding:2rem; color:#8b919f;">
+                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📂</div>
+                        <p>هنوز محتوایی آپلود نکرده‌اید</p>
+                        <a href="/upload" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">آپلود اولین محتوا ←</a>
+                    </div>
+                }
+                else
+                {
+                    <div style="display:flex; flex-direction:column; gap:0.875rem;">
+                        @foreach (var item in myUploadedContents)
+                        {
+                            var contentUrl = $"/content/{item.Id}";
+                            <div class="course-row" style="cursor:pointer;" @onclick="() => Nav.NavigateTo(contentUrl)">
+                                <div style="width:52px; height:52px; border-radius:0.75rem; background:rgba(124,58,237,0.1); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+                                    @ContentTypeEmoji(item.Type.ToString())
+                                </div>
+                                <div class="course-row-info">
+                                    <div class="course-row-title">@item.Title</div>
+                                    <div class="course-row-instructor">@item.Category • 👁 @item.ViewCount بازدید</div>
+                                    <div style="display:flex; gap:0.75rem; margin-top:0.375rem;">
+                                        <span style="font-size:0.75rem; background:@(item.IsFree ? "rgba(125,211,168,0.1)" : "rgba(124,58,237,0.1)"); color:@(item.IsFree ? "#7dd3a8" : "#a78bfa"); padding:0.2rem 0.625rem; border-radius:9999px;">@(item.IsFree ? "رایگان" : $"{item.CoinPrice} 🪙")</span>
+                                        <span style="font-size:0.75rem; color:#8b919f;">@item.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                    </div>
+                                </div>
+                                <a href="/upload" style="color:#aac7ff; font-size:0.8rem; font-weight:700; text-decoration:none; flex-shrink:0;">ویرایش</a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
             <!-- Courses -->
             <div class="tab-panel @(activeTab == "courses" ? "active-panel" : "")">
-                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">دوره‌های ثبت‌نام‌شده</p>
-                <div class="courses-list">
-                    @foreach (var course in enrolledCourses)
-                    {
-                        <div class="course-row">
-                            <img class="course-thumb" src="@course.ThumbnailImage" alt="@course.Title"
-                                 onerror="this.style.background='#272a31'; this.style.border='1px solid #414753';" />
-                            <div class="course-row-info">
-                                <div class="course-row-title">@course.Title</div>
-                                <div class="course-row-instructor">👨‍🏫 @course.Instructor</div>
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: @(course.Progress)%;"></div>
+                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">دوره‌های ثبت‌نام‌شده (@realEnrollments.Count)</p>
+                @if (realEnrollments.Count == 0)
+                {
+                    <div style="text-align:center; padding:2rem; color:#8b919f;">
+                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📚</div>
+                        <p>هنوز در دوره‌ای ثبت‌نام نکرده‌اید</p>
+                        <a href="/school" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده دوره‌ها ←</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="courses-list">
+                        @foreach (var enr in realEnrollments)
+                        {
+                            var courseUrl = $"/course/{enr.CourseId}";
+                            <div class="course-row" style="cursor:pointer;" @onclick="() => Nav.NavigateTo(courseUrl)">
+                                <div style="width:80px; height:80px; border-radius:0.75rem; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0;">🎓</div>
+                                <div class="course-row-info">
+                                    <div class="course-row-title">@(enr.Course?.Title ?? "دوره")</div>
+                                    <div class="course-row-instructor">👨‍🏫 @(enr.Course?.Instructor ?? "")</div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" style="width:@(enr.ProgressPercent)%;"></div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.25rem;">
+                                        <div class="progress-label">@(enr.ProgressPercent)٪ کامل شده</div>
+                                        @if (enr.CompletedAt.HasValue)
+                                        {
+                                            <span style="font-size:0.72rem; background:rgba(125,211,168,0.1); color:#7dd3a8; padding:0.15rem 0.5rem; border-radius:9999px; font-weight:700;">✅ تکمیل شده</span>
+                                        }
+                                    </div>
                                 </div>
-                                <div class="progress-label">@(course.Progress)٪ کامل شده</div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
             </div>
 
             <!-- Activities -->
@@ -389,7 +449,8 @@
     }
 
     private User? currentUser;
-    private List<EnrolledCourse> enrolledCourses = new();
+    private List<ContentMedia> myUploadedContents = new();
+    private List<UserCourseEnrollment> realEnrollments = new();
     private List<AchievementItem> achievementsList = new();
     private List<ActivityItem> recentActivities = new();
     private string activeTab = "achievements";
@@ -400,13 +461,17 @@
 
     private const string StorageKey = "avina_user";
 
-    protected override void OnInitialized()
+    private static string ContentTypeEmoji(string type) => type switch
     {
-        // Load from AuthState if logged in, otherwise use guest defaults
+        "Video" => "🎬", "Audio" => "🎵", "Image" => "🖼️", "PDF" => "📄", _ => "📁"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
         var u = AuthState.CurrentUser;
         currentUser = new User
         {
-            Id = 1,
+            Id = u?.Id ?? 0,
             Name = u != null ? u.Name : "مهمان",
             Email = u != null ? u.Email : "",
             Role = u != null ? u.Role : "بازدیدکننده",
@@ -418,13 +483,23 @@
             CreatedAt = DateTime.Now
         };
 
-        enrolledCourses = new List<EnrolledCourse>
+        if (u != null && u.Id > 0)
         {
-            new EnrolledCourse { Title = "ریاضی پایه - پایه هفتم", Instructor = "محمد علی‌زاده", ThumbnailImage = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80", Progress = 65 },
-            new EnrolledCourse { Title = "علوم طبیعی", Instructor = "فاطمه احمدی", ThumbnailImage = "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&q=80", Progress = 40 },
-            new EnrolledCourse { Title = "ادبیات فارسی", Instructor = "حسین رضایی", ThumbnailImage = "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=200&q=80", Progress = 90 },
-            new EnrolledCourse { Title = "زبان انگلیسی مقدماتی", Instructor = "سارا کریمی", ThumbnailImage = "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=200&q=80", Progress = 25 },
-        };
+            try
+            {
+                myUploadedContents = await Db.Contents
+                    .Where(c => c.UploaderId == u.Id)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+
+                realEnrollments = await Db.CourseEnrollments
+                    .Include(e => e.Course)
+                    .Where(e => e.UserId == u.Id)
+                    .OrderByDescending(e => e.EnrolledAt)
+                    .ToListAsync();
+            }
+            catch { }
+        }
 
         achievementsList = new List<AchievementItem>
         {

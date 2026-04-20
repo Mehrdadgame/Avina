@@ -1,0 +1,236 @@
+@page "/notifications"
+@rendermode InteractiveServer
+@using Avina.Models
+@using Avina.Services
+@inject AuthStateService AuthState
+@inject INotificationService NotificationService
+@inject NavigationManager Nav
+@implements IDisposable
+
+<style>
+.notifications-page { max-width: 920px; margin: 0 auto; padding: 1.25rem 1.5rem 3rem; }
+.notifications-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.notifications-title { font-size:1.45rem; font-weight:900; color:#e8ecf8; margin:0; display:flex; align-items:center; gap:0.5rem; }
+.notifications-sub { color:#8b94aa; font-size:0.88rem; margin-top:0.2rem; }
+.chip-unread { background:rgba(236,72,153,0.18); border:1px solid rgba(236,72,153,0.35); color:#f8b4d9; padding:0.35rem 0.8rem; border-radius:999px; font-size:0.78rem; font-weight:700; }
+.btn-mark-all {
+    background:linear-gradient(135deg,#4248d4,#7c3aed); border:none; color:white; padding:0.55rem 1.05rem;
+    border-radius:0.7rem; font-family:'Vazirmatn',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all .2s;
+}
+.btn-mark-all:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 18px rgba(66,72,212,.35); }
+.btn-mark-all:disabled { opacity:.6; cursor:not-allowed; }
+.notifications-list { display:flex; flex-direction:column; gap:0.9rem; }
+.notification-card {
+    background:#181d27; border:1px solid #2a3244; border-radius:1rem; padding:1rem 1.1rem; cursor:pointer;
+    transition:all .25s ease; position:relative; overflow:hidden; animation:notifyIn .35s ease both;
+}
+.notification-card:hover { transform:translateY(-2px); border-color:#3a4562; }
+.notification-card.unread { border-color:rgba(236,72,153,.45); background:linear-gradient(180deg,rgba(236,72,153,.07),rgba(24,29,39,1)); }
+.notification-card.unread::before {
+    content:''; position:absolute; right:0; top:0; bottom:0; width:4px;
+    background:linear-gradient(180deg,#ec4899,#7c3aed);
+}
+.notification-row { display:flex; align-items:flex-start; gap:0.75rem; }
+.notification-icon {
+    width:42px; height:42px; border-radius:0.8rem; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(124,58,237,.16); border:1px solid rgba(124,58,237,.35); font-size:1.2rem;
+}
+.notification-body { flex:1; min-width:0; }
+.notification-meta { display:flex; align-items:center; justify-content:space-between; gap:0.7rem; margin-bottom:0.35rem; flex-wrap:wrap; }
+.notification-type { color:#a6b3d6; font-size:0.73rem; font-weight:700; background:rgba(34,43,62,.7); padding:0.2rem 0.55rem; border-radius:999px; border:1px solid #33405c; }
+.notification-time { color:#7f89a1; font-size:0.75rem; }
+.notification-title { color:#e9edf8; font-size:0.95rem; font-weight:800; margin:0 0 0.25rem; }
+.notification-text { color:#b6c0d8; font-size:0.84rem; line-height:1.7; margin:0 0 0.65rem; }
+.notification-actions { display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; }
+.btn-open-link {
+    background:transparent; border:1px solid #4c5d88; color:#bcd1ff; padding:0.35rem 0.75rem; border-radius:0.6rem;
+    font-family:'Vazirmatn',sans-serif; font-size:0.76rem; font-weight:700; cursor:pointer; transition:all .2s;
+}
+.btn-open-link:hover { border-color:#7f9eff; color:#e1e9ff; background:rgba(127,158,255,.1); }
+.label-read { color:#7dd3a8; font-size:0.74rem; font-weight:700; }
+.empty-state, .login-state {
+    background:#181d27; border:1px dashed #37435f; border-radius:1rem; padding:2.2rem 1.4rem; text-align:center; color:#96a1bd;
+}
+.state-icon { font-size:2.2rem; margin-bottom:0.8rem; }
+.btn-login {
+    display:inline-flex; margin-top:0.8rem; text-decoration:none; color:white; background:linear-gradient(135deg,#7c3aed,#ec4899);
+    padding:0.5rem 1rem; border-radius:0.7rem; font-weight:700; font-size:0.82rem;
+}
+@@keyframes notifyIn {
+    from { opacity:0; transform:translateY(14px); }
+    to { opacity:1; transform:translateY(0); }
+}
+</style>
+
+<div class="notifications-page">
+    <div class="notifications-head">
+        <div>
+            <h1 class="notifications-title">🔔 اعلان‌ها</h1>
+            <div class="notifications-sub">آخرین بروزرسانی‌ها، تخفیف‌ها و خبرهای مدرسه</div>
+        </div>
+        @if (AuthState.CurrentUser != null)
+        {
+            <div style="display:flex; align-items:center; gap:0.7rem;">
+                <span class="chip-unread">@unreadCount اعلان خوانده‌نشده</span>
+                <button class="btn-mark-all" @onclick="MarkAllRead" disabled="@(loading || unreadCount == 0)">خواندن همه</button>
+            </div>
+        }
+    </div>
+
+    @if (AuthState.CurrentUser == null)
+    {
+        <div class="login-state">
+            <div class="state-icon">🔒</div>
+            <p>برای مشاهده اعلان‌ها ابتدا وارد حساب کاربری شوید.</p>
+            <a class="btn-login" href="/login">ورود / ثبت‌نام</a>
+        </div>
+    }
+    else if (loading)
+    {
+        <div class="empty-state">
+            <div class="state-icon">⏳</div>
+            <p>در حال بارگذاری اعلان‌ها...</p>
+        </div>
+    }
+    else if (notifications.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="state-icon">📭</div>
+            <p>هنوز اعلانی برای شما ثبت نشده است.</p>
+        </div>
+    }
+    else
+    {
+        <div class="notifications-list">
+            @foreach (var item in notifications)
+            {
+                <div class="notification-card @(item.IsRead ? "" : "unread")" @onclick="() => SelectNotification(item)">
+                    <div class="notification-row">
+                        <div class="notification-icon">@(string.IsNullOrWhiteSpace(item.Icon) ? "🔔" : item.Icon)</div>
+                        <div class="notification-body">
+                            <div class="notification-meta">
+                                <span class="notification-type">@MapType(item.Type)</span>
+                                <span class="notification-time">@ToRelative(item.CreatedAt)</span>
+                            </div>
+                            <h3 class="notification-title">@item.Title</h3>
+                            <p class="notification-text">@item.Message</p>
+                            <div class="notification-actions">
+                                @if (!item.IsRead)
+                                {
+                                    <span class="chip-unread">جدید</span>
+                                }
+                                else
+                                {
+                                    <span class="label-read">✓ خوانده شده</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(item.LinkUrl))
+                                {
+                                    <button class="btn-open-link" @onclick:stopPropagation="true" @onclick="@(() => OpenLink(item))">
+                                        @(string.IsNullOrWhiteSpace(item.LinkLabel) ? "مشاهده" : item.LinkLabel)
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool loading = true;
+    private int unreadCount = 0;
+    private List<UserNotificationDto> notifications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.StateChanged += HandleAuthChanged;
+        await LoadData();
+    }
+
+    private async Task HandleAuthChanged()
+    {
+        await LoadData();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        var user = AuthState.CurrentUser;
+        if (user?.Id > 0)
+        {
+            notifications = await NotificationService.GetUserNotificationsAsync(user.Id, user.Role, 50);
+            unreadCount = notifications.Count(n => !n.IsRead);
+        }
+        else
+        {
+            notifications = new();
+            unreadCount = 0;
+        }
+        loading = false;
+    }
+
+    private async Task MarkAllRead()
+    {
+        var user = AuthState.CurrentUser;
+        if (user?.Id <= 0)
+        {
+            return;
+        }
+
+        await NotificationService.MarkAllAsReadAsync(user.Id, user.Role);
+        await LoadData();
+    }
+
+    private async Task SelectNotification(UserNotificationDto item)
+    {
+        var user = AuthState.CurrentUser;
+        if (user?.Id <= 0)
+        {
+            return;
+        }
+
+        if (!item.IsRead)
+        {
+            await NotificationService.MarkAsReadAsync(user.Id, item.Id);
+            item.IsRead = true;
+            unreadCount = Math.Max(0, unreadCount - 1);
+        }
+    }
+
+    private async Task OpenLink(UserNotificationDto item)
+    {
+        await SelectNotification(item);
+        if (!string.IsNullOrWhiteSpace(item.LinkUrl))
+        {
+            Nav.NavigateTo(item.LinkUrl);
+        }
+    }
+
+    private static string MapType(NotificationType type) => type switch
+    {
+        NotificationType.Discount => "تخفیف",
+        NotificationType.Store => "فروشگاه",
+        NotificationType.School => "مدرسه",
+        NotificationType.System => "سیستمی",
+        _ => "عمومی"
+    };
+
+    private static string ToRelative(DateTime createdAt)
+    {
+        var delta = DateTime.UtcNow - createdAt;
+        if (delta.TotalMinutes < 1) return "لحظاتی پیش";
+        if (delta.TotalHours < 1) return $"{(int)delta.TotalMinutes} دقیقه پیش";
+        if (delta.TotalDays < 1) return $"{(int)delta.TotalHours} ساعت پیش";
+        if (delta.TotalDays < 30) return $"{(int)delta.TotalDays} روز پیش";
+        return createdAt.ToString("yyyy/MM/dd");
+    }
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= HandleAuthChanged;
+    }
+}

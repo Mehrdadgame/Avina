@@ -1,5 +1,9 @@
 @page "/"
 @rendermode InteractiveServer
+@using Avina.Services
+@using Avina.Models
+@inject IHomeService HomeService
+@inject NavigationManager Nav
 
 <style>
 .home-container {
@@ -555,6 +559,63 @@
     font-weight: 900;
     margin-left: -0.75rem;
 }
+
+.featured-auto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.featured-auto-card {
+    background: #1b202b;
+    border: 1px solid #303a4f;
+    border-radius: 1rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    animation: slideUp .45s ease both;
+}
+
+.featured-auto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 35px rgba(15, 23, 42, .4);
+    border-color: #566897;
+}
+
+.featured-auto-cover {
+    height: 130px;
+    background: linear-gradient(135deg, #1c2638, #111827);
+    display: flex;
+    align-items: end;
+    justify-content: end;
+    padding: 0.6rem;
+}
+
+.featured-auto-badge {
+    background: rgba(14, 24, 42, .65);
+    border: 1px solid rgba(157, 181, 255, .45);
+    color: #d8e3ff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.featured-auto-body { padding: 0.85rem; }
+.featured-auto-title {
+    margin: 0 0 0.35rem;
+    color: #eef3ff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.5;
+    min-height: 2.6rem;
+}
+
+.featured-auto-sub {
+    margin: 0;
+    color: #96a4c6;
+    font-size: 0.78rem;
+}
 </style>
 
 <div class="home-container">
@@ -675,49 +736,255 @@
         </div>
     </section>
 
+    <!-- ===== CONTENT SECTIONS FROM DB ===== -->
+
+    @if (homeSections != null)
+    {
+        <!-- Latest Content -->
+        @if (homeSections.Latest.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">🆕 جدیدترین محتوا</h2>
+                    <a href="/content" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده همه ←</a>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @foreach (var item in homeSections.Latest)
+                    {
+                        <div @onclick="@(() => Nav.NavigateTo($"/content/{item.Id}"))" class="content-section-card" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:120px; background:linear-gradient(135deg,#2a2f3a,#1c2026); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative;">
+                                @ContentTypeIcon(item.Type)
+                                @if (!item.IsFree) {
+                                    <span style="position:absolute; top:6px; left:6px; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:9999px;">@item.CoinPrice 🪙</span>
+                                }
+                            </div>
+                            <div style="padding:0.75rem;">
+                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
+                                <span style="font-size:0.7rem; color:#8b919f;">@item.Category</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Top of Week -->
+        @if (homeSections.TopWeek.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">🔥 برتر هفته</h2>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @{ int twRank = 1; }
+                    @foreach (var item in homeSections.TopWeek)
+                    {
+                        int rank = twRank++;
+                        <div @onclick="@(() => Nav.NavigateTo($"/content/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:120px; background:linear-gradient(135deg,#2a1a0e,#3d2a1a); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative;">
+                                @ContentTypeIcon(item.Type)
+                                <span style="position:absolute; top:6px; right:6px; background:rgba(255,182,80,0.2); color:#ffb650; border:1px solid rgba(255,182,80,0.4); font-size:0.65rem; font-weight:900; padding:2px 7px; border-radius:9999px;">#@rank</span>
+                            </div>
+                            <div style="padding:0.75rem;">
+                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
+                                <span style="font-size:0.7rem; color:#ffb650;">👁 @item.WeeklyViews بازدید</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Top of Month -->
+        @if (homeSections.TopMonth.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">📅 برتر ماه</h2>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @{ int tmRank = 1; }
+                    @foreach (var item in homeSections.TopMonth)
+                    {
+                        int rank = tmRank++;
+                        <div @onclick="@(() => Nav.NavigateTo($"/content/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:120px; background:linear-gradient(135deg,#0d1f2d,#1a3a4a); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative;">
+                                @ContentTypeIcon(item.Type)
+                                <span style="position:absolute; top:6px; right:6px; background:rgba(100,200,255,0.2); color:#64c8ff; border:1px solid rgba(100,200,255,0.3); font-size:0.65rem; font-weight:900; padding:2px 7px; border-radius:9999px;">#@rank</span>
+                            </div>
+                            <div style="padding:0.75rem;">
+                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
+                                <span style="font-size:0.7rem; color:#64c8ff;">👁 @item.MonthlyViews بازدید</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Bestseller -->
+        @if (homeSections.Bestseller.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">💎 پرفروش‌ترین</h2>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @foreach (var item in homeSections.Bestseller)
+                    {
+                        <div @onclick="@(() => Nav.NavigateTo($"/content/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:120px; background:linear-gradient(135deg,#1a0d2e,#2d1a4a); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative;">
+                                @ContentTypeIcon(item.Type)
+                                <span style="position:absolute; top:6px; left:6px; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:9999px;">@item.CoinPrice 🪙</span>
+                            </div>
+                            <div style="padding:0.75rem;">
+                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
+                                <span style="font-size:0.7rem; color:#a78bfa;">🛒 @item.PurchaseCount خرید</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Most Viewed -->
+        @if (homeSections.MostViewed.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">👁 پربیننده‌ترین</h2>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @foreach (var item in homeSections.MostViewed)
+                    {
+                        <div @onclick="@(() => Nav.NavigateTo($"/content/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:120px; background:linear-gradient(135deg,#0d2010,#1a3a20); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative;">
+                                @ContentTypeIcon(item.Type)
+                            </div>
+                            <div style="padding:0.75rem;">
+                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
+                                <span style="font-size:0.7rem; color:#7dd3a8;">👁 @item.ViewCount بازدید</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Featured Courses from DB -->
+        @if (homeSections.FeaturedCourses.Any())
+        {
+            <section class="curated-section">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+                    <h2 class="section-title" style="margin-bottom:0;">🎓 دوره‌های ویژه</h2>
+                    <a href="/school" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده همه ←</a>
+                </div>
+                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
+                    @foreach (var course in homeSections.FeaturedCourses)
+                    {
+                        <div @onclick="@(() => Nav.NavigateTo($"/course/{course.Id}"))" style="min-width:240px; max-width:240px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
+                            <div style="height:130px; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:3rem;">🎓</div>
+                            <div style="padding:0.875rem;">
+                                <p style="font-size:0.85rem; font-weight:700; color:#e0e2ec; margin-bottom:0.375rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@course.Title</p>
+                                <p style="font-size:0.75rem; color:#8b919f; margin-bottom:0.5rem;">@course.Instructor</p>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:0.7rem; color:#fbbf24;">⭐ @course.Rating.ToString("F1")</span>
+                                    <span style="font-size:0.75rem; font-weight:700; color:@(course.IsFree ? "#7dd3a8" : "#a78bfa");">@(course.IsFree ? "رایگان" : $"{course.CoinPrice} 🪙")</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+    else if (sectionsLoading)
+    {
+        <section class="curated-section">
+            <div style="text-align:center; padding:2rem; color:#8b919f;">در حال بارگذاری محتوا...</div>
+        </section>
+    }
+
     <!-- Curated Section -->
-    <section class="curated-section">
-        <h2 class="section-title">📚 برای شما انتخاب شده</h2>
-        <div class="bento-grid">
-            <!-- Large Featured -->
-            <div class="bento-item bento-large">
-                <img class="bento-image" src="https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1200&q=80" alt="کلاس ویژه">
-                <div class="bento-overlay"></div>
-                <div class="bento-content">
-                    <div class="bento-badge">🎓 کلاس ویژه</div>
-                    <h3 class="bento-title">هنر مدیریت زندگی</h3>
-                    <button class="bento-btn">همین الان ببین</button>
-                </div>
+    @if (homeSections?.FeaturedPicks.Any() == true)
+    {
+        <section class="curated-section">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; gap:0.8rem; flex-wrap:wrap;">
+                <h2 class="section-title" style="margin-bottom:0;">📚 منتخب هوشمند + منتخب دستی</h2>
+                <span style="font-size:0.78rem; color:#9fb0d6; border:1px solid #374669; border-radius:999px; padding:0.25rem 0.7rem;">
+                    مدیریت‌پذیر از دیتابیس
+                </span>
             </div>
+            <div class="featured-auto-grid">
+                @foreach (var pick in homeSections.FeaturedPicks)
+                {
+                    <div class="featured-auto-card" @onclick="@(() => Nav.NavigateTo(pick.LinkUrl))">
+                        <div class="featured-auto-cover" style="background-image:linear-gradient(to top,rgba(14,18,28,.9),rgba(14,18,28,.15)),url('@pick.ImageUrl'); background-size:cover; background-position:center;">
+                            <span class="featured-auto-badge">@pick.Badge</span>
+                        </div>
+                        <div class="featured-auto-body">
+                            <p class="featured-auto-title">@pick.Title</p>
+                            <p class="featured-auto-sub">@pick.Subtitle</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="curated-section">
+            <h2 class="section-title">📚 برای شما انتخاب شده</h2>
+            <div class="bento-grid">
+                <div class="bento-item bento-large">
+                    <img class="bento-image" src="https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1200&q=80" alt="کلاس ویژه">
+                    <div class="bento-overlay"></div>
+                    <div class="bento-content">
+                        <div class="bento-badge">🎓 کلاس ویژه</div>
+                        <h3 class="bento-title">هنر مدیریت زندگی</h3>
+                        <button class="bento-btn">همین الان ببین</button>
+                    </div>
+                </div>
 
-            <!-- Info Card -->
-            <div class="bento-item bento-card">
-                <div>
-                    <div class="bento-card-icon">✨</div>
-                    <h3 class="bento-card-title">کیوریشن هوشمند</h3>
-                    <p class="bento-card-desc">محتوای مناسب سطح تو با برچسب‌های هوش مصنوعی انتخاب می‌شه!</p>
+                <div class="bento-item bento-card">
+                    <div>
+                        <div class="bento-card-icon">✨</div>
+                        <h3 class="bento-card-title">کیوریشن هوشمند</h3>
+                        <p class="bento-card-desc">محتوای مناسب سطح تو با برچسب‌های هوش مصنوعی انتخاب می‌شه!</p>
+                    </div>
+                    <div class="bento-card-link">
+                        امتحان کن <span>←</span>
+                    </div>
                 </div>
-                <div class="bento-card-link">
-                    امتحان کن <span>←</span>
-                </div>
-            </div>
 
-            <!-- Stats Card -->
-            <div class="bento-item bento-stats">
-                <div class="bento-stats-number">۱۰۰K+</div>
-                <div class="bento-stats-label">دانش‌آموز این هفته</div>
-                <div class="avatar-group">
-                    <img class="avatar" src="https://i.pravatar.cc/150?img=2" alt="">
-                    <img class="avatar" src="https://i.pravatar.cc/150?img=3" alt="">
-                    <img class="avatar" src="https://i.pravatar.cc/150?img=4" alt="">
-                    <div class="avatar-count">+12</div>
+                <div class="bento-item bento-stats">
+                    <div class="bento-stats-number">۱۰۰K+</div>
+                    <div class="bento-stats-label">دانش‌آموز این هفته</div>
+                    <div class="avatar-group">
+                        <img class="avatar" src="https://i.pravatar.cc/150?img=2" alt="">
+                        <img class="avatar" src="https://i.pravatar.cc/150?img=3" alt="">
+                        <img class="avatar" src="https://i.pravatar.cc/150?img=4" alt="">
+                        <div class="avatar-count">+12</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    }
 </div>
 
 @code {
+    private HomeSectionsDto? homeSections;
+    private bool sectionsLoading = true;
+
+    private static string ContentTypeIcon(string type) => type switch
+    {
+        "Video" => "🎬",
+        "Audio" => "🎵",
+        "PDF" => "📄",
+        "Image" => "🖼️",
+        _ => "📁"
+    };
+
     private class CourseItem
     {
         public string Title { get; set; } = "";
@@ -765,6 +1032,17 @@
     private List<HeroSlide> heroSlides = new();
     private int heroIndex = 0;
     private System.Threading.Timer? _carouselTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            homeSections = await HomeService.GetHomeSectionsAsync();
+            ApplyDynamicHeroFromDb();
+        }
+        catch { /* silently fail if DB not available */ }
+        finally { sectionsLoading = false; }
+    }
 
     protected override void OnInitialized()
     {
@@ -829,6 +1107,32 @@
         };
     }
 
+    private void ApplyDynamicHeroFromDb()
+    {
+        if (homeSections?.HeroBanners == null || !homeSections.HeroBanners.Any())
+        {
+            return;
+        }
+
+        heroSlides = homeSections.HeroBanners.Select(b => new HeroSlide
+        {
+            Image = b.ImageUrl,
+            Badge = b.Badge,
+            Title = b.Title,
+            Description = b.Description,
+            PrimaryLabel = b.PrimaryLabel,
+            PrimaryLink = b.PrimaryLink,
+            SecondaryLabel = b.SecondaryLabel,
+            SecondaryLink = b.SecondaryLink,
+            Stat1 = b.Stat1,
+            Stat1Label = b.Stat1Label,
+            Stat2 = b.Stat2,
+            Stat2Label = b.Stat2Label
+        }).ToList();
+
+        heroIndex = 0;
+    }
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
@@ -844,9 +1148,23 @@
         }
     }
 
-    private void NextHero() { heroIndex = (heroIndex + 1) % heroSlides.Count; }
-    private void PrevHero() { heroIndex = (heroIndex - 1 + heroSlides.Count) % heroSlides.Count; }
-    private void SetHeroSlide(int i) { heroIndex = i; }
+    private void NextHero()
+    {
+        if (heroSlides.Count == 0) return;
+        heroIndex = (heroIndex + 1) % heroSlides.Count;
+    }
+
+    private void PrevHero()
+    {
+        if (heroSlides.Count == 0) return;
+        heroIndex = (heroIndex - 1 + heroSlides.Count) % heroSlides.Count;
+    }
+
+    private void SetHeroSlide(int i)
+    {
+        if (heroSlides.Count == 0) return;
+        heroIndex = Math.Clamp(i, 0, heroSlides.Count - 1);
+    }
 
     public void Dispose() { _carouselTimer?.Dispose(); }
 }

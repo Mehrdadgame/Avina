@@ -1,0 +1,319 @@
+@page "/content/{Id:int}"
+@rendermode InteractiveServer
+@using Avina.Services
+@using Avina.Data
+@using Avina.Models
+@using Microsoft.EntityFrameworkCore
+@inject AvinaDbContext Db
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+
+<style>
+.content-page { max-width: 960px; margin: 0 auto; padding: 1.5rem 2rem; }
+.content-hero { background: #1c2026; border-radius: 1.25rem; overflow: hidden; margin-bottom: 1.5rem; }
+.media-container { background: #000; display: flex; align-items: center; justify-content: center; min-height: 300px; position: relative; }
+.media-locked-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+}
+.content-meta { padding: 1.5rem 2rem; }
+.content-title { font-size: 1.5rem; font-weight: 900; color: #f1f5f9; margin-bottom: 0.75rem; }
+.tag-chip {
+    display: inline-block; background: rgba(124,58,237,0.15); color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.3); padding: 0.2rem 0.625rem;
+    border-radius: 9999px; font-size: 0.75rem; font-weight: 600; margin: 0.2rem;
+}
+.meta-row { display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 1rem 0; color: #94a3b8; font-size: 0.875rem; }
+.meta-item { display: flex; align-items: center; gap: 0.375rem; }
+.buy-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 1rem; padding: 1.5rem; margin-top: 1rem;
+    display: flex; flex-direction: column; gap: 1rem;
+}
+.btn-buy {
+    padding: 0.875rem 2rem; border-radius: 0.875rem; border: none;
+    background: linear-gradient(135deg, #7c3aed, #ec4899); color: white;
+    font-size: 1rem; font-weight: 700; font-family: 'Vazirmatn', sans-serif;
+    cursor: pointer; transition: all 0.2s; width: 100%;
+}
+.btn-buy:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(124,58,237,0.3); }
+.btn-buy:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-back {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: #94a3b8; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; margin-bottom: 1.25rem;
+    background: none; border: none; font-family: 'Vazirmatn', sans-serif;
+}
+.btn-back:hover { color: #a78bfa; }
+</style>
+
+<div class="content-page">
+    <button class="btn-back" @onclick="@(() => Nav.NavigateTo("/"))">← بازگشت به خانه</button>
+
+    @if (loading)
+    {
+        <div style="text-align:center; padding:4rem; color:#64748b;">در حال بارگذاری...</div>
+    }
+    else if (content == null)
+    {
+        <div style="text-align:center; padding:4rem; color:#f87171;">محتوا یافت نشد.</div>
+    }
+    else
+    {
+        <div class="content-hero">
+            <!-- Media player -->
+            <div class="media-container">
+                @if (hasAccess)
+                {
+                    @if (content.Type == ContentMediaType.Video)
+                    {
+                        <video controls style="width:100%; max-height:520px;" preload="metadata">
+                            <source src="@content.FilePath" />
+                            مرورگر شما از ویدیو پشتیبانی نمی‌کند.
+                        </video>
+                    }
+                    else if (content.Type == ContentMediaType.Audio)
+                    {
+                        <div style="width:100%; padding:3rem 2rem; background:#0f172a;">
+                            <div style="text-align:center; font-size:4rem; margin-bottom:1.5rem;">🎵</div>
+                            <audio controls style="width:100%;">
+                                <source src="@content.FilePath" />
+                            </audio>
+                        </div>
+                    }
+                    else if (content.Type == ContentMediaType.Image)
+                    {
+                        <img src="@content.FilePath" alt="@content.Title" style="max-width:100%; max-height:600px; object-fit:contain;" />
+                    }
+                    else if (content.Type == ContentMediaType.PDF)
+                    {
+                        <div style="width:100%; padding:1rem;">
+                            <iframe src="@content.FilePath" style="width:100%; height:600px; border:none; border-radius:0.5rem;"></iframe>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <!-- Locked: show type icon + lock overlay -->
+                    <div style="width:100%; height:300px; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:5rem; filter:blur(2px);">
+                        @TypeIcon(content.Type)
+                    </div>
+                    <div class="media-locked-overlay">
+                        <div style="font-size:3rem; margin-bottom:1rem;">🔒</div>
+                        <div style="font-size:1.25rem; font-weight:700; color:white; margin-bottom:0.5rem;">محتوای پولی</div>
+                        <div style="color:#94a3b8; font-size:0.9rem; margin-bottom:1.5rem;">برای دسترسی کامل خریداری کنید</div>
+                        <div style="font-size:2rem; font-weight:900; color:#a78bfa; margin-bottom:1rem;">@content.CoinPrice 🪙</div>
+                        @if (AuthState.CurrentUser == null)
+                        {
+                            <a href="/login" style="background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.75rem 2rem; border-radius:0.875rem; font-weight:700; text-decoration:none; font-size:0.95rem;">ورود برای خرید</a>
+                        }
+                        else
+                        {
+                            <button class="btn-buy" @onclick="PurchaseContent" disabled="@buying" style="max-width:280px;">
+                                @(buying ? "در حال پردازش..." : $"خرید با {content.CoinPrice} 🪙")
+                            </button>
+                            @if (!string.IsNullOrEmpty(purchaseError))
+                            {
+                                <div style="color:#f87171; font-size:0.8rem; margin-top:0.5rem;">@purchaseError</div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Meta -->
+            <div class="content-meta">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+                    <span style="background:rgba(124,58,237,0.2); color:#a78bfa; border:1px solid rgba(124,58,237,0.4); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700;">@TypeLabel(content.Type)</span>
+                    <span style="background:rgba(30,41,59,0.8); color:#94a3b8; padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem;">@content.Category</span>
+                    @if (content.IsFree)
+                    {
+                        <span style="background:rgba(125,211,168,0.15); color:#7dd3a8; border:1px solid rgba(125,211,168,0.3); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700;">رایگان</span>
+                    }
+                    else
+                    {
+                        <span style="background:rgba(124,58,237,0.15); color:#a78bfa; border:1px solid rgba(124,58,237,0.3); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700;">@content.CoinPrice 🪙</span>
+                    }
+                </div>
+
+                <h1 class="content-title">@content.Title</h1>
+                <p style="color:#94a3b8; font-size:0.9rem; line-height:1.7; margin-bottom:1rem;">@content.Description</p>
+
+                <div class="meta-row">
+                    <div class="meta-item">👁 <strong style="color:#e2e8f0;">@content.ViewCount</strong> بازدید</div>
+                    @if (!content.IsFree)
+                    {
+                        <div class="meta-item">🛒 <strong style="color:#e2e8f0;">@content.PurchaseCount</strong> خرید</div>
+                    }
+                    @if (content.DurationSeconds > 0)
+                    {
+                        <div class="meta-item">⏱ <strong style="color:#e2e8f0;">@(content.DurationSeconds / 60) دقیقه</strong></div>
+                    }
+                    @if (content.PageCount > 0)
+                    {
+                        <div class="meta-item">📄 <strong style="color:#e2e8f0;">@content.PageCount صفحه</strong></div>
+                    }
+                    @if (!string.IsNullOrEmpty(content.Uploader?.Name))
+                    {
+                        <div class="meta-item">👤 <strong style="color:#e2e8f0;">@content.Uploader.Name</strong></div>
+                    }
+                    <div class="meta-item">📅 <strong style="color:#e2e8f0;">@content.CreatedAt.ToString("yyyy/MM/dd")</strong></div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(content.Tags))
+                {
+                    <div style="margin-top:0.75rem;">
+                        @foreach (var tag in content.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            <span class="tag-chip">#@tag.Trim()</span>
+                        }
+                    </div>
+                }
+
+                @if (hasAccess && !content.IsFree)
+                {
+                    <div style="margin-top:1rem; background:rgba(125,211,168,0.1); border:1px solid rgba(125,211,168,0.3); border-radius:0.75rem; padding:0.875rem; display:flex; align-items:center; gap:0.75rem;">
+                        <span style="font-size:1.5rem;">✅</span>
+                        <span style="color:#7dd3a8; font-weight:700; font-size:0.875rem;">این محتوا را خریداری کرده‌اید</span>
+                    </div>
+                }
+
+                @if (!hasAccess && !content.IsFree && AuthState.CurrentUser != null)
+                {
+                    <div class="buy-card">
+                        <div style="font-size:1rem; font-weight:700; color:#f1f5f9;">خرید این محتوا</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color:#94a3b8; font-size:0.875rem;">قیمت:</span>
+                            <span style="font-size:1.5rem; font-weight:900; color:#a78bfa;">@content.CoinPrice 🪙</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color:#94a3b8; font-size:0.875rem;">موجودی شما:</span>
+                            <span style="font-weight:700; color:@(AuthState.CurrentUser.Coin >= content.CoinPrice ? "#7dd3a8" : "#f87171");">@AuthState.CurrentUser.Coin 🪙</span>
+                        </div>
+                        <button class="btn-buy" @onclick="PurchaseContent" disabled="@buying">
+                            @(buying ? "در حال پردازش..." : $"خرید — {content.CoinPrice} 🪙")
+                        </button>
+                        @if (!string.IsNullOrEmpty(purchaseError))
+                        {
+                            <div style="color:#f87171; font-size:0.85rem; text-align:center;">@purchaseError</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ContentMedia? content;
+    private bool loading = true;
+    private bool hasAccess = false;
+    private bool buying = false;
+    private string? purchaseError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContent();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadContent();
+    }
+
+    private async Task LoadContent()
+    {
+        loading = true;
+        try
+        {
+            content = await Db.Contents
+                .Include(c => c.Uploader)
+                .FirstOrDefaultAsync(c => c.Id == Id);
+
+            if (content != null)
+            {
+                // Increment view counts
+                content.ViewCount++;
+                content.WeeklyViews++;
+                content.MonthlyViews++;
+                await Db.SaveChangesAsync();
+
+                // Check access
+                if (content.IsFree)
+                {
+                    hasAccess = true;
+                }
+                else if (AuthState.CurrentUser != null)
+                {
+                    hasAccess = await Db.ContentPurchases
+                        .AnyAsync(p => p.UserId == AuthState.CurrentUser.Id && p.ContentId == Id);
+                }
+            }
+        }
+        finally { loading = false; }
+    }
+
+    private async Task PurchaseContent()
+    {
+        var user = AuthState.CurrentUser;
+        if (user == null || content == null) return;
+
+        buying = true;
+        purchaseError = null;
+
+        try
+        {
+            if (user.Coin < content.CoinPrice)
+            {
+                purchaseError = $"کوین کافی نیست. نیاز: {content.CoinPrice}، موجودی: {user.Coin}";
+                return;
+            }
+
+            var dbUser = await Db.Users.FindAsync(user.Id);
+            if (dbUser == null) return;
+
+            dbUser.Coin -= content.CoinPrice;
+            content.PurchaseCount++;
+
+            Db.ContentPurchases.Add(new ContentPurchase
+            {
+                UserId = user.Id,
+                ContentId = Id,
+                CoinSpent = content.CoinPrice
+            });
+
+            await Db.SaveChangesAsync();
+            user.Coin = dbUser.Coin;
+            if (AuthState.CurrentUser != null) AuthState.CurrentUser.Coin = dbUser.Coin;
+            hasAccess = true;
+        }
+        catch
+        {
+            purchaseError = "خطا در پردازش خرید.";
+        }
+        finally { buying = false; }
+    }
+
+    private static string TypeIcon(ContentMediaType t) => t switch
+    {
+        ContentMediaType.Video => "🎬",
+        ContentMediaType.Audio => "🎵",
+        ContentMediaType.Image => "🖼️",
+        ContentMediaType.PDF => "📄",
+        _ => "📁"
+    };
+
+    private static string TypeLabel(ContentMediaType t) => t switch
+    {
+        ContentMediaType.Video => "ویدیو",
+        ContentMediaType.Audio => "صدا",
+        ContentMediaType.Image => "تصویر",
+        ContentMediaType.PDF => "PDF",
+        _ => "فایل"
+    };
+}

@@ -1,30 +1,11 @@
 @inherits LayoutComponentBase
 @using Avina.Services
-@using System.Text.Json
-@inject AuthStateService AuthState
-@inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject AuthStateService AuthState
+@inject INotificationService NotificationService
 @implements IDisposable
 
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>آخرین نگهبان</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/app-custom.css" />
-    <link rel="stylesheet" href="css/app.css" />
-    <link rel="stylesheet" href="css/school.css" />
-    <link rel="stylesheet" href="css/games.css" />
-    <link rel="stylesheet" href="css/store.css" />
-    <link rel="stylesheet" href="css/profile.css" />
-    <link rel="stylesheet" href="css/upload.css" />
-    <link rel="stylesheet" href="css/home.css" />
-    <link rel="stylesheet" href="css/responsive-components.css" />
+<HeadContent>
     <style>
         body, html, *:not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp) {
             font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important;
@@ -136,224 +117,150 @@
             to { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
         }
     </style>
-</head>
-<body>
-    <!-- Welcome toast -->
-    @if (showToast)
-    {
-        <div class="welcome-toast @(hidingToast ? "hiding" : "")">
-            <span style="font-size:1.2rem;">👋</span>
-            <span>خوش اومدی، <strong style="color:#aac7ff;">@toastName</strong>!</span>
-            <span style="font-size:0.8rem; color:#ffb68c;">🪙 +100 کوین</span>
-        </div>
-    }
+</HeadContent>
 
-    <div class="app-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1 class="logo">آخرین نگهبان</h1>
-                <p class="logo-subtitle">Avina</p>
+
+<div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="logo">آخرین نگهبان</h1>
+            <p class="logo-subtitle">Avina</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <NavLink href="/" class="nav-item" Match="NavLinkMatch.All">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">خانه</span>
+            </NavLink>
+
+            <NavLink href="/school" class="nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">مدرسه آنلاین</span>
+            </NavLink>
+
+            <NavLink href="/games" class="nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">بازی‌های آموزشی</span>
+            </NavLink>
+
+            <NavLink href="/life-path" class="nav-item">
+                <span class="nav-icon">🛤️</span>
+                <span class="nav-label">مسیر من</span>
+            </NavLink>
+
+            <NavLink href="/store" class="nav-item">
+                <span class="nav-icon">🛍️</span>
+                <span class="nav-label">فروشگاه</span>
+            </NavLink>
+        </nav>
+
+        <!-- Today's Challenge Button -->
+        <a href="/school" class="btn-today-challenge">
+            <span>⚡</span>
+            <span>چالش امروز</span>
+        </a>
+
+        <div class="sidebar-footer">
+            <SidebarAuth />
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-layout">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="btn-menu" id="toggleSidebar">☰</button>
+                <div class="search-box">
+                    <input type="text" placeholder="جستجو...">
+                    <span class="search-icon">🔍</span>
+                </div>
             </div>
 
-            <nav class="sidebar-nav">
-                <NavLink href="/" class="nav-item" Match="NavLinkMatch.All">
-                    <span class="nav-icon">🏠</span>
-                    <span class="nav-label">خانه</span>
-                </NavLink>
-
-                <NavLink href="/school" class="nav-item">
-                    <span class="nav-icon">📚</span>
-                    <span class="nav-label">مدرسه آنلاین</span>
-                </NavLink>
-
-                <NavLink href="/games" class="nav-item">
-                    <span class="nav-icon">🎮</span>
-                    <span class="nav-label">بازی‌های آموزشی</span>
-                </NavLink>
-
-                <NavLink href="/life-path" class="nav-item">
-                    <span class="nav-icon">🛤️</span>
-                    <span class="nav-label">مسیر من</span>
-                </NavLink>
-
-                <NavLink href="/store" class="nav-item">
-                    <span class="nav-icon">🛍️</span>
-                    <span class="nav-label">فروشگاه</span>
-                </NavLink>
-            </nav>
-
-            <!-- Today's Challenge Button -->
-            <a href="/school" class="btn-today-challenge">
-                <span>⚡</span>
-                <span>چالش امروز</span>
-            </a>
-
-            <div class="sidebar-footer">
-                @if (AuthState.IsLoggedIn)
-                {
-                    <a href="/profile" class="user-profile">
-                        <img src="@AuthState.CurrentUser!.ProfileImage" alt="@AuthState.CurrentUser.Name" class="user-avatar">
-                        <div class="user-info">
-                            <p class="user-name">@AuthState.CurrentUser.Name</p>
-                            <p class="user-role">@AuthState.CurrentUser.Role</p>
-                            <div class="sidebar-coin-row">
-                                <span>🪙</span>
-                                <span>@AuthState.CurrentUser.Coin.ToString("N0") کوین</span>
-                            </div>
-                        </div>
-                    </a>
-                    <button class="btn-logout-sidebar" @onclick="HandleLogout">خروج از حساب</button>
-                }
-                else
-                {
-                    <div class="user-profile" style="cursor:default;">
-                        <div class="guest-avatar">👤</div>
-                        <div class="user-info">
-                            <p class="user-name">مهمان</p>
-                            <p class="user-role">وارد نشده</p>
-                        </div>
-                    </div>
-                    <a href="/login" class="btn-auth-sidebar">ثبت نام / ورود</a>
-                }
+            <div class="header-right">
+                <a href="/upload" class="btn-upload" title="بارگذاری محتوا">
+                    <span class="upload-icon">📤</span>
+                    <span>اپلود</span>
+                </a>
+                <a href="/notifications" class="btn-notification @(unreadNotifications > 0 ? "has-unread" : "")" title="اعلان‌ها">
+                    <span class="notification-icon">🔔</span>
+                    @if (unreadNotifications > 0)
+                    {
+                        <span class="notification-badge">@FormatUnread(unreadNotifications)</span>
+                    }
+                </a>
+                <HeaderAuth />
             </div>
-        </aside>
+        </header>
 
-        <!-- Main Content -->
-        <div class="main-layout">
-            <!-- Top Header -->
-            <header class="top-header">
-                <div class="header-left">
-                    <button class="btn-menu" id="toggleSidebar">☰</button>
-                    <div class="search-box">
-                        <input type="text" placeholder="جستجو...">
-                        <span class="search-icon">🔍</span>
-                    </div>
-                </div>
-
-                <div class="header-right">
-                    <a href="/upload" class="btn-upload" title="بارگذاری محتوا">
-                        <span class="upload-icon">📤</span>
-                        <span>اپلود</span>
-                    </a>
-                    <button class="btn-notification">
-                        <span class="notification-icon">🔔</span>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    @if (AuthState.IsLoggedIn)
-                    {
-                        <a href="/profile" class="header-profile-link" title="پروفایل">
-                            <img src="@AuthState.CurrentUser!.ProfileImage" alt="پروفایل" class="header-avatar">
-                        </a>
-                    }
-                    else
-                    {
-                        <a href="/login" class="btn-auth-header">ثبت نام</a>
-                    }
-                </div>
-            </header>
-
-            <!-- Content Area -->
-            <main class="main-content">
-                @Body
-            </main>
-        </div>
+        <!-- Content Area -->
+        <main class="main-content">
+            @Body
+        </main>
     </div>
+</div>
 
-    <!-- Music Player -->
-    <MusicPlayer />
+<!-- Music Player -->
+<MusicPlayer />
 
-    <div id="blazor-error-ui" data-nosnippet>
-        خطای برنامه رخ داد.
-        <a href="." class="reload">بارگذاری مجدد</a>
-        <span class="dismiss">🗙</span>
-    </div>
-
-    <script src="js/bootstrap.bundle.min.js"></script>
-    <script src="js/app.js"></script>
-</body>
-</html>
+<div id="blazor-error-ui" data-nosnippet>
+    خطای برنامه رخ داد.
+    <a href="." class="reload">بارگذاری مجدد</a>
+    <span class="dismiss">🗙</span>
+</div>
 
 @code {
-    private const string StorageKey = "avina_user";
-
-    // Toast state
-    private bool showToast = false;
-    private bool hidingToast = false;
-    private string toastName = "";
-    private bool _wasLoggedIn = false;
-
     protected override void OnInitialized()
     {
-        AuthState.StateChanged += OnAuthChanged;
         Nav.LocationChanged += OnLocationChanged;
+        AuthState.StateChanged += OnAuthStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await TryRestoreFromStorage();
+            await RefreshUnreadNotificationsAsync();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    private async Task TryRestoreFromStorage()
+    private int unreadNotifications;
+
+    private async Task OnAuthStateChanged()
     {
-        try
-        {
-            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
-            if (!string.IsNullOrEmpty(json))
-            {
-                var user = JsonSerializer.Deserialize<UserCacheDto>(json);
-                if (user != null && !AuthState.IsLoggedIn)
-                    AuthState.SetUser(user);
-            }
-        }
-        catch { }
+        await RefreshUnreadNotificationsAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-        => InvokeAsync(StateHasChanged);
-
-    private void OnAuthChanged()
     {
-        // Show welcome toast when user logs in
-        if (AuthState.IsLoggedIn && !_wasLoggedIn)
+        _ = InvokeAsync(async () =>
         {
-            _wasLoggedIn = true;
-            toastName = AuthState.CurrentUser?.Name ?? "";
-            showToast = true;
-            hidingToast = false;
-            _ = DismissToastAsync();
-        }
-        else if (!AuthState.IsLoggedIn)
+            await RefreshUnreadNotificationsAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task RefreshUnreadNotificationsAsync()
+    {
+        var user = AuthState.CurrentUser;
+        if (user?.Id > 0)
         {
-            _wasLoggedIn = false;
-            showToast = false;
+            unreadNotifications = await NotificationService.GetUnreadCountAsync(user.Id, user.Role);
         }
-        InvokeAsync(StateHasChanged);
+        else
+        {
+            unreadNotifications = 0;
+        }
     }
 
-    private async Task DismissToastAsync()
-    {
-        await Task.Delay(2800);
-        hidingToast = true;
-        await InvokeAsync(StateHasChanged);
-        await Task.Delay(350);
-        showToast = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task HandleLogout()
-    {
-        try { await JS.InvokeVoidAsync("lsRemove", StorageKey); } catch { }
-        AuthState.Logout();
-        Nav.NavigateTo("/");
-    }
+    private static string FormatUnread(int count) => count > 99 ? "99+" : count.ToString();
 
     public void Dispose()
     {
-        AuthState.StateChanged -= OnAuthChanged;
         Nav.LocationChanged -= OnLocationChanged;
+        AuthState.StateChanged -= OnAuthStateChanged;
     }
 }

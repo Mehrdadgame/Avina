@@ -1,0 +1,34 @@
+@rendermode InteractiveServer
+@using Avina.Services
+@using System.Text.Json
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@implements IDisposable
+
+@if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
+{
+    <a href="/profile" class="header-profile-link" title="پروفایل">
+        <img src="@AuthState.CurrentUser.ProfileImage" alt="پروفایل" class="header-avatar">
+    </a>
+}
+else
+{
+    <a href="/login" class="btn-auth-header">ثبت نام</a>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthState.StateChanged += OnAuthChanged;
+    }
+
+    private async Task OnAuthChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= OnAuthChanged;
+    }
+}

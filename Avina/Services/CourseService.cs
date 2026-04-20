@@ -55,7 +55,7 @@ public class CourseService : ICourseService
                 Instructor = "محمد علی",
                 StudentCount = 450,
                 Rating = 4.8,
-                Duration = 240
+                DurationMinutes = 240
             },
             new Course 
             { 
@@ -68,7 +68,7 @@ public class CourseService : ICourseService
                 Instructor = "فاطمه احمدی",
                 StudentCount = 380,
                 Rating = 4.6,
-                Duration = 300
+                DurationMinutes = 300
             },
             new Course 
             { 
@@ -81,7 +81,7 @@ public class CourseService : ICourseService
                 Instructor = "علی رضائی",
                 StudentCount = 520,
                 Rating = 4.9,
-                Duration = 180
+                DurationMinutes = 180
             },
             new Course 
             { 
@@ -94,7 +94,7 @@ public class CourseService : ICourseService
                 Instructor = "زهرا کریمی",
                 StudentCount = 320,
                 Rating = 4.7,
-                Duration = 270
+                DurationMinutes = 270
             },
             new Course 
             { 
@@ -107,7 +107,7 @@ public class CourseService : ICourseService
                 Instructor = "حسن رزاقی",
                 StudentCount = 580,
                 Rating = 4.95,
-                Duration = 200
+                DurationMinutes = 200
             },
             new Course 
             { 
@@ -120,7 +120,7 @@ public class CourseService : ICourseService
                 Instructor = "رضا حسنی",
                 StudentCount = 420,
                 Rating = 4.8,
-                Duration = 360
+                DurationMinutes = 360
             }
         };
     }
