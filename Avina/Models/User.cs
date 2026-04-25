@@ -23,4 +23,9 @@ public class User
     // Navigation properties
     public virtual ICollection<UserPurchase> Purchases { get; set; } = new List<UserPurchase>();
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<SocialPost> SocialPosts { get; set; } = new List<SocialPost>();
+    public virtual ICollection<SocialComment> SocialComments { get; set; } = new List<SocialComment>();
+    public virtual ICollection<SocialPostLike> SocialPostLikes { get; set; } = new List<SocialPostLike>();
+    public virtual ICollection<UserFollow> FollowersMap { get; set; } = new List<UserFollow>();
+    public virtual ICollection<UserFollow> FollowingMap { get; set; } = new List<UserFollow>();
 }

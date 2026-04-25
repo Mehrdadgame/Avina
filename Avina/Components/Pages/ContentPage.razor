@@ -3,6 +3,7 @@
 @using Avina.Services
 @using Avina.Data
 @using Avina.Models
+@using Avina.Helpers
 @using Microsoft.EntityFrameworkCore
 @inject AvinaDbContext Db
 @inject AuthStateService AuthState
@@ -160,7 +161,7 @@
                     {
                         <div class="meta-item">👤 <strong style="color:#e2e8f0;">@content.Uploader.Name</strong></div>
                     }
-                    <div class="meta-item">📅 <strong style="color:#e2e8f0;">@content.CreatedAt.ToString("yyyy/MM/dd")</strong></div>
+                    <div class="meta-item">📅 <strong style="color:#e2e8f0;">@content.CreatedAt.ToShamsiDate()</strong></div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(content.Tags))

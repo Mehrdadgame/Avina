@@ -42,14 +42,14 @@
     }
 
     <!-- School Carousel Banner -->
-    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:280px;">
+    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:280px; direction:ltr;">
         <div style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(schoolSlideIndex * -100)%);">
             @foreach (var slide in schoolSlides)
             {
-                <div style="min-width:100%; height:100%; position:relative; flex-shrink:0; overflow:hidden;">
+                <div style="min-width:100%; height:100%; position:relative; flex:0 0 100%; flex-shrink:0; overflow:hidden;">
                     <img src="@slide.Image" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
                     <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(11,14,21,0.88) 0%, rgba(66,72,212,0.4) 50%, transparent 100%);"></div>
-                    <div style="position:absolute; inset:0; padding:2rem 2.5rem; display:flex; align-items:center; justify-content:space-between; z-index:10;">
+                    <div style="position:absolute; inset:0; padding:2rem 2.5rem; display:flex; align-items:center; justify-content:space-between; z-index:10; direction:rtl;">
                         <div style="max-width:500px; text-align:right;">
                             <span style="background:rgba(175,199,247,0.2); color:#afc7f7; border:1px solid rgba(175,199,247,0.4); padding:0.25rem 0.875rem; border-radius:9999px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:0.75rem;">@slide.Badge</span>
                             <h2 style="font-size:1.6rem; font-weight:900; color:white; line-height:1.3; margin-bottom:0.5rem;">@slide.Title</h2>
@@ -91,34 +91,61 @@
             <h3 class="text-xl font-black">دوره‌های من</h3>
             <a href="#" class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">مشاهده همه</a>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @foreach (var (course, index) in enrolledCourses.Select((c, i) => (c, i)))
-            {
-                var thumbImg = index == 0
-                    ? "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80"
-                    : "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&q=80";
-                <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-5 shadow-sm card-lift relative">
-                    <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
-                        <img src="@thumbImg" alt="@course.Title" class="w-full h-full object-cover" />
-                    </div>
-                    <div class="flex-1 text-right">
-                        <h4 class="font-bold text-base mb-1">@course.Title</h4>
-                        <div class="flex justify-between text-xs text-on-surface-variant mb-2">
-                            <span>@(index == 0 ? "۶۸٪ تکمیل شده" : "۳۲٪ تکمیل شده")</span>
-                            <span>@course.Instructor</span>
+        @if (!enrolledCourses.Any())
+        {
+            <div class="bg-surface-container-low p-6 rounded-2xl text-right text-on-surface-variant">
+                بعد از ثبت‌نام در دوره‌ها، وضعیت پیشرفت، آزمون‌ها و گواهی‌های شما اینجا نمایش داده می‌شود.
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach (var (course, index) in enrolledCourses.Select((c, i) => (c, i)))
+                {
+                    var thumbImg = index == 0
+                        ? "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200&q=80"
+                        : "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=200&q=80";
+                    var insight = GetCourseInsight(course.Id);
+                    var progress = GetEnrollmentProgress(course.Id);
+                    var enrolledCourseUrl = $"/course/{course.Id}";
+                    <div class="bg-surface-container-lowest p-5 rounded-2xl flex items-center gap-5 shadow-sm card-lift relative cursor-pointer"
+                         @onclick="() => Nav.NavigateTo(enrolledCourseUrl)">
+                        <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
+                            <img src="@thumbImg" alt="@course.Title" class="w-full h-full object-cover" />
                         </div>
-                        <div class="h-2.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                            <div class="h-full primary-gradient rounded-full progress-bar"
-                                 style="width:@(index == 0 ? "68%" : "32%"); animation-delay:@(index == 0 ? "0.3s" : "0.5s");"></div>
+                        <div class="flex-1 text-right">
+                            <h4 class="font-bold text-base mb-1">@course.Title</h4>
+                            <div class="flex justify-between text-xs text-on-surface-variant mb-2">
+                                <span>@progress٪ تکمیل شده</span>
+                                <span>@course.Instructor</span>
+                            </div>
+                            <div class="h-2.5 w-full bg-surface-container-highest rounded-full overflow-hidden mb-3">
+                                <div class="h-full primary-gradient rounded-full progress-bar"
+                                     style="width:@($"{progress}%"); animation-delay:@(index == 0 ? "0.3s" : "0.5s");"></div>
+                            </div>
+                            <div class="flex flex-wrap justify-end gap-2 text-[11px]">
+                                @if (insight.HasExam)
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-primary-container text-on-primary-container">آزمون فعال</span>
+                                }
+                                @if (insight.LastScore.HasValue)
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">نمره: @insight.LastScore.Value٪</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(insight.CertificateNumber))
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-green-500/15 text-green-300 border border-green-400/20">لایسنس صادر شده</span>
+                                }
+                            </div>
                         </div>
+                        @if (progress > 0)
+                        {
+                            <span class="absolute -top-2.5 -right-2.5 bg-tertiary-container text-on-tertiary-container text-[10px] px-2 py-0.5 rounded-full font-black border-2 border-background shadow">در حال یادگیری</span>
+                        }
                     </div>
-                    @if (index == 0)
-                    {
-                        <span class="absolute -top-2.5 -right-2.5 bg-tertiary-container text-on-tertiary-container text-[10px] px-2 py-0.5 rounded-full font-black border-2 border-background shadow">ادامه نبرد</span>
-                    }
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     </section>
 
     <!-- Course Grid -->
@@ -159,8 +186,30 @@
                         </div>
                     </div>
                     <div class="p-5 text-right flex-1 flex flex-col">
+                        @{
+                            var insight = GetCourseInsight(course.Id);
+                            var teacherSummary = GetTeacherSummary(course);
+                        }
                         <h4 class="text-base font-bold mb-2">@course.Title</h4>
                         <p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2 flex-1">@course.Description</p>
+                        <div class="mb-4 rounded-xl border border-white/8 bg-black/10 p-3 text-[11px] leading-6 text-on-surface-variant">
+                            <div><strong style="color:#eef3ff;">معلم:</strong> @course.Instructor</div>
+                            <div><strong style="color:#eef3ff;">توضیح معلم:</strong> @teacherSummary</div>
+                            <div class="flex flex-wrap gap-2 justify-end mt-2">
+                                @if (insight.HasExam)
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-primary-container text-on-primary-container">آزمون دارد</span>
+                                }
+                                @if (insight.LastScore.HasValue)
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">آخرین نمره @insight.LastScore.Value٪</span>
+                                }
+                                @if (insight.Passed)
+                                {
+                                    <span class="px-2 py-1 rounded-full bg-green-500/15 text-green-300 border border-green-400/20">قبول شده</span>
+                                }
+                            </div>
+                        </div>
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-1 text-tertiary font-bold">
                                 <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">grade</span>
@@ -194,6 +243,16 @@
         public string Icon { get; set; } = "";
     }
 
+    private sealed class SchoolCourseInsight
+    {
+        public bool HasExam { get; set; }
+        public int? ExamId { get; set; }
+        public int? PassingScore { get; set; }
+        public int? LastScore { get; set; }
+        public bool Passed { get; set; }
+        public string? CertificateNumber { get; set; }
+    }
+
     private List<SchoolSlide> schoolSlides = new();
     private int schoolSlideIndex = 0;
     private System.Threading.Timer? _schoolTimer;
@@ -202,6 +261,8 @@
     private List<Course> filteredCourses = new();
     private List<Course> enrolledCourses = new();
     private List<Course> teacherCourses = new();
+    private Dictionary<int, SchoolCourseInsight> courseInsights = [];
+    private Dictionary<int, int> enrollmentProgress = [];
     private string searchTerm = "";
     private string selectedCategory = "";
     private bool IsTeacher => IsTeacherRole(AuthState.CurrentUser?.Role);
@@ -220,9 +281,7 @@
             new SchoolSlide { Image = "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=1200&q=80", Badge = "🔬 آزمایشگاه مجازی", Title = "علوم: آزمایش‌های شگفت‌انگیز", Description = "آزمایش‌های علوم را به صورت تعاملی در خانه انجام بده و نتایج شگفت‌انگیز ببین.", BtnLabel = "شروع آزمایش", Icon = "🔬" },
         };
 
-        allCourses = await CourseService.GetAllCoursesAsync();
-        enrolledCourses = await CourseService.GetEnrolledCoursesAsync(1);
-        filteredCourses = allCourses;
+        await LoadSchoolDataAsync();
         await LoadTeacherCourses();
     }
 
@@ -252,8 +311,87 @@
 
     private async Task HandleAuthStateChanged()
     {
+        await LoadSchoolDataAsync();
         await LoadTeacherCourses();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadSchoolDataAsync()
+    {
+        allCourses = await Db.Courses
+            .AsNoTracking()
+            .Where(c => c.IsPublished)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+
+        await LoadStudentSchoolStateAsync();
+        ApplyFilters();
+    }
+
+    private async Task LoadStudentSchoolStateAsync()
+    {
+        courseInsights = [];
+        enrollmentProgress = [];
+        enrolledCourses = [];
+
+        var currentUserId = AuthState.CurrentUser?.Id;
+        if (currentUserId is null or <= 0)
+        {
+            return;
+        }
+
+        var courseIds = allCourses.Select(c => c.Id).ToList();
+
+        var enrollments = await Db.CourseEnrollments
+            .AsNoTracking()
+            .Include(e => e.Course)
+            .Where(e => e.UserId == currentUserId)
+            .OrderByDescending(e => e.EnrolledAt)
+            .ToListAsync();
+
+        enrolledCourses = enrollments
+            .Where(e => e.Course is not null)
+            .Select(e => e.Course)
+            .DistinctBy(c => c.Id)
+            .ToList();
+
+        enrollmentProgress = enrollments
+            .GroupBy(e => e.CourseId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.EnrolledAt).First().ProgressPercent);
+
+        var exams = await Db.Exams
+            .AsNoTracking()
+            .Where(e => courseIds.Contains(e.CourseId))
+            .ToListAsync();
+
+        var latestResults = await Db.ExamResults
+            .AsNoTracking()
+            .Include(r => r.Exam)
+            .Where(r => r.UserId == currentUserId)
+            .OrderByDescending(r => r.TakenAt)
+            .ToListAsync();
+
+        var certificates = await Db.Certificates
+            .AsNoTracking()
+            .Where(c => c.UserId == currentUserId)
+            .ToListAsync();
+
+        foreach (var course in allCourses)
+        {
+            var exam = exams.FirstOrDefault(e => e.CourseId == course.Id);
+            var latestResult = latestResults.FirstOrDefault(r => r.Exam?.CourseId == course.Id);
+            var certificate = certificates.FirstOrDefault(c => c.CourseId == course.Id);
+
+            courseInsights[course.Id] = new SchoolCourseInsight
+            {
+                HasExam = exam is not null,
+                ExamId = exam?.Id,
+                PassingScore = exam?.PassingScore,
+                LastScore = latestResult?.Score,
+                Passed = latestResult?.Passed ?? false,
+                CertificateNumber = certificate?.CertificateNumber
+            };
+        }
     }
 
     private async Task LoadTeacherCourses()
@@ -269,6 +407,31 @@
             .Where(c => c.Instructor == instructorName)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
+    }
+
+    private SchoolCourseInsight GetCourseInsight(int courseId)
+        => courseInsights.TryGetValue(courseId, out var insight) ? insight : new SchoolCourseInsight();
+
+    private int GetEnrollmentProgress(int courseId)
+        => enrollmentProgress.TryGetValue(courseId, out var progress) ? progress : 0;
+
+    private static string GetTeacherSummary(Course course)
+    {
+        var summary = course.WhatYouLearn?.Split('|', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(summary))
+        {
+            return summary.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(course.Requirements))
+        {
+            return course.Requirements.Split('|', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim()
+                ?? "این دوره با همراهی معلم و تمرین مرحله‌به‌مرحله برگزار می‌شود.";
+        }
+
+        return string.IsNullOrWhiteSpace(course.Description)
+            ? "این دوره با همراهی معلم و تمرین مرحله‌به‌مرحله برگزار می‌شود."
+            : course.Description;
     }
 
     private static bool IsTeacherRole(string? role)

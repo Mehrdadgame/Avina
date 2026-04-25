@@ -6,7 +6,7 @@ namespace Avina.Services;
 
 public interface IAuthService
 {
-    Task<AuthResponse> RegisterAsync(string name, string email, string password);
+    Task<AuthResponse> RegisterAsync(string name, string email, string password, string? role = null);
     Task<AuthResponse> LoginAsync(string email, string password);
 }
 
@@ -16,20 +16,23 @@ public class AuthService : IAuthService
     private readonly JwtTokenService _jwtService;
     private readonly ILogger<AuthService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IProfileAvatarService _profileAvatarService;
 
     public AuthService(
         AvinaDbContext context,
         JwtTokenService jwtService,
         ILogger<AuthService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IProfileAvatarService profileAvatarService)
     {
         _context = context;
         _jwtService = jwtService;
         _logger = logger;
         _configuration = configuration;
+        _profileAvatarService = profileAvatarService;
     }
 
-    public async Task<AuthResponse> RegisterAsync(string name, string email, string password)
+    public async Task<AuthResponse> RegisterAsync(string name, string email, string password, string? role = null)
     {
         try
         {
@@ -53,6 +56,7 @@ public class AuthService : IAuthService
             }
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+            var normalizedRole = _profileAvatarService.NormalizeRole("دانش‌آموز");
 
             var user = new User
             {
@@ -60,10 +64,10 @@ public class AuthService : IAuthService
                 Email = email.Trim(),
                 PasswordHash = passwordHash,
                 PasswordSalt = "",
-                Role = "دانش‌آموز",
+                Role = normalizedRole,
                 Coin = 100,
                 Level = 1,
-                ProfileImage = $"https://i.pravatar.cc/150?u={email}",
+                ProfileImage = _profileAvatarService.GetDefaultAvatar(normalizedRole),
                 CreatedAt = DateTime.UtcNow,
                 LastLoginAt = DateTime.UtcNow
             };

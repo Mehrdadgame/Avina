@@ -28,6 +28,13 @@ public class AvinaDbContext : DbContext
     public DbSet<UserNotificationState> UserNotificationStates { get; set; } = null!;
     public DbSet<HomeBanner> HomeBanners { get; set; } = null!;
     public DbSet<HomeFeaturedItem> HomeFeaturedItems { get; set; } = null!;
+    public DbSet<SocialPost> SocialPosts { get; set; } = null!;
+    public DbSet<SocialComment> SocialComments { get; set; } = null!;
+    public DbSet<SocialPostLike> SocialPostLikes { get; set; } = null!;
+    public DbSet<UserFollow> UserFollows { get; set; } = null!;
+    public DbSet<DailyChallenge> DailyChallenges { get; set; } = null!;
+    public DbSet<DailyChallengeQuestion> DailyChallengeQuestions { get; set; } = null!;
+    public DbSet<UserDailyChallengeAttempt> UserDailyChallengeAttempts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +134,59 @@ public class AvinaDbContext : DbContext
         modelBuilder.Entity<Notification>().HasIndex(n => new { n.IsActive, n.PublishAt, n.ExpireAt });
         modelBuilder.Entity<HomeBanner>().HasIndex(b => new { b.IsActive, b.DisplayOrder });
         modelBuilder.Entity<HomeFeaturedItem>().HasIndex(f => new { f.SectionKey, f.DisplayOrder, f.IsActive });
+        modelBuilder.Entity<SocialPost>().Property(p => p.Content).HasMaxLength(4000);
+        modelBuilder.Entity<SocialComment>().Property(c => c.Content).HasMaxLength(1000);
+
+        modelBuilder.Entity<SocialPost>()
+            .HasOne(p => p.User).WithMany(u => u.SocialPosts)
+            .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SocialComment>()
+            .HasOne(c => c.Post).WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SocialComment>()
+            .HasOne(c => c.User).WithMany(u => u.SocialComments)
+            .HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SocialPostLike>()
+            .HasOne(l => l.Post).WithMany(p => p.Likes)
+            .HasForeignKey(l => l.PostId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SocialPostLike>()
+            .HasOne(l => l.User).WithMany(u => u.SocialPostLikes)
+            .HasForeignKey(l => l.UserId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SocialPostLike>()
+            .HasIndex(l => new { l.PostId, l.UserId }).IsUnique();
+        modelBuilder.Entity<SocialPost>()
+            .HasIndex(p => p.CreatedAt);
+        modelBuilder.Entity<SocialComment>()
+            .HasIndex(c => new { c.PostId, c.CreatedAt });
+
+        modelBuilder.Entity<UserFollow>()
+            .HasOne(f => f.Follower).WithMany(u => u.FollowingMap)
+            .HasForeignKey(f => f.FollowerId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<UserFollow>()
+            .HasOne(f => f.Following).WithMany(u => u.FollowersMap)
+            .HasForeignKey(f => f.FollowingId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<UserFollow>()
+            .HasIndex(f => new { f.FollowerId, f.FollowingId }).IsUnique();
+
+        modelBuilder.Entity<DailyChallenge>()
+            .Property(c => c.Title).HasMaxLength(200);
+        modelBuilder.Entity<DailyChallengeQuestion>()
+            .Property(q => q.QuestionText).HasMaxLength(1000);
+        modelBuilder.Entity<DailyChallenge>()
+            .HasIndex(c => new { c.IsActive, c.PublishAt });
+        modelBuilder.Entity<DailyChallengeQuestion>()
+            .HasOne(q => q.DailyChallenge).WithMany(c => c.Questions)
+            .HasForeignKey(q => q.DailyChallengeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserDailyChallengeAttempt>()
+            .HasOne(a => a.User).WithMany()
+            .HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserDailyChallengeAttempt>()
+            .HasOne(a => a.DailyChallenge).WithMany(c => c.Attempts)
+            .HasForeignKey(a => a.DailyChallengeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserDailyChallengeAttempt>()
+            .HasIndex(a => new { a.UserId, a.DailyChallengeId, a.AttemptNumber }).IsUnique();
 
         SeedData(modelBuilder);
     }
@@ -364,5 +424,154 @@ public class AvinaDbContext : DbContext
                 PublishAt = now
             }
         );
+
+        SeedDailyChallenges(modelBuilder, now);
+    }
+
+    private static void SeedDailyChallenges(ModelBuilder modelBuilder, DateTime now)
+    {
+        var challenges = new[]
+        {
+            new DailyChallenge
+            {
+                Id = 1,
+                Title = "استاد محاسبات",
+                Description = "۲۰ سوال ریاضی سطح متوسط را حل کن و اگر بیشتر از ۵۰ درصد درست بزنی، به همان نسبت امتیاز بگیر.",
+                Subject = "ریاضی",
+                Icon = "🧮",
+                BorderColor = "#ffb68c",
+                RewardPoints = 20,
+                PassingPercentage = 50,
+                TimeLimitMinutes = 20,
+                IsActive = true,
+                PublishAt = now
+            },
+            new DailyChallenge
+            {
+                Id = 2,
+                Title = "سفیر زبان",
+                Description = "۲۰ سوال واژگان و گرامر را جواب بده و مهارت زبانت را به مسیر رشدت اضافه کن.",
+                Subject = "زبان",
+                Icon = "🌍",
+                BorderColor = "#afc7f7",
+                RewardPoints = 30,
+                PassingPercentage = 50,
+                TimeLimitMinutes = 18,
+                IsActive = true,
+                PublishAt = now
+            },
+            new DailyChallenge
+            {
+                Id = 3,
+                Title = "دانشمند کوچک",
+                Description = "۲۰ سوال علوم و آزمایشگاهی را پاسخ بده و امتیاز علمی جمع کن.",
+                Subject = "علوم",
+                Icon = "🔬",
+                BorderColor = "#aac7ff",
+                RewardPoints = 80,
+                PassingPercentage = 50,
+                TimeLimitMinutes = 22,
+                IsActive = true,
+                PublishAt = now
+            },
+            new DailyChallenge
+            {
+                Id = 4,
+                Title = "خواننده ماهر",
+                Description = "در ۲۰ سوال ادبیات و درک مطلب شرکت کن و برای مسیرت امتیاز بگیر.",
+                Subject = "ادبیات",
+                Icon = "📚",
+                BorderColor = "#7dd3a8",
+                RewardPoints = 50,
+                PassingPercentage = 50,
+                TimeLimitMinutes = 20,
+                IsActive = true,
+                PublishAt = now
+            }
+        };
+
+        modelBuilder.Entity<DailyChallenge>().HasData(challenges);
+        modelBuilder.Entity<DailyChallengeQuestion>().HasData(BuildDailyChallengeQuestions());
+    }
+
+    private static List<DailyChallengeQuestion> BuildDailyChallengeQuestions()
+    {
+        var questions = new List<DailyChallengeQuestion>();
+        questions.AddRange(BuildChallengeQuestions(
+            challengeId: 1,
+            idStart: 1,
+            subjectLabel: "ریاضی",
+            optionA: "۲",
+            optionB: "۴",
+            optionC: "۶",
+            optionD: "۸",
+            correctAnswer: "B",
+            stems: Enumerable.Range(1, 20).Select(i => $"سوال {i} ریاضی: حاصل ۲ + ۲ کدام است؟")));
+
+        questions.AddRange(BuildChallengeQuestions(
+            challengeId: 2,
+            idStart: 21,
+            subjectLabel: "زبان",
+            optionA: "Good morning",
+            optionB: "Good night",
+            optionC: "Goodbye",
+            optionD: "Please sit",
+            correctAnswer: "A",
+            stems: Enumerable.Range(1, 20).Select(i => $"سوال {i} زبان: ترجمه درست «صبح بخیر» کدام است؟")));
+
+        questions.AddRange(BuildChallengeQuestions(
+            challengeId: 3,
+            idStart: 41,
+            subjectLabel: "علوم",
+            optionA: "اکسیژن",
+            optionB: "هیدروژن",
+            optionC: "نیتروژن",
+            optionD: "دی‌اکسید کربن",
+            correctAnswer: "A",
+            stems: Enumerable.Range(1, 20).Select(i => $"سوال {i} علوم: گازی که برای تنفس انسان لازم است کدام است؟")));
+
+        questions.AddRange(BuildChallengeQuestions(
+            challengeId: 4,
+            idStart: 61,
+            subjectLabel: "ادبیات",
+            optionA: "اسم",
+            optionB: "فعل",
+            optionC: "صفت",
+            optionD: "قید",
+            correctAnswer: "B",
+            stems: Enumerable.Range(1, 20).Select(i => $"سوال {i} ادبیات: در جمله «او نوشت» واژه «نوشت» چه نقشی دارد؟")));
+
+        return questions;
+    }
+
+    private static IEnumerable<DailyChallengeQuestion> BuildChallengeQuestions(
+        int challengeId,
+        int idStart,
+        string subjectLabel,
+        string optionA,
+        string optionB,
+        string optionC,
+        string optionD,
+        string correctAnswer,
+        IEnumerable<string> stems)
+    {
+        var id = idStart;
+        var order = 1;
+        foreach (var stem in stems)
+        {
+            yield return new DailyChallengeQuestion
+            {
+                Id = id++,
+                DailyChallengeId = challengeId,
+                Order = order++,
+                QuestionText = stem,
+                OptionA = optionA,
+                OptionB = optionB,
+                OptionC = optionC,
+                OptionD = optionD,
+                CorrectAnswer = correctAnswer,
+                Points = 1
+            };
+        }
     }
 }

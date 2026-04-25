@@ -1,0 +1,205 @@
+@page "/search"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components
+@using Avina.Services
+@inject ISearchService SearchService
+
+<PageTitle>جستجو</PageTitle>
+
+<style>
+.search-page { display:flex; flex-direction:column; gap:1.5rem; padding:1rem; }
+.search-hero {
+    background: linear-gradient(135deg, #182131, #0f1726);
+    border: 1px solid #303a4f;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+}
+.search-title { margin:0 0 .5rem; color:#eef3ff; font-size:1.5rem; font-weight:900; }
+.search-subtitle { margin:0; color:#9fb0d6; line-height:1.8; }
+.search-form {
+    display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1rem;
+}
+.search-input {
+    flex:1 1 320px; min-width:0; background:#0b0e15; border:1px solid #414753; color:#e0e2ec;
+    border-radius:1rem; padding:.9rem 1rem; font-family:'Vazirmatn',sans-serif;
+}
+.search-submit {
+    border:none; border-radius:1rem; padding:.9rem 1.25rem; font-weight:800; color:white;
+    background:linear-gradient(135deg,#4248d4,#9197ff);
+}
+.search-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; }
+.search-section {
+    background:#1c2026; border:1px solid #303a4f; border-radius:1.25rem; padding:1rem;
+}
+.search-section h2 { margin:0 0 1rem; color:#eef3ff; font-size:1rem; font-weight:800; }
+.result-list { display:flex; flex-direction:column; gap:.75rem; }
+.result-card {
+    display:flex; gap:.85rem; align-items:flex-start; text-decoration:none; color:inherit;
+    background:#111823; border:1px solid #2d3748; border-radius:1rem; padding:.85rem;
+    transition:transform .2s ease, border-color .2s ease;
+}
+.result-card:hover { transform:translateY(-2px); border-color:#aac7ff; }
+.result-avatar {
+    width:52px; height:52px; border-radius:50%; object-fit:cover; background:#222c3a; flex-shrink:0;
+}
+.result-meta { min-width:0; }
+.result-kind { color:#aac7ff; font-size:.72rem; font-weight:800; margin-bottom:.2rem; }
+.result-title { color:#eef3ff; font-weight:800; margin-bottom:.25rem; }
+.result-subtitle { color:#b7c3de; font-size:.82rem; margin-bottom:.3rem; }
+.result-description {
+    color:#91a0bd; font-size:.8rem; line-height:1.7; display:-webkit-box;
+    -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.search-empty {
+    background:#1c2026; border:1px dashed #414753; border-radius:1.25rem; padding:2rem; text-align:center; color:#9fb0d6;
+}
+@@media (max-width: 900px) {
+    .search-grid { grid-template-columns:1fr; }
+}
+</style>
+
+<div class="search-page">
+    <section class="search-hero">
+        <h1 class="search-title">جستجوی سراسری</h1>
+        <p class="search-subtitle">کاربر، پست، دوره، محتوا و محصول را از یک‌جا پیدا کن.</p>
+
+        <form method="get" action="/search" class="search-form">
+            <input class="search-input" type="search" name="q" value="@Query" placeholder="مثلا: پایتون، طراحی، علی..." />
+            <button class="search-submit" type="submit">جستجو</button>
+        </form>
+    </section>
+
+    @if (isLoading)
+    {
+        <div class="search-empty">در حال جستجو...</div>
+    }
+    else if (string.IsNullOrWhiteSpace(Query))
+    {
+        <div class="search-empty">عبارت جستجو را وارد کن تا نتیجه‌ها نمایش داده شوند.</div>
+    }
+    else if (results is not null && TotalResults == 0)
+    {
+        <div class="search-empty">برای "<strong>@Query</strong>" نتیجه‌ای پیدا نشد.</div>
+    }
+    else if (results is not null)
+    {
+        <div class="search-grid">
+            <section class="search-section">
+                <h2>کاربرها</h2>
+                @RenderResults(results.Users)
+            </section>
+            <section class="search-section">
+                <h2>پست‌ها</h2>
+                @RenderResults(results.Posts)
+            </section>
+            <section class="search-section">
+                <h2>دوره‌ها</h2>
+                @RenderResults(results.Courses)
+            </section>
+            <section class="search-section">
+                <h2>محتواها</h2>
+                @RenderResults(results.Contents)
+            </section>
+            <section class="search-section">
+                <h2>محصول‌ها</h2>
+                @RenderResults(results.Products)
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? Query { get; set; }
+
+    private GlobalSearchResultDto? results;
+    private bool isLoading;
+    private string? previousQuery;
+
+    private int TotalResults =>
+        (results?.Users.Count ?? 0) +
+        (results?.Posts.Count ?? 0) +
+        (results?.Courses.Count ?? 0) +
+        (results?.Contents.Count ?? 0) +
+        (results?.Products.Count ?? 0);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.Equals(previousQuery, Query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        previousQuery = Query;
+
+        if (string.IsNullOrWhiteSpace(Query))
+        {
+            results = null;
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            results = await SearchService.SearchAsync(Query);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private RenderFragment RenderResults(List<SearchResultItemDto> items) => builder =>
+    {
+        if (items.Count == 0)
+        {
+            builder.AddMarkupContent(0, "<div class=\"search-empty\">نتیجه‌ای در این بخش پیدا نشد.</div>");
+            return;
+        }
+
+        var seq = 1;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "result-list");
+
+        foreach (var item in items)
+        {
+            builder.OpenElement(seq++, "a");
+            builder.AddAttribute(seq++, "class", "result-card");
+            builder.AddAttribute(seq++, "href", item.Link);
+
+            builder.OpenElement(seq++, "img");
+            builder.AddAttribute(seq++, "class", "result-avatar");
+            builder.AddAttribute(seq++, "src", string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://i.pravatar.cc/150?img=12" : item.ImageUrl);
+            builder.AddAttribute(seq++, "alt", item.Title);
+            builder.CloseElement();
+
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "result-meta");
+
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "result-kind");
+            builder.AddContent(seq++, item.Kind);
+            builder.CloseElement();
+
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "result-title");
+            builder.AddContent(seq++, item.Title);
+            builder.CloseElement();
+
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "result-subtitle");
+            builder.AddContent(seq++, item.Subtitle);
+            builder.CloseElement();
+
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "result-description");
+            builder.AddContent(seq++, item.Description);
+            builder.CloseElement();
+
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+}

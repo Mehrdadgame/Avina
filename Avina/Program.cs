@@ -17,6 +17,9 @@ builder.AddServiceDefaults();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AvinaDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddDbContextFactory<AvinaDbContext>(
+    options => options.UseSqlServer(connectionString),
+    ServiceLifetime.Scoped);
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -79,6 +82,10 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISocialFeedService, SocialFeedService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<ISocialImageStorageService, SocialImageStorageService>();
+builder.Services.AddScoped<IProfileAvatarService, ProfileAvatarService>();
 
 var app = builder.Build();
 

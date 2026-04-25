@@ -1,575 +1,756 @@
 @page "/profile"
+@using Avina.Data
 @using Avina.Models
 @using Avina.Services
-@using Avina.Data
+@using Avina.Helpers
 @using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.EntityFrameworkCore
 @inject AuthStateService AuthState
-@inject AvinaDbContext Db
+@inject IDbContextFactory<AvinaDbContext> DbFactory
+@inject IProfileAvatarService ProfileAvatarService
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
 <style>
-.profile-page { padding: 1.5rem; animation: fadeSlideIn 0.5s ease both; }
-
-@@keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+.profile-page { padding:1.5rem; display:flex; flex-direction:column; gap:1.5rem; }
+.profile-card { background:#1c2026; border:1px solid #414753; border-radius:1.25rem; padding:1.5rem; }
+.profile-hero { display:grid; grid-template-columns:140px minmax(0,1fr); gap:1.5rem; align-items:start; }
+.avatar-shell {
+    width:120px; height:120px; border-radius:50%; overflow:hidden; border:3px solid #aac7ff;
+    position:relative; background:#10131a; justify-self:center;
 }
-
-.profile-hero {
-    background: linear-gradient(135deg, #1c2026 0%, #181c22 100%);
-    border: 1px solid #414753;
-    border-radius: 1.25rem;
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    overflow: hidden;
+.avatar-shell img { width:100%; height:100%; object-fit:cover; }
+.avatar-overlay {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.45); color:white; font-size:1.4rem; opacity:0; transition:opacity .2s ease;
 }
-.profile-hero::before {
-    content: '';
-    position: absolute;
-    top: -60px; left: -60px;
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(170,199,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
+.avatar-shell:hover .avatar-overlay { opacity:1; }
+.avatar-input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.profile-title { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:.35rem; }
+.profile-name { margin:0; color:#eef3ff; font-size:1.75rem; font-weight:900; }
+.role-badge {
+    border-radius:999px; padding:.3rem .8rem; background:rgba(170,199,255,.14);
+    color:#aac7ff; border:1px solid rgba(170,199,255,.28); font-size:.82rem; font-weight:700;
 }
-
-.profile-top-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 2rem;
-    flex-wrap: wrap;
+.profile-bio { color:#c1c6d5; line-height:1.9; margin:0 0 1rem; }
+.help-text { color:#8b919f; font-size:.82rem; margin-top:.75rem; }
+.status-box {
+    background:rgba(170,199,255,.08); border:1px solid rgba(170,199,255,.18); color:#dce8ff;
+    border-radius:1rem; padding:.9rem 1rem; margin-bottom:1rem;
 }
-
-.profile-avatar-wrap {
-    width: 110px; height: 110px;
-    border-radius: 50%;
-    border: 3px solid #aac7ff;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    position: relative;
+.profile-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
+.btn-primary, .btn-secondary, .btn-danger {
+    font-family:'Vazirmatn',sans-serif; cursor:pointer; transition:all .2s ease;
+    border-radius:.8rem; padding:.75rem 1.15rem; font-weight:800;
 }
-.profile-avatar-wrap:hover { border-color: #9197ff; box-shadow: 0 0 0 6px rgba(170,199,255,0.15); }
-.profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-edit-overlay {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.2s ease;
-    border-radius: 50%; font-size: 1.5rem;
+.btn-primary { background:linear-gradient(135deg,#4248d4,#9197ff); color:white; border:none; }
+.btn-secondary { background:transparent; color:#c1c6d5; border:1px solid #414753; }
+.btn-danger { background:transparent; color:#ffb4ab; border:1px solid rgba(255,180,171,.3); }
+.btn-primary:hover, .btn-secondary:hover, .btn-danger:hover { transform:translateY(-1px); }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:1rem; }
+.stat-card { background:#272a31; border:1px solid #414753; border-radius:1rem; padding:1rem; text-align:center; }
+.stat-value { color:#eef3ff; font-size:1.4rem; font-weight:900; margin-bottom:.25rem; }
+.stat-label { color:#8b919f; font-size:.8rem; }
+.profile-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:1.5rem; }
+.tabs { display:flex; gap:.35rem; overflow:auto; padding-bottom:.25rem; margin-bottom:1rem; }
+.tab-btn {
+    border:none; background:#111823; color:#a5b4d4; padding:.7rem 1rem; border-radius:.85rem;
+    font-family:'Vazirmatn',sans-serif; font-weight:700; white-space:nowrap;
 }
-.profile-avatar-wrap:hover .avatar-edit-overlay { opacity: 1; }
-
-.profile-info { flex: 1; min-width: 200px; }
-.profile-name-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; flex-wrap: wrap; }
-.profile-name { font-size: 1.6rem; font-weight: 800; color: #e0e2ec; margin: 0; }
-.profile-role-badge {
-    background: rgba(170,199,255,0.15); color: #aac7ff;
-    border: 1px solid rgba(170,199,255,0.3);
-    padding: 0.25rem 0.75rem; border-radius: 9999px;
-    font-size: 0.8rem; font-weight: 600;
+.tab-btn.active { background:#1d2840; color:#eef3ff; border:1px solid #395179; }
+.section-title { color:#eef3ff; font-size:1rem; font-weight:800; margin:0 0 1rem; }
+.list-stack { display:flex; flex-direction:column; gap:.85rem; }
+.row-card {
+    background:#1c2026; border:1px solid #414753; border-radius:1rem; padding:1rem;
+    display:flex; align-items:center; gap:1rem;
 }
-.profile-bio { color: #c1c6d5; font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5; }
-
-.edit-input {
-    background: #0b0e15; border: 1px solid #414753; border-radius: 0.625rem;
-    color: #e0e2ec; padding: 0.5rem 0.875rem; font-size: 0.9rem; width: 100%;
-    font-family: 'Vazirmatn', sans-serif; transition: border-color 0.2s; margin-bottom: 0.75rem;
-    display: block;
+.row-icon {
+    width:52px; height:52px; border-radius:.9rem; background:#101621; display:flex;
+    align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;
 }
-.edit-input:focus { outline: none; border-color: #aac7ff; box-shadow: 0 0 0 3px rgba(170,199,255,0.1); }
-.edit-input::placeholder { color: #8b919f; }
-.edit-textarea { resize: vertical; min-height: 70px; }
-.edit-btns { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
-.btn-save, .btn-cancel-edit, .btn-edit-profile, .btn-logout-profile, .btn-save-settings {
-    font-family: 'Vazirmatn', sans-serif; cursor: pointer; transition: all 0.2s ease;
+.row-content { min-width:0; flex:1; }
+.row-title { color:#eef3ff; font-weight:800; margin-bottom:.2rem; }
+.row-meta { color:#8b919f; font-size:.82rem; line-height:1.8; }
+.row-actions { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
+.row-link {
+    display:inline-flex; align-items:center; justify-content:center; min-width:110px;
+    padding:.62rem .95rem; border-radius:.8rem; text-decoration:none; font-weight:800;
+    font-size:.82rem; transition:all .2s ease;
 }
-.btn-save, .btn-edit-profile, .btn-save-settings {
-    background: linear-gradient(135deg, #4248d4, #9197ff);
-    color: white; border: none; border-radius: 0.75rem; font-weight: 700;
+.row-link.view { background:#1d2840; color:#eef3ff; border:1px solid #395179; }
+.row-link.download { background:rgba(125,211,168,.12); color:#7dd3a8; border:1px solid rgba(125,211,168,.28); }
+.row-link:hover { transform:translateY(-1px); }
+.side-card { background:#1c2026; border:1px solid #414753; border-radius:1rem; padding:1rem 1.1rem; }
+.side-item { display:flex; justify-content:space-between; gap:1rem; padding:.7rem 0; border-bottom:1px solid #30343d; color:#c1c6d5; }
+.side-item:last-child { border-bottom:none; }
+.side-item strong { color:#eef3ff; }
+.form-grid { display:grid; gap:.9rem; max-width:620px; }
+.field-label { display:block; color:#e0e2ec; font-weight:700; margin-bottom:.4rem; font-size:.88rem; }
+.field-input {
+    width:100%; background:#0b0e15; border:1px solid #414753; border-radius:.8rem; color:#e0e2ec;
+    padding:.75rem .95rem; font-family:'Vazirmatn',sans-serif; font-size:.9rem;
 }
-.btn-save { padding: 0.5rem 1.25rem; font-size: 0.875rem; border-radius: 0.625rem; }
-.btn-save:hover, .btn-edit-profile:hover, .btn-save-settings:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-edit-profile { padding: 0.625rem 1.5rem; font-size: 0.9rem; }
-.btn-save-settings { padding: 0.625rem 1.75rem; font-size: 0.9rem; margin-top: 1rem; }
-.btn-cancel-edit {
-    background: transparent; color: #c1c6d5; border: 1px solid #414753;
-    padding: 0.5rem 1.25rem; border-radius: 0.625rem; font-size: 0.875rem;
+.field-input:focus { outline:none; border-color:#aac7ff; box-shadow:0 0 0 3px rgba(170,199,255,.1); }
+.field-textarea { min-height:110px; resize:vertical; }
+.upload-note { color:#aac7ff; font-size:.82rem; }
+.empty-state { color:#9fb0d6; text-align:center; padding:2rem 1rem; }
+.crop-card { background:#101621; border:1px solid #303a4f; border-radius:1rem; padding:1rem; display:grid; gap:1rem; }
+.crop-preview-shell { display:grid; justify-content:center; }
+.crop-preview {
+    width:min(320px, 80vw); aspect-ratio:1; position:relative; overflow:hidden;
+    border-radius:1rem; background:#05070b; border:1px solid #334155;
 }
-.btn-cancel-edit:hover { border-color: #aac7ff; color: #aac7ff; }
-.btn-logout-profile {
-    background: transparent; color: #ffb4ab; border: 1px solid rgba(255,180,171,0.3);
-    padding: 0.625rem 1.5rem; border-radius: 0.75rem; font-size: 0.9rem; font-weight: 600;
+.crop-image {
+    position:absolute; top:50%; left:50%; transform-origin:center center;
+    user-select:none; pointer-events:none; max-width:none;
 }
-.btn-logout-profile:hover { background: rgba(255,180,171,0.1); }
-.profile-action-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-
-.profile-stats-row {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 1rem; margin-top: 1.5rem;
+.crop-mask {
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(circle at center, transparent 0 38%, rgba(0,0,0,.58) 39% 100%);
 }
-.profile-stat-card {
-    background: #272a31; border: 1px solid #414753; border-radius: 0.875rem;
-    padding: 1rem 1.25rem; text-align: center; transition: all 0.2s ease;
+.crop-ring {
+    position:absolute; width:76%; height:76%; border:2px solid rgba(255,255,255,.9);
+    border-radius:50%; inset:12%; box-shadow:0 0 0 999px rgba(0,0,0,.01);
 }
-.profile-stat-card:hover { border-color: #aac7ff; background: rgba(170,199,255,0.06); }
-.stat-value { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem; }
-.coin-val { color: #ffb68c; }
-.followers-val { color: #aac7ff; }
-.following-val { color: #afc7f7; }
-.score-val { color: #7dd3a8; }
-.stat-label-text { font-size: 0.8rem; color: #8b919f; font-weight: 500; }
-
-.profile-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
-@@media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
-
-.quick-info-card {
-    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
-    padding: 1.5rem; position: sticky; top: 1.5rem;
+.range-group { display:grid; gap:.35rem; }
+.range-label { color:#d8e4ff; font-size:.85rem; font-weight:700; }
+.range-row { display:grid; grid-template-columns:1fr 64px; gap:.75rem; align-items:center; }
+.range-value { color:#9fb0d6; font-size:.82rem; text-align:center; }
+@@media (max-width: 900px) {
+    .profile-hero { grid-template-columns:1fr; }
+    .profile-grid { grid-template-columns:1fr; }
 }
-.quick-info-title { font-size: 1rem; font-weight: 700; color: #e0e2ec; margin-bottom: 1.25rem; }
-.quick-info-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0.625rem 0; border-bottom: 1px solid #414753;
-    color: #c1c6d5; font-size: 0.875rem;
-}
-.quick-info-item:last-child { border-bottom: none; }
-.quick-info-item strong { color: #e0e2ec; font-weight: 700; }
-
-.profile-tabs {
-    display: flex; gap: 0; border-bottom: 2px solid #414753;
-    margin-bottom: 1.5rem; overflow-x: auto;
-}
-.profile-tab-btn {
-    background: transparent; border: none; color: #8b919f;
-    padding: 0.75rem 1.25rem; font-weight: 600; font-size: 0.875rem;
-    cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
-    transition: all 0.2s ease; white-space: nowrap; font-family: 'Vazirmatn', sans-serif;
-}
-.profile-tab-btn:hover { color: #aac7ff; }
-.profile-tab-btn.active-tab { color: #aac7ff; border-bottom-color: #aac7ff; }
-
-.tab-panel { display: none; }
-.tab-panel.active-panel { display: block; }
-
-.achievements-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem;
-}
-.achievement-item {
-    background: #1c2026; border: 2px solid #414753; border-radius: 1rem;
-    padding: 1.25rem 1rem; text-align: center; transition: all 0.25s ease;
-}
-.achievement-item:hover {
-    border-color: #aac7ff; background: rgba(170,199,255,0.06);
-    transform: translateY(-3px); box-shadow: 0 8px 24px rgba(170,199,255,0.12);
-}
-.achievement-emoji { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
-.achievement-name { font-size: 0.8rem; color: #c1c6d5; font-weight: 600; }
-
-.courses-list { display: flex; flex-direction: column; gap: 1rem; }
-.course-row {
-    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
-    padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: center;
-    transition: all 0.2s ease;
-}
-.course-row:hover { border-color: #aac7ff; }
-.course-thumb {
-    width: 80px; height: 80px; border-radius: 0.75rem; object-fit: cover;
-    flex-shrink: 0; background: #272a31;
-}
-.course-row-info { flex: 1; min-width: 0; }
-.course-row-title { font-size: 0.95rem; font-weight: 700; color: #e0e2ec; margin-bottom: 0.25rem; }
-.course-row-instructor { font-size: 0.8rem; color: #8b919f; margin-bottom: 0.625rem; }
-.progress-bar-bg { background: #32353c; border-radius: 9999px; height: 6px; overflow: hidden; }
-.progress-bar-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #4248d4, #aac7ff); }
-.progress-label { font-size: 0.75rem; color: #aac7ff; font-weight: 600; margin-top: 0.25rem; }
-
-.activities-list { display: flex; flex-direction: column; gap: 1rem; }
-.activity-item {
-    background: #1c2026; border: 1px solid #414753; border-radius: 1rem;
-    padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
-    transition: all 0.2s ease;
-}
-.activity-item:hover { border-color: #aac7ff; }
-.activity-dot { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #4248d4, #aac7ff); flex-shrink: 0; }
-.activity-text { font-size: 0.875rem; color: #c1c6d5; flex: 1; }
-.activity-time { font-size: 0.75rem; color: #8b919f; white-space: nowrap; }
-
-.settings-form { max-width: 550px; }
-.settings-group { margin-bottom: 1.25rem; }
-.settings-label { display: block; color: #e0e2ec; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
-.settings-input {
-    width: 100%; background: #0b0e15; border: 1px solid #414753; border-radius: 0.625rem;
-    color: #e0e2ec; padding: 0.625rem 0.875rem; font-family: 'Vazirmatn', sans-serif;
-    font-size: 0.9rem; transition: border-color 0.2s; display: block;
-}
-.settings-input:focus { outline: none; border-color: #aac7ff; box-shadow: 0 0 0 3px rgba(170,199,255,0.1); }
-.settings-textarea { resize: vertical; min-height: 90px; }
-.settings-toggle {
-    display: flex; align-items: center; gap: 0.75rem; color: #c1c6d5;
-    font-size: 0.875rem; padding: 0.75rem 0; border-bottom: 1px solid #414753; cursor: pointer;
-}
-.settings-toggle:last-of-type { border-bottom: none; }
-.toggle-label { flex: 1; }
 </style>
 
 <div class="profile-page">
-    <!-- Profile Hero -->
-    <div class="profile-hero">
-        <div class="profile-top-row">
-            <div class="profile-avatar-wrap" @onclick="ToggleEditMode" style="flex-shrink:0;">
-                <img src="@(currentUser?.ProfileImage ?? "https://i.pravatar.cc/150?img=5")" alt="@currentUser?.Name" />
-                <div class="avatar-edit-overlay">✏️</div>
-            </div>
+    <section class="profile-card">
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="status-box">@statusMessage</div>
+        }
 
-            <div class="profile-info">
-                @if (!isEditing)
-                {
-                    <div class="profile-name-row">
-                        <h2 class="profile-name">@currentUser?.Name</h2>
-                        <span class="profile-role-badge">@currentUser?.Role</span>
-                    </div>
-                    <p class="profile-bio">@currentUser?.Bio</p>
-                    <div class="profile-action-btns">
-                        <button class="btn-edit-profile" @onclick="ToggleEditMode">✏️ ویرایش پروفایل</button>
-                        <button class="btn-logout-profile" @onclick="Logout">خروج از حساب</button>
-                    </div>
-                }
-                else
-                {
-                    <input class="edit-input" type="text" placeholder="نام کاربری" @bind="editName" />
-                    <input class="edit-input" type="text" placeholder="نقش (مثلاً دانش‌آموز)" @bind="editRole" />
-                    <textarea class="edit-input edit-textarea" placeholder="درباره خودت بنویس..." @bind="editBio"></textarea>
-                    <div class="edit-btns">
-                        <button class="btn-save" @onclick="SaveProfile">✅ ذخیره</button>
-                        <button class="btn-cancel-edit" @onclick="CancelEdit">لغو</button>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Stats Row -->
-        <div class="profile-stats-row">
-            <div class="profile-stat-card">
-                <div class="stat-value coin-val">@currentUser?.Coin.ToString("N0")</div>
-                <div class="stat-label-text">🪙 کوین</div>
-            </div>
-            <div class="profile-stat-card">
-                <div class="stat-value followers-val">@currentUser?.Followers</div>
-                <div class="stat-label-text">دنبال‌کننده</div>
-            </div>
-            <div class="profile-stat-card">
-                <div class="stat-value following-val">@currentUser?.Following</div>
-                <div class="stat-label-text">دنبال‌شونده</div>
-            </div>
-            <div class="profile-stat-card">
-                <div class="stat-value score-val">۲,۴۵۰</div>
-                <div class="stat-label-text">⭐ امتیاز کل</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content Grid -->
-    <div class="profile-grid">
-        <div>
-            <!-- Tabs -->
-            <div class="profile-tabs">
-                <button class="profile-tab-btn @(activeTab == "achievements" ? "active-tab" : "")" @onclick='() => SetTab("achievements")'>🏆 دستاوردها</button>
-                <button class="profile-tab-btn @(activeTab == "myContent" ? "active-tab" : "")" @onclick='() => SetTab("myContent")'>📁 محتوای من</button>
-                <button class="profile-tab-btn @(activeTab == "courses" ? "active-tab" : "")" @onclick='() => SetTab("courses")'>📚 دوره‌های من</button>
-                <button class="profile-tab-btn @(activeTab == "activities" ? "active-tab" : "")" @onclick='() => SetTab("activities")'>⚡ فعالیت‌ها</button>
-                <button class="profile-tab-btn @(activeTab == "settings" ? "active-tab" : "")" @onclick='() => SetTab("settings")'>⚙️ تنظیمات</button>
-            </div>
-
-            <!-- Achievements -->
-            <div class="tab-panel @(activeTab == "achievements" ? "active-panel" : "")">
-                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">مدال‌های کسب‌شده (8)</p>
-                <div class="achievements-grid">
-                    @foreach (var a in achievementsList)
+        <div class="profile-hero">
+            <div>
+                <div class="avatar-shell">
+                    <img src="@CurrentProfileImage" alt="@currentUser?.Name" />
+                    <div class="avatar-overlay">✏️</div>
+                    @if (isAuthenticated)
                     {
-                        <div class="achievement-item">
-                            <span class="achievement-emoji">@a.Emoji</span>
-                            <div class="achievement-name">@a.Name</div>
-                        </div>
+                        <InputFile class="avatar-input" OnChange="HandleProfileImageSelectedAsync" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                    }
+                </div>
+                @if (isAuthenticated)
+                {
+                    <div class="help-text">برای تغییر عکس، روی آواتار کلیک کن.</div>
+                }
+            </div>
+
+            <div>
+                <div class="profile-title">
+                    <h1 class="profile-name">@currentUser?.Name</h1>
+                    <span class="role-badge">@currentUser?.Role</span>
+                </div>
+                <p class="profile-bio">@(!string.IsNullOrWhiteSpace(currentUser?.Bio) ? currentUser?.Bio : "هنوز بیوگرافی ثبت نشده است.")</p>
+
+                <div class="profile-actions">
+                    @if (isAuthenticated)
+                    {
+                        <button class="btn-primary" @onclick="ToggleEditMode">@(isEditing ? "بستن ویرایش" : "ویرایش پروفایل")</button>
+                        <button class="btn-danger" @onclick="Logout">خروج از حساب</button>
+                    }
+                    else
+                    {
+                        <button class="btn-primary" @onclick='() => Nav.NavigateTo("/login")'>ورود / ثبت‌نام</button>
                     }
                 </div>
             </div>
+        </div>
+    </section>
 
-            <!-- My Content Tab -->
-            <div class="tab-panel @(activeTab == "myContent" ? "active-panel" : "")">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <p style="color:#e0e2ec; font-weight:700; font-size:1rem; margin:0;">محتوای آپلود شده (@myUploadedContents.Count)</p>
-                    <a href="/upload" style="background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; padding:0.5rem 1.25rem; border-radius:0.75rem; font-weight:700; font-size:0.8rem; text-decoration:none;">+ آپلود جدید</a>
-                </div>
-                @if (myUploadedContents.Count == 0)
-                {
-                    <div style="text-align:center; padding:2rem; color:#8b919f;">
-                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📂</div>
-                        <p>هنوز محتوایی آپلود نکرده‌اید</p>
-                        <a href="/upload" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">آپلود اولین محتوا ←</a>
-                    </div>
-                }
-                else
-                {
-                    <div style="display:flex; flex-direction:column; gap:0.875rem;">
-                        @foreach (var item in myUploadedContents)
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">@currentUser?.Coin.ToString("N0")</div>
+            <div class="stat-label">کوین</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@currentUser?.Followers</div>
+            <div class="stat-label">دنبال‌کننده</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@currentUser?.Following</div>
+            <div class="stat-label">دنبال‌شونده</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@realEnrollments.Count</div>
+            <div class="stat-label">دوره‌های من</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@purchasedProducts.Count</div>
+            <div class="stat-label">محصولات خریداری‌شده</div>
+        </div>
+    </section>
+
+    <section class="profile-grid">
+        <div>
+            <div class="tabs">
+                <button class="tab-btn @(activeTab == "overview" ? "active" : "")" @onclick='() => SetTab("overview")'>مرور</button>
+                <button class="tab-btn @(activeTab == "content" ? "active" : "")" @onclick='() => SetTab("content")'>محتوای من</button>
+                <button class="tab-btn @(activeTab == "courses" ? "active" : "")" @onclick='() => SetTab("courses")'>دوره‌ها</button>
+                <button class="tab-btn @(activeTab == "products" ? "active" : "")" @onclick='() => SetTab("products")'>محصولات من</button>
+                <button class="tab-btn @(activeTab == "settings" ? "active" : "")" @onclick='() => SetTab("settings")'>تنظیمات</button>
+            </div>
+
+            @if (activeTab == "overview")
+            {
+                <section class="profile-card">
+                    <h2 class="section-title">دستاوردها</h2>
+                    <div class="list-stack">
+                        @foreach (var achievement in achievementsList)
                         {
-                            var contentUrl = $"/content/{item.Id}";
-                            <div class="course-row" style="cursor:pointer;" @onclick="() => Nav.NavigateTo(contentUrl)">
-                                <div style="width:52px; height:52px; border-radius:0.75rem; background:rgba(124,58,237,0.1); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
-                                    @ContentTypeEmoji(item.Type.ToString())
+                            <div class="row-card">
+                                <div class="row-icon">@achievement.Emoji</div>
+                                <div class="row-content">
+                                    <div class="row-title">@achievement.Name</div>
+                                    <div class="row-meta">دستاورد ثبت‌شده در پروفایل آموزشی شما</div>
                                 </div>
-                                <div class="course-row-info">
-                                    <div class="course-row-title">@item.Title</div>
-                                    <div class="course-row-instructor">@item.Category • 👁 @item.ViewCount بازدید</div>
-                                    <div style="display:flex; gap:0.75rem; margin-top:0.375rem;">
-                                        <span style="font-size:0.75rem; background:@(item.IsFree ? "rgba(125,211,168,0.1)" : "rgba(124,58,237,0.1)"); color:@(item.IsFree ? "#7dd3a8" : "#a78bfa"); padding:0.2rem 0.625rem; border-radius:9999px;">@(item.IsFree ? "رایگان" : $"{item.CoinPrice} 🪙")</span>
-                                        <span style="font-size:0.75rem; color:#8b919f;">@item.CreatedAt.ToString("yyyy/MM/dd")</span>
-                                    </div>
-                                </div>
-                                <a href="/upload" style="color:#aac7ff; font-size:0.8rem; font-weight:700; text-decoration:none; flex-shrink:0;">ویرایش</a>
                             </div>
                         }
                     </div>
-                }
-            </div>
+                </section>
+            }
 
-            <!-- Courses -->
-            <div class="tab-panel @(activeTab == "courses" ? "active-panel" : "")">
-                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">دوره‌های ثبت‌نام‌شده (@realEnrollments.Count)</p>
-                @if (realEnrollments.Count == 0)
-                {
-                    <div style="text-align:center; padding:2rem; color:#8b919f;">
-                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📚</div>
-                        <p>هنوز در دوره‌ای ثبت‌نام نکرده‌اید</p>
-                        <a href="/school" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده دوره‌ها ←</a>
-                    </div>
-                }
-                else
-                {
-                    <div class="courses-list">
-                        @foreach (var enr in realEnrollments)
-                        {
-                            var courseUrl = $"/course/{enr.CourseId}";
-                            <div class="course-row" style="cursor:pointer;" @onclick="() => Nav.NavigateTo(courseUrl)">
-                                <div style="width:80px; height:80px; border-radius:0.75rem; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0;">🎓</div>
-                                <div class="course-row-info">
-                                    <div class="course-row-title">@(enr.Course?.Title ?? "دوره")</div>
-                                    <div class="course-row-instructor">👨‍🏫 @(enr.Course?.Instructor ?? "")</div>
-                                    <div class="progress-bar-bg">
-                                        <div class="progress-bar-fill" style="width:@(enr.ProgressPercent)%;"></div>
+            @if (activeTab == "content")
+            {
+                <section class="profile-card">
+                    <h2 class="section-title">محتوای آپلودشده</h2>
+                    @if (myUploadedContents.Count == 0)
+                    {
+                        <div class="empty-state">هنوز محتوایی آپلود نشده است.</div>
+                    }
+                    else
+                    {
+                        <div class="list-stack">
+                            @foreach (var item in myUploadedContents)
+                            {
+                                <div class="row-card" style="cursor:pointer;" @onclick="() => NavigateToContent(item.Id)">
+                                    <div class="row-icon">@ContentTypeEmoji(item.Type.ToString())</div>
+                                    <div class="row-content">
+                                        <div class="row-title">@item.Title</div>
+                                        <div class="row-meta">@item.Category • @(item.IsFree ? "رایگان" : $"{item.CoinPrice} کوین") • @item.CreatedAt.ToShamsiDate()</div>
                                     </div>
-                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.25rem;">
-                                        <div class="progress-label">@(enr.ProgressPercent)٪ کامل شده</div>
-                                        @if (enr.CompletedAt.HasValue)
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+
+            @if (activeTab == "courses")
+            {
+                <section class="profile-card">
+                    <h2 class="section-title">دوره‌های ثبت‌نام‌شده</h2>
+                    @if (realEnrollments.Count == 0)
+                    {
+                        <div class="empty-state">هنوز در دوره‌ای ثبت‌نام نشده‌اید.</div>
+                    }
+                    else
+                    {
+                        <div class="list-stack">
+                            @foreach (var enrollment in realEnrollments)
+                            {
+                                <div class="row-card" style="cursor:pointer;" @onclick="() => NavigateToCourse(enrollment.CourseId)">
+                                    <div class="row-icon">🎓</div>
+                                    <div class="row-content">
+                                        <div class="row-title">@(enrollment.Course?.Title ?? "دوره")</div>
+                                        <div class="row-meta">@(enrollment.Course?.Instructor ?? "مدرس") • @enrollment.ProgressPercent٪ پیشرفت</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+
+            @if (activeTab == "products")
+            {
+                <section class="profile-card">
+                    <h2 class="section-title">محصولات خریداری‌شده</h2>
+                    @if (purchasedProducts.Count == 0)
+                    {
+                        <div class="empty-state">هنوز محصولی از فروشگاه نخریده‌اید.</div>
+                    }
+                    else
+                    {
+                        <div class="list-stack">
+                            @foreach (var purchase in purchasedProducts)
+                            {
+                                var product = purchase.Product;
+                                if (product is null)
+                                {
+                                    continue;
+                                }
+
+                                <div class="row-card">
+                                    <div class="row-icon">@ProductCategoryEmoji(product.Category)</div>
+                                    <div class="row-content">
+                                        <div class="row-title">@product.Name</div>
+                                        <div class="row-meta">
+                                            @TypeLabel(product.Type) • @product.Category • @purchase.PurchasedAt.ToShamsiDate() • @purchase.CoinSpent.ToString("N0") کوین
+                                        </div>
+                                    </div>
+                                    <div class="row-actions">
+                                        <a class="row-link view" href="@($"/product/{product.Id}")">مشاهده</a>
+                                        @if (!string.IsNullOrWhiteSpace(product.FilePath))
                                         {
-                                            <span style="font-size:0.72rem; background:rgba(125,211,168,0.1); color:#7dd3a8; padding:0.15rem 0.5rem; border-radius:9999px; font-weight:700;">✅ تکمیل شده</span>
+                                            <a class="row-link download" href="@product.FilePath" target="_blank" rel="noopener">دانلود</a>
                                         }
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-
-            <!-- Activities -->
-            <div class="tab-panel @(activeTab == "activities" ? "active-panel" : "")">
-                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">فعالیت‌های اخیر</p>
-                <div class="activities-list">
-                    @foreach (var act in recentActivities)
-                    {
-                        <div class="activity-item">
-                            <div class="activity-dot"></div>
-                            <div class="activity-text">@act.Text</div>
-                            <div class="activity-time">@act.Time</div>
+                            }
                         </div>
                     }
-                </div>
-            </div>
+                </section>
+            }
 
-            <!-- Settings -->
-            <div class="tab-panel @(activeTab == "settings" ? "active-panel" : "")">
-                <p style="color:#e0e2ec; font-weight:700; margin-bottom:1.25rem; font-size:1rem;">تنظیمات حساب کاربری</p>
-                <div class="settings-form">
-                    <div class="settings-group">
-                        <label class="settings-label">ایمیل</label>
-                        <input type="email" class="settings-input" value="@currentUser?.Email" />
-                    </div>
-                    <div class="settings-group">
-                        <label class="settings-label">بیوگرافی</label>
-                        <textarea class="settings-input settings-textarea">@currentUser?.Bio</textarea>
-                    </div>
-                    <div class="settings-group">
-                        <label class="settings-label">اعلان‌ها</label>
-                        <label class="settings-toggle">
-                            <input type="checkbox" checked />
-                            <span class="toggle-label">پوش‌نوتیفیکیشن</span>
-                        </label>
-                        <label class="settings-toggle">
-                            <input type="checkbox" checked />
-                            <span class="toggle-label">ایمیل برای دوره‌های جدید</span>
-                        </label>
-                        <label class="settings-toggle">
-                            <input type="checkbox" />
-                            <span class="toggle-label">اطلاع‌رسانی پیام‌های خصوصی</span>
-                        </label>
-                    </div>
-                    <button class="btn-save-settings" @onclick="SaveSettings">ذخیره تغییرات</button>
-                </div>
-            </div>
+            @if (activeTab == "settings")
+            {
+                <section class="profile-card">
+                    <h2 class="section-title">تنظیمات حساب</h2>
+                    @if (!isAuthenticated)
+                    {
+                        <div class="empty-state">برای ویرایش پروفایل ابتدا وارد حساب شوید.</div>
+                    }
+                    else
+                    {
+                        <div class="form-grid">
+                            <div>
+                                <label class="field-label">نام</label>
+                                <input class="field-input" @bind="editName" />
+                            </div>
+                            <div>
+                                <label class="field-label">نقش</label>
+                                <select class="field-input" @bind="editRole">
+                                    <option value="دانش‌آموز">دانش‌آموز</option>
+                                    <option value="معلم">معلم</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="field-label">ایمیل</label>
+                                <input class="field-input" value="@currentUser?.Email" disabled />
+                            </div>
+                            <div>
+                                <label class="field-label">بیوگرافی</label>
+                                <textarea class="field-input field-textarea" @bind="editBio"></textarea>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(cropPreviewUrl))
+                            {
+                                <div class="crop-card">
+                                    <div class="crop-preview-shell">
+                                        <div class="crop-preview">
+                                            <img class="crop-image"
+                                                 src="@cropPreviewUrl"
+                                                 style="@CropImageStyle"
+                                                 alt="crop preview" />
+                                            <div class="crop-mask"></div>
+                                            <div class="crop-ring"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="range-group">
+                                        <label class="range-label">بزرگ‌نمایی</label>
+                                        <div class="range-row">
+                                            <input type="range" min="1" max="3" step="0.01" @bind="cropZoom" />
+                                            <div class="range-value">@cropZoom.ToString("0.00")x</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="range-group">
+                                        <label class="range-label">جابجایی افقی</label>
+                                        <div class="range-row">
+                                            <input type="range" min="-1" max="1" step="0.01" @bind="cropOffsetX" />
+                                            <div class="range-value">@cropOffsetX.ToString("0.00")</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="range-group">
+                                        <label class="range-label">جابجایی عمودی</label>
+                                        <div class="range-row">
+                                            <input type="range" min="-1" max="1" step="0.01" @bind="cropOffsetY" />
+                                            <div class="range-value">@cropOffsetY.ToString("0.00")</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="upload-note">دایره‌ی وسط همان بخشی است که برای آواتار نمایش داده می‌شود.</div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(selectedProfileImageName))
+                            {
+                                <div class="upload-note">عکس جدید انتخاب شده: @selectedProfileImageName</div>
+                            }
+
+                            <div class="profile-actions">
+                                <button class="btn-primary" @onclick="SaveProfile" disabled="@isSaving">@(isSaving ? "در حال ذخیره..." : "ذخیره تغییرات")</button>
+                                <button class="btn-secondary" @onclick="CancelEdit">بازنشانی</button>
+                            </div>
+                        </div>
+                    }
+                </section>
+            }
         </div>
 
-        <!-- Quick Info Sidebar -->
-        <div class="quick-info-card">
-            <div class="quick-info-title">📊 آمار سریع</div>
-            <div class="quick-info-item"><span>دوره‌های تکمیل‌شده</span><strong>12</strong></div>
-            <div class="quick-info-item"><span>مدال کسب‌شده</span><strong>8</strong></div>
-            <div class="quick-info-item"><span>روز بدون قطع</span><strong>24</strong></div>
-            <div class="quick-info-item"><span>آزمون‌های پاس‌شده</span><strong>31</strong></div>
-            <div class="quick-info-item"><span>ساعت مطالعه</span><strong>148</strong></div>
-            <div class="quick-info-item"><span>رتبه در بین همسالان</span><strong style="color:#ffb68c;">#7</strong></div>
-            <div class="quick-info-item"><span>عضویت از</span><strong>فروردین ۱۴۰۳</strong></div>
-        </div>
-    </div>
+        <aside class="side-card">
+            <h2 class="section-title">آمار سریع</h2>
+            <div class="side-item"><span>عضویت از</span><strong>@currentUser?.CreatedAt.ToShamsiDate()</strong></div>
+            <div class="side-item"><span>تعداد محتوا</span><strong>@myUploadedContents.Count</strong></div>
+            <div class="side-item"><span>تعداد دوره</span><strong>@realEnrollments.Count</strong></div>
+            <div class="side-item"><span>تعداد محصول</span><strong>@purchasedProducts.Count</strong></div>
+            <div class="side-item"><span>ایمیل</span><strong>@currentUser?.Email</strong></div>
+        </aside>
+    </section>
 </div>
 
 @code {
-    private class AchievementItem { public string Emoji { get; set; } = ""; public string Name { get; set; } = ""; }
-    private class ActivityItem { public string Text { get; set; } = ""; public string Time { get; set; } = ""; }
-    private class EnrolledCourse
+    private sealed class AchievementItem
     {
-        public string Title { get; set; } = "";
-        public string Instructor { get; set; } = "";
-        public string ThumbnailImage { get; set; } = "";
-        public int Progress { get; set; }
+        public string Emoji { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
     }
 
     private User? currentUser;
-    private List<ContentMedia> myUploadedContents = new();
-    private List<UserCourseEnrollment> realEnrollments = new();
-    private List<AchievementItem> achievementsList = new();
-    private List<ActivityItem> recentActivities = new();
-    private string activeTab = "achievements";
-    private bool isEditing = false;
-    private string editName = "";
-    private string editRole = "";
-    private string editBio = "";
+    private List<ContentMedia> myUploadedContents = [];
+    private List<UserCourseEnrollment> realEnrollments = [];
+    private List<UserPurchase> purchasedProducts = [];
+    private List<AchievementItem> achievementsList = [];
+    private string activeTab = "overview";
+    private string editName = string.Empty;
+    private string editRole = "دانش‌آموز";
+    private string editBio = string.Empty;
+    private string selectedProfileImageName = string.Empty;
+    private string statusMessage = string.Empty;
+    private string? cropPreviewUrl;
+    private IBrowserFile? pendingProfileImage;
+    private bool isEditing;
+    private bool isSaving;
+    private double cropZoom = 1.2;
+    private double cropOffsetX;
+    private double cropOffsetY;
 
     private const string StorageKey = "avina_user";
 
+    private bool isAuthenticated => AuthState.CurrentUser is not null && AuthState.CurrentUser.Id > 0;
+
+    private string CurrentProfileImage => ProfileAvatarService.ResolveProfileImage(currentUser?.ProfileImage, currentUser?.Role);
+
+    private string CropImageStyle =>
+        $"transform: translate(calc(-50% + {cropOffsetX * 34:F1}%), calc(-50% + {cropOffsetY * 34:F1}%)) scale({cropZoom:F2}); width:100%; height:100%; object-fit:cover;";
+
     private static string ContentTypeEmoji(string type) => type switch
     {
-        "Video" => "🎬", "Audio" => "🎵", "Image" => "🖼️", "PDF" => "📄", _ => "📁"
+        "Video" => "🎬",
+        "Audio" => "🎵",
+        "Image" => "🖼️",
+        "PDF" => "📄",
+        _ => "📁"
+    };
+
+    private static string ProductCategoryEmoji(string? category) => category switch
+    {
+        "کتاب" => "📚",
+        "پادکست" => "🎙️",
+        "کیت مهارتی" => "🔧",
+        "دوره ویدیویی" => "🎬",
+        "بازی" => "🎮",
+        _ => "🛍️"
+    };
+
+    private static string TypeLabel(string? type) => type switch
+    {
+        "Physical" => "فیزیکی",
+        "Digital" => "دیجیتال",
+        "Podcast" => "پادکست",
+        "Pdf" => "PDF",
+        _ => type ?? "نامشخص"
     };
 
     protected override async Task OnInitializedAsync()
     {
-        var u = AuthState.CurrentUser;
-        currentUser = new User
-        {
-            Id = u?.Id ?? 0,
-            Name = u != null ? u.Name : "مهمان",
-            Email = u != null ? u.Email : "",
-            Role = u != null ? u.Role : "بازدیدکننده",
-            ProfileImage = u != null ? u.ProfileImage : "https://i.pravatar.cc/150?img=5",
-            Bio = u != null ? u.Bio : "",
-            Coin = u != null ? u.Coin : 0,
-            Followers = 0,
-            Following = 0,
-            CreatedAt = DateTime.Now
-        };
+        await LoadCurrentUserAsync();
 
-        if (u != null && u.Id > 0)
-        {
-            try
-            {
-                myUploadedContents = await Db.Contents
-                    .Where(c => c.UploaderId == u.Id)
-                    .OrderByDescending(c => c.CreatedAt)
-                    .ToListAsync();
-
-                realEnrollments = await Db.CourseEnrollments
-                    .Include(e => e.Course)
-                    .Where(e => e.UserId == u.Id)
-                    .OrderByDescending(e => e.EnrolledAt)
-                    .ToListAsync();
-            }
-            catch { }
-        }
-
-        achievementsList = new List<AchievementItem>
-        {
-            new AchievementItem { Emoji = "🥇", Name = "اول شدن" },
-            new AchievementItem { Emoji = "🏆", Name = "قهرمان هفته" },
-            new AchievementItem { Emoji = "⭐", Name = "ستاره درخشان" },
-            new AchievementItem { Emoji = "🎖️", Name = "مدال افتخار" },
-            new AchievementItem { Emoji = "🌟", Name = "سوپراستار" },
-            new AchievementItem { Emoji = "🔥", Name = "آتش‌نشین" },
-            new AchievementItem { Emoji = "💎", Name = "الماس" },
-            new AchievementItem { Emoji = "🚀", Name = "فضانورد" },
-        };
-
-        recentActivities = new List<ActivityItem>
-        {
-            new ActivityItem { Text = "دوره 'ریاضی پایه' را شروع کردی", Time = "۲ ساعت پیش" },
-            new ActivityItem { Text = "مدال 'درخشندگی' را کسب کردی", Time = "دیروز" },
-            new ActivityItem { Text = "در آزمون 'فصل اول' ۹۵٪ کسب کردی", Time = "۳ روز پیش" },
-            new ActivityItem { Text = "در ماموریت اجتماعی شرکت کردی", Time = "هفته پیش" },
-            new ActivityItem { Text = "دوره 'علوم طبیعی' ثبت‌نام کردی", Time = "۱۰ روز پیش" },
-        };
+        achievementsList =
+        [
+            new AchievementItem { Emoji = "🏆", Name = "فعال برتر" },
+            new AchievementItem { Emoji = "⭐", Name = "کاربر درخشان" },
+            new AchievementItem { Emoji = "🔥", Name = "یادگیرنده پرتلاش" },
+            new AchievementItem { Emoji = "🚀", Name = "رشد سریع" }
+        ];
     }
 
-    private void SetTab(string tab) => activeTab = tab;
+    private async Task LoadCurrentUserAsync()
+    {
+        var authUser = AuthState.CurrentUser;
+        if (authUser is null)
+        {
+            currentUser = new User
+            {
+                Name = "مهمان",
+                Email = string.Empty,
+                Role = "دانش‌آموز",
+                ProfileImage = ProfileAvatarService.GetDefaultAvatar("دانش‌آموز"),
+                Bio = string.Empty,
+                CreatedAt = DateTime.UtcNow
+            };
+            SeedEditFields();
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var dbUser = await db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == authUser.Id);
+
+        currentUser = dbUser ?? new User
+        {
+            Id = authUser.Id,
+            Name = authUser.Name,
+            Email = authUser.Email,
+            Role = authUser.Role,
+            Bio = authUser.Bio,
+            Coin = authUser.Coin,
+            ProfileImage = authUser.ProfileImage,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        currentUser.Role = ProfileAvatarService.NormalizeRole(currentUser.Role);
+        currentUser.ProfileImage = ProfileAvatarService.ResolveProfileImage(currentUser.ProfileImage, currentUser.Role);
+
+        myUploadedContents = await db.Contents
+            .AsNoTracking()
+            .Where(c => c.UploaderId == currentUser.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+
+        realEnrollments = await db.CourseEnrollments
+            .AsNoTracking()
+            .Include(e => e.Course)
+            .Where(e => e.UserId == currentUser.Id)
+            .OrderByDescending(e => e.EnrolledAt)
+            .ToListAsync();
+
+        purchasedProducts = await db.UserPurchases
+            .AsNoTracking()
+            .Include(p => p.Product)
+            .Where(p => p.UserId == currentUser.Id)
+            .OrderByDescending(p => p.PurchasedAt)
+            .ToListAsync();
+
+        SeedEditFields();
+        await SyncAuthCacheAsync();
+    }
+
+    private void SeedEditFields()
+    {
+        editName = currentUser?.Name ?? string.Empty;
+        editRole = ProfileAvatarService.NormalizeRole(currentUser?.Role);
+        editBio = currentUser?.Bio ?? string.Empty;
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+        isEditing = tab == "settings";
+        statusMessage = string.Empty;
+    }
+
+    private void NavigateToContent(int contentId) => Nav.NavigateTo($"/content/{contentId}");
+
+    private void NavigateToCourse(int courseId) => Nav.NavigateTo($"/course/{courseId}");
 
     private void ToggleEditMode()
     {
         isEditing = !isEditing;
-        if (isEditing && currentUser != null)
+        activeTab = "settings";
+        if (isEditing)
         {
-            editName = currentUser.Name ?? "";
-            editRole = currentUser.Role ?? "";
-            editBio = currentUser.Bio ?? "";
+            SeedEditFields();
         }
+    }
+
+    private async Task HandleProfileImageSelectedAsync(InputFileChangeEventArgs e)
+    {
+        if (!isAuthenticated || currentUser is null)
+        {
+            return;
+        }
+
+        statusMessage = string.Empty;
+
+        try
+        {
+            var file = e.File;
+            if (file is null)
+            {
+                return;
+            }
+
+            pendingProfileImage = file;
+            selectedProfileImageName = file.Name;
+            cropZoom = 1.2;
+            cropOffsetX = 0;
+            cropOffsetY = 0;
+            cropPreviewUrl = await BuildPreviewDataUrlAsync(file);
+            isEditing = true;
+            activeTab = "settings";
+            statusMessage = "عکس جدید انتخاب شد. ناحیه‌ی نمایش را تنظیم کن و بعد ذخیره بزن.";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = ex.Message;
+        }
+    }
+
+    private static async Task<string> BuildPreviewDataUrlAsync(IBrowserFile file)
+    {
+        await using var stream = file.OpenReadStream(10 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        return $"data:{file.ContentType};base64,{base64}";
     }
 
     private async Task SaveProfile()
     {
-        if (currentUser != null)
+        if (!isAuthenticated || currentUser is null)
         {
-            if (!string.IsNullOrWhiteSpace(editName)) currentUser.Name = editName;
-            if (!string.IsNullOrWhiteSpace(editRole)) currentUser.Role = editRole;
-            currentUser.Bio = editBio;
-
-            // Sync back to AuthState and localStorage
-            if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
-            {
-                AuthState.CurrentUser.Name = currentUser.Name ?? "";
-                AuthState.CurrentUser.Role = currentUser.Role ?? "";
-                AuthState.CurrentUser.Bio = currentUser.Bio ?? "";
-                // Notify layout to re-render sidebar
-                AuthState.SetUser(AuthState.CurrentUser);
-                try
-                {
-                    await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(AuthState.CurrentUser));
-                }
-                catch { }
-            }
+            statusMessage = "برای ویرایش پروفایل باید وارد حساب شوی.";
+            return;
         }
-        isEditing = false;
+
+        isSaving = true;
+        statusMessage = string.Empty;
+
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var dbUser = await db.Users.FirstOrDefaultAsync(u => u.Id == currentUser.Id);
+            if (dbUser is null)
+            {
+                statusMessage = "کاربر پیدا نشد.";
+                return;
+            }
+
+            var normalizedRole = ProfileAvatarService.NormalizeRole(editRole);
+            var previousRole = dbUser.Role;
+
+            dbUser.Name = string.IsNullOrWhiteSpace(editName) ? dbUser.Name : editName.Trim();
+            dbUser.Role = normalizedRole;
+            dbUser.Bio = editBio?.Trim();
+
+            if (pendingProfileImage is not null)
+            {
+                dbUser.ProfileImage = await ProfileAvatarService.SaveProfileImageAsync(
+                    pendingProfileImage,
+                    new ProfileAvatarCropOptions
+                    {
+                        Zoom = cropZoom,
+                        OffsetX = cropOffsetX,
+                        OffsetY = cropOffsetY
+                    });
+            }
+            else if (string.IsNullOrWhiteSpace(dbUser.ProfileImage))
+            {
+                dbUser.ProfileImage = ProfileAvatarService.GetDefaultAvatar(normalizedRole);
+            }
+            else if (ProfileAvatarService.IsDefaultAvatar(dbUser.ProfileImage) &&
+                     ProfileAvatarService.NormalizeRole(previousRole) != normalizedRole)
+            {
+                dbUser.ProfileImage = ProfileAvatarService.GetDefaultAvatar(normalizedRole);
+            }
+
+            await db.SaveChangesAsync();
+
+            currentUser = new User
+            {
+                Id = dbUser.Id,
+                Name = dbUser.Name,
+                Email = dbUser.Email,
+                Role = dbUser.Role,
+                Bio = dbUser.Bio,
+                Coin = dbUser.Coin,
+                Followers = dbUser.Followers,
+                Following = dbUser.Following,
+                ProfileImage = ProfileAvatarService.ResolveProfileImage(dbUser.ProfileImage, dbUser.Role),
+                CreatedAt = dbUser.CreatedAt
+            };
+
+            SeedEditFields();
+            selectedProfileImageName = string.Empty;
+            cropPreviewUrl = null;
+            pendingProfileImage = null;
+            statusMessage = "پروفایل با موفقیت به‌روزرسانی شد.";
+            isEditing = false;
+            await SyncAuthCacheAsync();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"خطا در ذخیره پروفایل: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
-    private void CancelEdit() => isEditing = false;
+    private void CancelEdit()
+    {
+        SeedEditFields();
+        selectedProfileImageName = string.Empty;
+        cropPreviewUrl = null;
+        pendingProfileImage = null;
+        cropZoom = 1.2;
+        cropOffsetX = 0;
+        cropOffsetY = 0;
+        statusMessage = string.Empty;
+    }
+
+    private async Task SyncAuthCacheAsync()
+    {
+        if (currentUser is null || !isAuthenticated || AuthState.CurrentUser is null)
+        {
+            return;
+        }
+
+        var cache = new UserCacheDto
+        {
+            Id = currentUser.Id,
+            Name = currentUser.Name,
+            Email = currentUser.Email,
+            Role = currentUser.Role,
+            Bio = currentUser.Bio ?? string.Empty,
+            ProfileImage = ProfileAvatarService.ResolveProfileImage(currentUser.ProfileImage, currentUser.Role),
+            Coin = currentUser.Coin
+        };
+
+        AuthState.SetUser(cache);
+        await JS.InvokeVoidAsync("lsSet", StorageKey, JsonSerializer.Serialize(cache));
+    }
 
     private async Task Logout()
     {
-        try { await JS.InvokeVoidAsync("lsRemove", StorageKey); } catch { }
+        try
+        {
+            await JS.InvokeVoidAsync("lsRemove", StorageKey);
+        }
+        catch
+        {
+        }
+
         AuthState.Logout();
         Nav.NavigateTo("/");
     }
-
-    private void SaveSettings() { }
 }

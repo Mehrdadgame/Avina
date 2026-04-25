@@ -1,0 +1,224 @@
+@page "/social/profile/{Id:int}"
+@rendermode InteractiveServer
+@using System.Text.Json
+@using Avina.Services
+@inject ISocialFeedService SocialFeedService
+@inject IProfileAvatarService ProfileAvatarService
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>پروفایل اجتماعی</PageTitle>
+
+<style>
+.profile-page { padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+.profile-hero {
+    background:linear-gradient(135deg,#162033,#101826); border:1px solid #2f3c52; border-radius:1.5rem;
+    padding:1.5rem; display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; flex-wrap:wrap;
+}
+.profile-head { display:flex; gap:1rem; align-items:flex-start; }
+.profile-avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; border:3px solid #aac7ff; }
+.profile-name { color:#eef3ff; font-size:1.6rem; font-weight:900; margin:0 0 .35rem; }
+.profile-role { color:#9fb0d6; font-size:.9rem; margin-bottom:.5rem; }
+.profile-bio { color:#d2dcf3; line-height:1.9; max-width:720px; }
+.profile-stats { display:flex; gap:.75rem; flex-wrap:wrap; }
+.profile-stat {
+    background:#101621; border:1px solid #2b3749; border-radius:1rem; padding:.85rem 1rem; min-width:110px;
+}
+.profile-stat-value { color:#eef3ff; font-size:1.2rem; font-weight:900; }
+.profile-stat-label { color:#89a0c4; font-size:.78rem; }
+.profile-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:1rem; }
+.profile-side, .profile-feed { display:flex; flex-direction:column; gap:1rem; }
+.info-card {
+    background:#1c2026; border:1px solid #303a4f; border-radius:1.25rem; padding:1rem;
+}
+.info-title { color:#eef3ff; font-size:1rem; font-weight:800; margin:0 0 .8rem; }
+.info-line { color:#b7c3de; line-height:1.9; font-size:.88rem; }
+.profile-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
+.follow-btn {
+    border:none; border-radius:1rem; padding:.85rem 1.15rem; font-family:'Vazirmatn',sans-serif; font-weight:800;
+    background:linear-gradient(135deg,#4248d4,#9197ff); color:white;
+}
+.secondary-btn {
+    border:1px solid #395179; background:#152033; color:#dce8ff; border-radius:1rem; padding:.85rem 1.15rem;
+    font-family:'Vazirmatn',sans-serif; font-weight:800;
+}
+.post-card {
+    background:#1c2026; border:1px solid #303a4f; border-radius:1.25rem; padding:1rem;
+}
+.post-time { color:#7f8ca8; font-size:.76rem; margin-bottom:.6rem; }
+.post-content { color:#e6ecff; line-height:2; white-space:pre-wrap; margin-bottom:.7rem; }
+.post-image { width:100%; max-height:420px; object-fit:cover; border-radius:1rem; border:1px solid #334155; background:#0b0e15; }
+.empty-box {
+    background:#1c2026; border:1px dashed #303a4f; border-radius:1.25rem; padding:2rem; color:#9fb0d6; text-align:center;
+}
+@@media (max-width: 1000px) {
+    .profile-grid { grid-template-columns:1fr; }
+}
+</style>
+
+<div class="profile-page">
+    @if (profile is null && isLoading)
+    {
+        <div class="empty-box">در حال بارگذاری پروفایل...</div>
+    }
+    else if (profile is null)
+    {
+        <div class="empty-box">پروفایل مورد نظر پیدا نشد.</div>
+    }
+    else
+    {
+        <section class="profile-hero">
+            <div class="profile-head">
+                <img class="profile-avatar" src="@ProfileAvatarService.ResolveProfileImage(profile.ProfileImage, profile.Role)" alt="@profile.Name" />
+                <div>
+                    <h1 class="profile-name">@profile.Name</h1>
+                    <div class="profile-role">@profile.Role</div>
+                    <div class="profile-bio">@(string.IsNullOrWhiteSpace(profile.Bio) ? "این کاربر هنوز بیوی اجتماعی ثبت نکرده است." : profile.Bio)</div>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                @if (currentUser is not null && currentUser.Id != profile.Id)
+                {
+                    <button class="follow-btn" @onclick="ToggleFollowAsync">
+                        @(profile.IsFollowedByCurrentUser ? "لغو دنبال‌کردن" : "دنبال کردن")
+                    </button>
+                }
+                <button class="secondary-btn" @onclick="GoToFeed">رفتن به فید</button>
+            </div>
+        </section>
+
+        <div class="profile-grid">
+            <div class="profile-feed">
+                @if (profile.Posts.Count == 0)
+                {
+                    <div class="empty-box">این کاربر هنوز پستی منتشر نکرده است.</div>
+                }
+                else
+                {
+                    @foreach (var post in profile.Posts)
+                    {
+                        <article class="post-card">
+                            <div class="post-time">@FormatRelative(post.CreatedAt)</div>
+                            <div class="post-content">@post.Content</div>
+                            @if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+                            {
+                                <img class="post-image" src="@post.ImageUrl" alt="post image" />
+                            }
+                            @if (!string.IsNullOrWhiteSpace(post.VideoUrl))
+                            {
+                                <video class="post-image" src="@post.VideoUrl" controls autoplay muted playsinline preload="metadata"></video>
+                            }
+                        </article>
+                    }
+                }
+            </div>
+
+            <aside class="profile-side">
+                <section class="info-card">
+                    <h2 class="info-title">آمار</h2>
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">@profile.PostCount</div>
+                            <div class="profile-stat-label">پست</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">@profile.Followers</div>
+                            <div class="profile-stat-label">دنبال‌کننده</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value">@profile.Following</div>
+                            <div class="profile-stat-label">دنبال‌شونده</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="info-card">
+                    <h2 class="info-title">اطلاعات بیشتر</h2>
+                    <div class="info-line">شناسه کاربر: @profile.Id</div>
+                    <div class="info-line">نام نمایشی: @profile.Name</div>
+                    <div class="info-line">نقش: @profile.Role</div>
+                </section>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private UserCacheDto? currentUser;
+    private SocialProfileDto? profile;
+    private bool isLoading;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadCurrentUserAsync();
+        await LoadProfileAsync();
+    }
+
+    private async Task LoadCurrentUserAsync()
+    {
+        currentUser = AuthState.CurrentUser;
+        if (currentUser is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", "avina_user");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                currentUser = JsonSerializer.Deserialize<UserCacheDto>(json);
+                if (currentUser is not null)
+                {
+                    AuthState.SetUser(currentUser);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        isLoading = true;
+        try
+        {
+            profile = await SocialFeedService.GetProfileAsync(Id, currentUser?.Id);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleFollowAsync()
+    {
+        if (currentUser is null || profile is null)
+        {
+            return;
+        }
+
+        await SocialFeedService.ToggleFollowAsync(currentUser.Id, profile.Id);
+        await LoadProfileAsync();
+    }
+
+    private void GoToFeed()
+    {
+        Nav.NavigateTo("/social");
+    }
+
+    private static string FormatRelative(DateTime value)
+    {
+        var diff = DateTime.UtcNow - value;
+        if (diff.TotalMinutes < 1) return "همین الان";
+        if (diff.TotalHours < 1) return $"{(int)diff.TotalMinutes} دقیقه پیش";
+        if (diff.TotalDays < 1) return $"{(int)diff.TotalHours} ساعت پیش";
+        return $"{(int)diff.TotalDays} روز پیش";
+    }
+}

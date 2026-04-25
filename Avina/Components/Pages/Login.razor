@@ -243,6 +243,12 @@ else
                     <label class="form-label">رمز عبور</label>
                     <input class="form-input" type="password" placeholder="حداقل ۶ کاراکتر" @bind="regPassword" @bind:event="oninput" />
                 </div>
+                <div class="form-group">
+                    <div style="background:rgba(170,199,255,0.08); border:1px solid rgba(170,199,255,0.18); color:#dbe8ff; border-radius:0.9rem; padding:0.9rem 1rem; font-size:0.85rem; line-height:1.9; text-align:right;">
+                        حسابی که از این فرم ساخته می‌شود به صورت <strong>دانش‌آموز</strong> ثبت می‌شود.
+                        اگر حساب معلم نیاز دارید، نام کاربری و رمز عبور توسط مجموعه برای شما ایجاد می‌شود.
+                    </div>
+                </div>
                 <button class="btn-submit" @onclick="HandleRegister" disabled="@isLoading">
                     @(isLoading ? "در حال ثبت نام..." : "ایجاد حساب کاربری")
                 </button>

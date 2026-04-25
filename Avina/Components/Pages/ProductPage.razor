@@ -41,7 +41,7 @@
 </style>
 
 <div class="product-page">
-    <button class="btn-back" @onclick="@(() => Nav.NavigateTo("/store"))">← بازگشت به فروشگاه</button>
+    <button class="btn-back" @onclick="@(() => Nav.NavigateTo("/store", forceLoad: true))">← بازگشت به فروشگاه</button>
 
     @if (loading)
     {

@@ -54,6 +54,33 @@ public class FeaturedPickDto
     public string LinkUrl { get; set; } = "";
 }
 
+public class HomeDiscoverItemDto
+{
+    public int Id { get; set; }
+    public string SourceType { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Category { get; set; } = "";
+    public string Creator { get; set; } = "";
+    public string PriceLabel { get; set; } = "";
+    public int Likes { get; set; }
+    public int Views { get; set; }
+    public string ImageUrl { get; set; } = "";
+    public string LinkUrl { get; set; } = "";
+    public string FilterKey { get; set; } = "all";
+}
+
+public class DailyChallengeCardDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string Subject { get; set; } = "";
+    public string Icon { get; set; } = "";
+    public string BorderColor { get; set; } = "#aac7ff";
+    public int RewardPoints { get; set; }
+    public int QuestionCount { get; set; }
+}
+
 public class HomeSectionsDto
 {
     public List<ContentDto> Latest { get; set; } = new();
@@ -64,6 +91,8 @@ public class HomeSectionsDto
     public List<Course> FeaturedCourses { get; set; } = new();
     public List<HomeBannerDto> HeroBanners { get; set; } = new();
     public List<FeaturedPickDto> FeaturedPicks { get; set; } = new();
+    public List<HomeDiscoverItemDto> DiscoverItems { get; set; } = new();
+    public List<DailyChallengeCardDto> DailyChallenges { get; set; } = new();
 }
 
 public interface IHomeService
@@ -82,25 +111,67 @@ public class HomeService : IHomeService
 
     public async Task<HomeSectionsDto> GetHomeSectionsAsync()
     {
-        var latest = await _db.Contents.Where(c => c.IsPublished)
-            .OrderByDescending(c => c.CreatedAt).Take(8)
-            .Select(c => ToDto(c)).ToListAsync();
+        var now = DateTime.UtcNow;
+        var weekStart = now.AddDays(-7);
+        var monthStart = now.AddDays(-30);
 
-        var topWeek = await _db.Contents.Where(c => c.IsPublished)
-            .OrderByDescending(c => c.WeeklyViews).Take(8)
-            .Select(c => ToDto(c)).ToListAsync();
+        var activeProducts = await _db.Products
+            .Where(p => p.IsActive)
+            .ToListAsync();
 
-        var topMonth = await _db.Contents.Where(c => c.IsPublished)
-            .OrderByDescending(c => c.MonthlyViews).Take(8)
-            .Select(c => ToDto(c)).ToListAsync();
+        var purchaseStats = await _db.UserPurchases
+            .Where(p => p.Product != null && p.Product.IsActive)
+            .GroupBy(p => p.ProductId)
+            .Select(g => new ProductPurchaseStatsDto
+            {
+                ProductId = g.Key,
+                TotalPurchases = g.Count(),
+                WeeklyPurchases = g.Count(x => x.PurchasedAt >= weekStart),
+                MonthlyPurchases = g.Count(x => x.PurchasedAt >= monthStart)
+            })
+            .ToDictionaryAsync(x => x.ProductId);
 
-        var bestseller = await _db.Contents.Where(c => c.IsPublished && !c.IsFree)
-            .OrderByDescending(c => c.PurchaseCount).Take(8)
-            .Select(c => ToDto(c)).ToListAsync();
+        ProductPurchaseStatsDto GetStats(int productId) =>
+            purchaseStats.TryGetValue(productId, out var stats)
+                ? stats
+                : new ProductPurchaseStatsDto { ProductId = productId };
 
-        var mostViewed = await _db.Contents.Where(c => c.IsPublished)
-            .OrderByDescending(c => c.ViewCount).Take(8)
-            .Select(c => ToDto(c)).ToListAsync();
+        var latest = activeProducts
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => ToStoreDto(p, GetStats(p.Id)))
+            .ToList();
+
+        var topWeek = activeProducts
+            .OrderByDescending(p => GetStats(p.Id).WeeklyPurchases)
+            .ThenByDescending(p => GetStats(p.Id).TotalPurchases)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => ToStoreDto(p, GetStats(p.Id)))
+            .ToList();
+
+        var topMonth = activeProducts
+            .OrderByDescending(p => GetStats(p.Id).MonthlyPurchases)
+            .ThenByDescending(p => GetStats(p.Id).TotalPurchases)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => ToStoreDto(p, GetStats(p.Id)))
+            .ToList();
+
+        var bestseller = activeProducts
+            .OrderByDescending(p => GetStats(p.Id).TotalPurchases)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => ToStoreDto(p, GetStats(p.Id)))
+            .ToList();
+
+        var mostViewed = activeProducts
+            .OrderByDescending(p => p.PreviewPages)
+            .ThenByDescending(p => GetStats(p.Id).TotalPurchases)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => ToStoreDto(p, GetStats(p.Id)))
+            .ToList();
 
         var featuredCourses = await _db.Courses.Where(c => c.IsPublished)
             .OrderByDescending(c => c.StudentCount).Take(6)
@@ -108,6 +179,8 @@ public class HomeService : IHomeService
 
         var heroBanners = await BuildHeroBannersAsync();
         var featuredPicks = await BuildFeaturedPicksAsync();
+        var discoverItems = await BuildDiscoverItemsAsync();
+        var dailyChallenges = await BuildDailyChallengesAsync();
 
         return new HomeSectionsDto
         {
@@ -118,8 +191,102 @@ public class HomeService : IHomeService
             MostViewed = mostViewed,
             FeaturedCourses = featuredCourses,
             HeroBanners = heroBanners,
-            FeaturedPicks = featuredPicks
+            FeaturedPicks = featuredPicks,
+            DiscoverItems = discoverItems,
+            DailyChallenges = dailyChallenges
         };
+    }
+
+    private async Task<List<HomeDiscoverItemDto>> BuildDiscoverItemsAsync()
+    {
+        var courseItems = await _db.Courses
+            .Where(c => c.IsPublished)
+            .OrderByDescending(c => c.StudentCount)
+            .Take(8)
+            .Select(c => new HomeDiscoverItemDto
+            {
+                Id = c.Id,
+                SourceType = "Course",
+                Title = c.Title,
+                Category = c.Category,
+                Creator = c.Instructor,
+                PriceLabel = c.IsFree ? "رایگان" : $"{c.CoinPrice:N0}ت",
+                Likes = c.RatingCount,
+                Views = c.StudentCount,
+                ImageUrl = !string.IsNullOrWhiteSpace(c.ThumbnailImage) ? c.ThumbnailImage! : GetImageForType("course"),
+                LinkUrl = $"/course/{c.Id}",
+                FilterKey = "school"
+            })
+            .ToListAsync();
+
+        var productItems = await _db.Products
+            .Where(p => p.IsActive)
+            .OrderByDescending(p => p.IsNew)
+            .ThenByDescending(p => p.CreatedAt)
+            .Take(8)
+            .Select(p => new HomeDiscoverItemDto
+            {
+                Id = p.Id,
+                SourceType = "Product",
+                Title = p.Name,
+                Category = p.Category,
+                Creator = p.Type,
+                PriceLabel = $"{p.CoinPrice:N0}ت",
+                Likes = p.Stock,
+                Views = p.PreviewPages,
+                ImageUrl = !string.IsNullOrWhiteSpace(p.Image) ? p.Image! : GetImageForType("product"),
+                LinkUrl = $"/product/{p.Id}",
+                FilterKey = p.Category.Contains("بازی") ? "game" : p.Category.Contains("کتاب") || p.Category.Contains("پادکست") ? "study" : "skill"
+            })
+            .ToListAsync();
+
+        var contentItems = await _db.Contents
+            .Where(c => c.IsPublished)
+            .OrderByDescending(c => c.ViewCount)
+            .Take(8)
+            .Select(c => new HomeDiscoverItemDto
+            {
+                Id = c.Id,
+                SourceType = "Content",
+                Title = c.Title,
+                Category = c.Category,
+                Creator = c.Type.ToString(),
+                PriceLabel = c.IsFree ? "رایگان" : $"{c.CoinPrice:N0}ت",
+                Likes = c.PurchaseCount,
+                Views = c.ViewCount,
+                ImageUrl = !string.IsNullOrWhiteSpace(c.ThumbnailPath) ? c.ThumbnailPath! : GetImageForType("content"),
+                LinkUrl = $"/content/{c.Id}",
+                FilterKey = c.Category.Contains("مطالعه") || c.Type == ContentMediaType.PDF || c.Type == ContentMediaType.Audio ? "study" : "skill"
+            })
+            .ToListAsync();
+
+        return courseItems
+            .Concat(productItems)
+            .Concat(contentItems)
+            .OrderByDescending(i => i.Views)
+            .ThenByDescending(i => i.Likes)
+            .Take(12)
+            .ToList();
+    }
+
+    private async Task<List<DailyChallengeCardDto>> BuildDailyChallengesAsync()
+    {
+        return await _db.DailyChallenges
+            .Where(c => c.IsActive && c.PublishAt <= DateTime.UtcNow)
+            .OrderBy(c => c.Id)
+            .Take(8)
+            .Select(c => new DailyChallengeCardDto
+            {
+                Id = c.Id,
+                Title = c.Title,
+                Description = c.Description,
+                Subject = c.Subject,
+                Icon = c.Icon,
+                BorderColor = c.BorderColor,
+                RewardPoints = c.RewardPoints,
+                QuestionCount = c.Questions.Count
+            })
+            .ToListAsync();
     }
 
     private async Task<List<HomeBannerDto>> BuildHeroBannersAsync()
@@ -495,6 +662,51 @@ public class HomeService : IHomeService
         }
 
         return list.Count >= targetCount;
+    }
+
+    private sealed class ProductPurchaseStatsDto
+    {
+        public int ProductId { get; set; }
+        public int TotalPurchases { get; set; }
+        public int WeeklyPurchases { get; set; }
+        public int MonthlyPurchases { get; set; }
+    }
+
+    private static ContentDto ToStoreDto(Product product, ProductPurchaseStatsDto stats) => new()
+    {
+        Id = product.Id,
+        Title = product.Name,
+        Description = product.Description,
+        Type = "Product",
+        FilePath = product.FilePath ?? string.Empty,
+        ThumbnailPath = product.Image,
+        IsFree = product.CoinPrice <= 0,
+        CoinPrice = product.CoinPrice,
+        Category = product.Category,
+        Tags = product.Type,
+        ViewCount = product.PreviewPages,
+        PurchaseCount = stats.TotalPurchases,
+        WeeklyViews = stats.WeeklyPurchases,
+        MonthlyViews = stats.MonthlyPurchases,
+        DurationSeconds = 0,
+        PageCount = product.PreviewPages,
+        FileSizeBytes = 0,
+        UploaderName = "فروشگاه",
+        CreatedAt = product.CreatedAt
+    };
+
+    private static string ToProductFilterKey(string category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return "skill";
+        }
+
+        return category.Contains("بازی", StringComparison.OrdinalIgnoreCase)
+            ? "game"
+            : category.Contains("کتاب", StringComparison.OrdinalIgnoreCase) || category.Contains("پادکست", StringComparison.OrdinalIgnoreCase)
+                ? "study"
+                : "skill";
     }
 
     private static string GetImageForType(string type) => type switch

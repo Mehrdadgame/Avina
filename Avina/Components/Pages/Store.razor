@@ -2,36 +2,62 @@
 @using Avina.Models
 @using Avina.Services
 @using System.Net.Http.Json
+@using System.Text
 @rendermode InteractiveServer
 @implements IDisposable
 @inject HttpClient Http
 @inject AuthStateService AuthState
 @inject NavigationManager Nav
 
-<div class="px-4 md:px-8 pt-6 pb-28 max-w-7xl">
+<style>
+.store-price-badge {
+    position: absolute;
+    top: .7rem;
+    right: .7rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    padding: .42rem .7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .96);
+    border: 1px solid rgba(15, 23, 42, .08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .18);
+    color: #0f172a;
+}
+.store-price-value {
+    color: #0f172a;
+    font-size: .9rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.store-price-icon {
+    color: #f4b400;
+    font-size: 1rem;
+    font-variation-settings: 'FILL' 1;
+    line-height: 1;
+}
+</style>
 
-    <!-- Store Carousel Banner -->
-    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:320px;">
+<div class="px-4 md:px-8 pt-6 pb-28 max-w-7xl">
+    <section class="mb-10 animate-page" style="position:relative; overflow:hidden; border-radius:1.25rem; height:320px; direction:ltr;">
         <div style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(storeSlideIndex * -100)%);">
             @foreach (var slide in storeSlides)
             {
-                <div style="min-width:100%; height:100%; position:relative; flex-shrink:0;">
-                    <img src="@slide.Image" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                <div style="min-width:100%; height:100%; position:relative; flex:0 0 100%; flex-shrink:0;">
+                    <img src="@ResolveImage(slide.Image, "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80")" alt="@slide.Title" style="width:100%; height:100%; object-fit:cover; display:block;" />
                     <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(46,71,112,0.92) 0%, rgba(66,72,212,0.6) 50%, transparent 100%);"></div>
-                    <div style="position:absolute; inset:0; padding:2.5rem 3.5rem; display:flex; align-items:center; z-index:10;">
+                    <div style="position:absolute; inset:0; padding:2.5rem 3.5rem; display:flex; align-items:center; z-index:10; direction:rtl;">
                         <div style="text-align:right; max-width:520px;">
                             <span style="background:rgba(255,182,140,0.25); color:#ffb68c; border:1px solid rgba(255,182,140,0.4); padding:0.25rem 0.875rem; border-radius:9999px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:0.875rem;">@slide.Badge</span>
                             <h1 style="font-size:2rem; font-weight:900; color:white; line-height:1.25; margin-bottom:0.75rem;">@slide.Title</h1>
                             <p style="color:rgba(224,226,236,0.85); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.65; max-width:420px;">@slide.Description</p>
-                            <button style="background:white; color:#4248d4; padding:0.625rem 1.75rem; border-radius:0.875rem; font-weight:800; border:none; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.9rem; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 16px rgba(0,0,0,0.2);" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">@slide.BtnLabel</button>
+                            <button style="background:white; color:#4248d4; padding:0.625rem 1.75rem; border-radius:0.875rem; font-weight:800; border:none; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.9rem;">@slide.BtnLabel</button>
                         </div>
                     </div>
-                    <!-- Decorative icon -->
                     <div style="position:absolute; left:3rem; top:50%; transform:translateY(-50%); font-size:6rem; opacity:0.15; z-index:5;">@slide.Icon</div>
                 </div>
             }
         </div>
-        <!-- Dots -->
         <div style="position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.4rem;">
             @for (int i = 0; i < storeSlides.Count; i++)
             {
@@ -39,18 +65,16 @@
                 <button @onclick="@(() => storeSlideIndex = idx)" style="width:@(storeSlideIndex == idx ? "24px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(storeSlideIndex == idx ? "rgba(255,182,140,0.9)" : "rgba(255,255,255,0.3)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
             }
         </div>
-        <!-- Arrows -->
-        <button @onclick="PrevStore" style="position:absolute; top:50%; right:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; backdrop-filter:blur(4px);">‹</button>
-        <button @onclick="NextStore" style="position:absolute; top:50%; left:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; backdrop-filter:blur(4px);">›</button>
+        <button @onclick="PrevStore" style="position:absolute; top:50%; right:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer;">&lsaquo;</button>
+        <button @onclick="NextStore" style="position:absolute; top:50%; left:1rem; transform:translateY(-50%); z-index:20; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:white; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer;">&rsaquo;</button>
     </section>
 
-    <!-- Categories & QR Hub -->
     <section class="grid grid-cols-1 md:grid-cols-12 gap-5 mb-10 animate-page delay-1">
-        <div class="md:col-span-4 bg-tertiary-container rounded-2xl p-7 flex flex-col justify-between relative overflow-hidden cursor-pointer active:scale-95 transition-transform card-lift">
+        <div class="md:col-span-4 bg-tertiary-container rounded-2xl p-7 flex flex-col justify-between relative overflow-hidden">
             <div class="relative z-10">
                 <span class="material-symbols-outlined text-4xl mb-4 text-on-tertiary-container" style="font-variation-settings:'FILL' 1;">qr_code_scanner</span>
                 <h3 class="text-xl font-bold text-on-tertiary-container mb-2">اسکنر محصولات</h3>
-                <p class="text-on-tertiary-container/80 text-sm leading-relaxed">کد کتاب‌های فیزیکی را اسکن کنید تا محتوای دیجیتال آن‌ها باز شود.</p>
+                <p class="text-on-tertiary-container/80 text-sm leading-relaxed">کد محصولات فیزیکی را اسکن کنید تا محتوای دیجیتال آن‌ها باز شود.</p>
             </div>
             <div class="absolute -bottom-3 -left-3 opacity-15 pointer-events-none">
                 <span class="material-symbols-outlined text-[100px]">photo_camera</span>
@@ -63,9 +87,9 @@
                 <button class="text-primary font-bold text-sm hover:underline">مشاهده همه</button>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group card-lift">
+                <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-3">
-                        <div class="bg-primary/10 p-2.5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                        <div class="bg-primary/10 p-2.5 rounded-xl text-primary">
                             <span class="material-symbols-outlined">menu_book</span>
                         </div>
                         <div>
@@ -75,9 +99,9 @@
                     </div>
                     <span class="material-symbols-outlined text-outline-variant">chevron_left</span>
                 </div>
-                <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm group card-lift">
+                <div class="bg-surface-container-lowest p-5 rounded-xl flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-3">
-                        <div class="bg-secondary/10 p-2.5 rounded-xl text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                        <div class="bg-secondary/10 p-2.5 rounded-xl text-secondary">
                             <span class="material-symbols-outlined">smart_display</span>
                         </div>
                         <div>
@@ -91,7 +115,6 @@
         </div>
     </section>
 
-    <!-- Product Grid -->
     <section class="mb-12 animate-page delay-2">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-black">جدیدترین محصولات</h2>
@@ -104,35 +127,39 @@
             </div>
         </div>
 
-        @{ var productImgs = new[] {
-            "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80",
-            "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
-            "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400&q=80",
-            "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&q=80",
-            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80",
-            "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
-        }; int pi = 0; }
+        @{
+            var productImgs = new[]
+            {
+                "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80",
+                "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
+                "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400&q=80",
+                "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&q=80",
+                "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80",
+                "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
+            };
+            int pi = 0;
+        }
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach (var product in visibleProducts)
             {
-                var pImg = productImgs[pi % productImgs.Length]; pi++;
-                var productId = product.Id;
-                var productUrl = $"/product/{productId}";
-                <div class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift"
+                var fallbackImg = productImgs[pi % productImgs.Length];
+                pi++;
+                var productUrl = $"/product/{product.Id}";
+                <div @key="product.Id" class="product-card group bg-surface-container-lowest rounded-2xl p-4 card-lift"
                      @onclick="() => Nav.NavigateTo(productUrl)" style="cursor:pointer;">
                     <div class="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
-                        <img src="@pImg" alt="@product.Name" class="product-img w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        <div class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                            <span class="text-sm font-black text-on-surface">@product.CoinPrice.ToString("N0")</span>
-                            <span class="material-symbols-outlined text-yellow-400 text-base" style="font-variation-settings:'FILL' 1;">monetization_on</span>
+                        <img src="@ResolveImage(product.Image, fallbackImg)" alt="@FixMojibake(product.Name)" class="product-img w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80';" />
+                        <div class="store-price-badge">
+                            <span class="material-symbols-outlined store-price-icon">monetization_on</span>
+                            <span class="store-price-value">@product.CoinPrice.ToString("N0")</span>
                         </div>
                         @if (product.IsNew)
                         {
                             <div class="absolute bottom-2.5 right-2.5 bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">جدید</div>
                         }
                     </div>
-                    <h3 class="font-bold text-base mb-0.5 px-1">@product.Name</h3>
-                    <p class="text-on-surface-variant text-xs mb-4 px-1">@product.Description</p>
+                    <h3 class="font-bold text-base mb-0.5 px-1">@FixMojibake(product.Name)</h3>
+                    <p class="text-on-surface-variant text-xs mb-4 px-1">@FixMojibake(product.Description)</p>
                     <button class="buy-btn w-full py-2.5 font-bold rounded-xl flex items-center justify-center gap-2 text-on-surface text-sm"
                             @onclick:stopPropagation="true"
                             @onclick="() => Nav.NavigateTo(productUrl)">
@@ -144,14 +171,13 @@
         </div>
     </section>
 
-    <!-- Info Section -->
     <section class="mt-10 p-8 md:p-12 bg-surface-container-lowest rounded-2xl shadow-sm animate-page delay-3">
         <div class="grid md:grid-cols-2 gap-10 items-center">
             <div class="order-2 md:order-1 text-right">
                 <h2 class="text-2xl md:text-3xl font-black mb-4 text-on-background">تجربه یادگیری فراتر از فیزیک</h2>
                 <p class="text-on-surface-variant leading-relaxed mb-6 text-sm">
                     هر محصول فیزیکی که از فروشگاه ما تهیه می‌کنید، یک کلید برای دنیای دیجیتال است.
-                    با اسکن کدهای مخفی داخل بسته‌ها، مراحل جدید در بازی باز شده و سکه‌های جایزه دریافت خواهید کرد.
+                    با اسکن کدهای مخفی داخل بسته‌ها، مراحل جدید باز شده و سکه‌های جایزه دریافت می‌کنید.
                 </p>
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
@@ -184,11 +210,10 @@
     </section>
 </div>
 
-<!-- Cart FAB -->
 @if (cartCount > 0)
 {
     <div class="fixed bottom-20 left-5 z-40 md:left-10 md:bottom-10">
-        <button class="fab-pulse primary-gradient text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform relative">
+        <button class="fab-pulse primary-gradient text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center relative">
             <span class="material-symbols-outlined text-2xl">shopping_cart</span>
             <span class="absolute -top-1 -right-1 bg-error-container text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">@cartCount</span>
         </button>
@@ -207,39 +232,44 @@
     }
 
     private List<StoreSlide> storeSlides = new();
-    private int storeSlideIndex = 0;
+    private int storeSlideIndex;
     private System.Threading.Timer? _storeTimer;
-
     private string activeFilter = "all";
-    private int cartCount = 0;
-
+    private int cartCount;
     private List<Product> allProducts = new();
 
     private List<Product> visibleProducts => activeFilter switch
     {
         "physical" => allProducts.Where(p => p.CoinPrice <= 1000).ToList(),
-        "digital"  => allProducts.Where(p => p.CoinPrice > 1000).ToList(),
-        _          => allProducts
+        "digital" => allProducts.Where(p => p.CoinPrice > 1000).ToList(),
+        _ => allProducts
     };
 
     protected override async Task OnInitializedAsync()
     {
         storeSlides = new List<StoreSlide>
         {
-            new StoreSlide { Image = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80", Badge = "🆕 کیت جدید", Title = "کیت خلاقیت نگهبانان کهن", Description = "با این مجموعه ابزارهای جادویی خود را بساز و به نبرد با تاریکی برو. هر محصول یک کد مخفی دارد!", BtnLabel = "همین الان دریافت کن", Icon = "🎒" },
-            new StoreSlide { Image = "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80", Badge = "📚 کتاب‌های ویژه", Title = "کتاب‌های آخرین نگهبان: طلوع", Description = "مجموعه کتاب‌های داستانی و آموزشی که دنیای آخرین نگهبان را زنده می‌کنند. هر کتاب = ۴۵۰ کوین.", BtnLabel = "مشاهده کتاب‌ها", Icon = "📖" },
-            new StoreSlide { Image = "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=1200&q=80", Badge = "🎮 بازی رومیزی", Title = "فتح دژ: بازی استراتژیک ۲-۴ نفره", Description = "یک بازی فکری هیجان‌انگیز برای کل خانواده. کد داخل بسته را اسکن کن تا مراحل دیجیتال باز بشه.", BtnLabel = "خرید بازی", Icon = "🎲" },
+            new() { Image = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80", Badge = "🆕 کیت جدید", Title = "کیت خلاقیت نگهبانان کهن", Description = "با این مجموعه ابزارهای جادویی خود را بساز و به نبرد با تاریکی برو.", BtnLabel = "همین الان دریافت کن", Icon = "🎒" },
+            new() { Image = "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80", Badge = "📚 کتاب‌های ویژه", Title = "کتاب‌های آخرین نگهبان", Description = "مجموعه کتاب‌های داستانی و آموزشی برای رشد مهارتی و ذهنی.", BtnLabel = "مشاهده کتاب‌ها", Icon = "📖" },
+            new() { Image = "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=1200&q=80", Badge = "🎮 بازی رومیزی", Title = "فتح دژ: بازی استراتژیک", Description = "یک بازی فکری هیجان‌انگیز برای کل خانواده.", BtnLabel = "خرید بازی", Icon = "🎲" },
         };
 
-        // Load products from API
         await LoadProducts();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (allProducts.Count == 0)
+        {
+            await LoadProducts();
+        }
     }
 
     private async Task LoadProducts()
     {
         try
         {
-            var response = await Http.GetAsync("http://localhost:5105/api/products");
+            var response = await Http.GetAsync("/api/products");
             if (response.IsSuccessStatusCode)
             {
                 var apiProducts = await response.Content.ReadFromJsonAsync<List<ProductApiDto>>();
@@ -250,6 +280,7 @@
                         Id = p.Id,
                         Name = p.Name,
                         Description = p.Description,
+                        Image = p.Image,
                         CoinPrice = p.CoinPrice,
                         Category = p.Category,
                         IsNew = p.IsNew,
@@ -259,73 +290,73 @@
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading products: {ex.Message}");
-            // Fallback to default products if API fails
             allProducts = new List<Product>
             {
-                new Product { Id = 1, Name = "کتاب: شروع برنامه‌نویسی", Description = "یک کتاب جامع برای یادگیری برنامه‌نویسی از صفر", CoinPrice = 500,  Category = "کتاب", IsNew = true, Price = 15.0m, Stock = 9999 },
-                new Product { Id = 2, Name = "پادکست: مسیریابی شغلی", Description = "پادکست هفتگی درباره انتخاب شغل و رشد حرفه‌ای", CoinPrice = 100, Category = "پادکست", IsNew = true, Price = 5.0m, Stock = 9999 },
-                new Product { Id = 3, Name = "کیت مهارت: ساخت رباتیک", Description = "کیت فیزیکی برای یادگیری رباتیک و الکترونیک", CoinPrice = 1000, Category = "کیت", IsNew = true, Price = 50.0m, Stock = 25 },
+                new() { Id = 1, Name = "کتاب: شروع برنامه‌نویسی", Description = "یک کتاب جامع برای یادگیری برنامه‌نویسی از صفر", CoinPrice = 500, Category = "کتاب", IsNew = true, Price = 15m, Stock = 9999, Image = "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80" },
+                new() { Id = 2, Name = "پادکست: مسیریابی شغلی", Description = "پادکست هفتگی درباره انتخاب شغل و رشد حرفه‌ای", CoinPrice = 100, Category = "پادکست", IsNew = true, Price = 5m, Stock = 9999, Image = "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80" },
+                new() { Id = 3, Name = "کیت مهارت: ساخت رباتیک", Description = "کیت فیزیکی برای یادگیری رباتیک و الکترونیک", CoinPrice = 1000, Category = "کیت", IsNew = true, Price = 50m, Stock = 25, Image = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80" },
             };
         }
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender)
         {
-            _storeTimer = new System.Threading.Timer(_ =>
-            {
-                InvokeAsync(() =>
-                {
-                    storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
-                    StateHasChanged();
-                });
-            }, null, 5500, 5500);
+            return;
         }
+
+        _storeTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                if (storeSlides.Count == 0)
+                {
+                    return;
+                }
+
+                storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
+                StateHasChanged();
+            });
+        }, null, 5500, 5500);
     }
 
-    private void NextStore() => storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
-    private void PrevStore() => storeSlideIndex = (storeSlideIndex - 1 + storeSlides.Count) % storeSlides.Count;
+    private void NextStore()
+    {
+        if (storeSlides.Count == 0) return;
+        storeSlideIndex = (storeSlideIndex + 1) % storeSlides.Count;
+    }
+
+    private void PrevStore()
+    {
+        if (storeSlides.Count == 0) return;
+        storeSlideIndex = (storeSlideIndex - 1 + storeSlides.Count) % storeSlides.Count;
+    }
 
     public void Dispose() => _storeTimer?.Dispose();
 
     private string GetFilterClass(string filter)
         => activeFilter == filter ? "filter-active" : "text-on-surface-variant";
 
-    private void SetFilter(string filter) { activeFilter = filter; }
+    private void SetFilter(string filter) => activeFilter = filter;
 
     private async Task AddToCart(int productId)
     {
         if (!AuthState.IsLoggedIn)
         {
-            // Navigate to login
             return;
         }
 
         var product = allProducts.FirstOrDefault(p => p.Id == productId);
         if (product == null) return;
 
-        try
+        var request = new { productId, coinAmount = product.CoinPrice };
+        var response = await Http.PostAsJsonAsync("/api/products/purchases", request);
+        if (response.IsSuccessStatusCode)
         {
-            var request = new { productId = productId, coinAmount = product.CoinPrice };
-            var response = await Http.PostAsJsonAsync("http://localhost:5105/api/products/purchases", request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                cartCount++;
-            }
-            else
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Purchase failed: {content}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error during purchase: {ex.Message}");
+            cartCount++;
         }
     }
 
@@ -342,12 +373,44 @@
         int Stock
     );
 
-    private string GetProductIcon(string? category) => category switch
+    private static string ResolveImage(string? imageUrl, string fallback)
     {
-        "کتاب‌ها"          => "menu_book",
-        "دوره‌های ویدیویی" => "smart_display",
-        "بازی‌های فکری"   => "extension",
-        "کیت‌های آموزشی"  => "science",
-        _                   => "inventory_2"
-    };
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return fallback;
+        }
+
+        var normalized = imageUrl.Trim();
+        if (normalized.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        return normalized.StartsWith('/') ? normalized : $"/{normalized}";
+    }
+
+    private static string FixMojibake(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        if (!value.Contains('Ø') && !value.Contains('Ù') && !value.Contains('â') && !value.Contains('ð'))
+        {
+            return value;
+        }
+
+        try
+        {
+            var bytes = Encoding.Latin1.GetBytes(value);
+            return Encoding.UTF8.GetString(bytes);
+        }
+        catch
+        {
+            return value;
+        }
+    }
 }

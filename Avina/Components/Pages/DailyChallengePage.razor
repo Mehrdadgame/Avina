@@ -1,0 +1,169 @@
+@page "/challenge/{Id:int}"
+@rendermode InteractiveServer
+@using Avina.Data
+@using Avina.Models
+@using Avina.Services
+@using Microsoft.EntityFrameworkCore
+@inject AvinaDbContext Db
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+
+<style>
+.challenge-wrap { max-width:900px; margin:0 auto; padding:1.25rem; display:flex; flex-direction:column; gap:1rem; }
+.challenge-head { background:#1c2026; border:1px solid #303a4f; border-radius:1rem; padding:1rem; }
+.challenge-title { color:#eef3ff; font-size:1.25rem; font-weight:900; margin:0 0 .35rem; }
+.challenge-sub { color:#9fb0d6; margin:0; line-height:1.8; }
+.question-card { background:#1c2026; border:1px solid #303a4f; border-radius:1rem; padding:1rem; }
+.q-title { color:#e6ecff; margin-bottom:.75rem; font-weight:700; line-height:1.9; }
+.q-options { display:grid; gap:.5rem; }
+.opt-btn { text-align:right; border:1px solid #334155; background:#0f172a; color:#dbe7ff; border-radius:.75rem; padding:.65rem .8rem; font-family:'Vazirmatn',sans-serif; }
+.opt-btn.selected { border-color:#818cf8; background:#1e1b4b; color:#e9e8ff; }
+.submit-area { display:flex; justify-content:center; padding:1rem 0; }
+.submit-btn { border:none; border-radius:.85rem; padding:.75rem 1.2rem; background:linear-gradient(135deg,#4248d4,#9197ff); color:#fff; font-family:'Vazirmatn',sans-serif; font-weight:800; }
+.result-card { background:#1c2026; border:1px solid #303a4f; border-radius:1rem; padding:1.25rem; text-align:center; }
+</style>
+
+<div class="challenge-wrap">
+    @if (loading)
+    {
+        <div class="challenge-head">در حال بارگذاری چالش...</div>
+    }
+    else if (AuthState.CurrentUser is null)
+    {
+        <div class="challenge-head">
+            <p class="challenge-sub">برای شرکت در چالش باید وارد حساب شوی.</p>
+            <button class="submit-btn" @onclick='() => Nav.NavigateTo("/login")'>ورود</button>
+        </div>
+    }
+    else if (challenge is null)
+    {
+        <div class="challenge-head">چالش پیدا نشد.</div>
+    }
+    else if (submitted)
+    {
+        <div class="result-card">
+            <h2 class="challenge-title">@challenge.Title</h2>
+            <p class="challenge-sub">درست: @correctAnswers از @totalQuestions</p>
+            <p class="challenge-sub">نمره: @scorePercent٪</p>
+            <p class="challenge-sub">نتیجه: @(passed ? "قبول" : "مردود")</p>
+            <p class="challenge-sub">امتیاز دریافتی: @earnedReward</p>
+            <div class="submit-area">
+                <button class="submit-btn" @onclick='() => Nav.NavigateTo("/life-path")'>رفتن به مسیر من</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <section class="challenge-head">
+            <h1 class="challenge-title">@challenge.Title</h1>
+            <p class="challenge-sub">@challenge.Description</p>
+            <p class="challenge-sub">موضوع: @challenge.Subject | حد قبولی: @challenge.PassingPercentage٪ | امتیاز پایه: @challenge.RewardPoints</p>
+        </section>
+
+        @foreach (var q in questions)
+        {
+            <article class="question-card" @key="q.Id">
+                <div class="q-title">@q.Order. @q.QuestionText</div>
+                <div class="q-options">
+                    @foreach (var opt in new[] { ("A", q.OptionA), ("B", q.OptionB), ("C", q.OptionC), ("D", q.OptionD) })
+                    {
+                        var selected = answers.TryGetValue(q.Id, out var a) && a == opt.Item1;
+                        <button class="opt-btn @(selected ? "selected" : "")" @onclick="@(() => SelectAnswer(q.Id, opt.Item1))">
+                            @opt.Item1) @opt.Item2
+                        </button>
+                    }
+                </div>
+            </article>
+        }
+
+        <div class="submit-area">
+            <button class="submit-btn" @onclick="SubmitAsync" disabled="@submitting">@(submitting ? "در حال ثبت..." : "ثبت آزمون")</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private DailyChallenge? challenge;
+    private List<DailyChallengeQuestion> questions = new();
+    private readonly Dictionary<int, string> answers = new();
+    private bool loading = true;
+    private bool submitting;
+    private bool submitted;
+
+    private int correctAnswers;
+    private int totalQuestions;
+    private int scorePercent;
+    private bool passed;
+    private int earnedReward;
+
+    protected override async Task OnInitializedAsync()
+    {
+        challenge = await Db.DailyChallenges
+            .Include(c => c.Questions.OrderBy(q => q.Order))
+            .FirstOrDefaultAsync(c => c.Id == Id && c.IsActive);
+
+        questions = challenge?.Questions.OrderBy(q => q.Order).ToList() ?? [];
+        loading = false;
+    }
+
+    private void SelectAnswer(int questionId, string answer)
+    {
+        answers[questionId] = answer;
+    }
+
+    private async Task SubmitAsync()
+    {
+        var user = AuthState.CurrentUser;
+        if (user is null || challenge is null || submitting || submitted)
+        {
+            return;
+        }
+
+        submitting = true;
+
+        try
+        {
+            totalQuestions = questions.Count;
+            correctAnswers = questions.Count(q =>
+                answers.TryGetValue(q.Id, out var a) &&
+                string.Equals(a, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase));
+
+            scorePercent = totalQuestions == 0 ? 0 : (int)Math.Round(correctAnswers * 100.0 / totalQuestions);
+            passed = scorePercent >= challenge.PassingPercentage;
+            earnedReward = passed && totalQuestions > 0
+                ? (int)Math.Round(challenge.RewardPoints * (correctAnswers / (double)totalQuestions))
+                : 0;
+
+            var attempt = await Db.UserDailyChallengeAttempts
+                .CountAsync(x => x.UserId == user.Id && x.DailyChallengeId == challenge.Id) + 1;
+
+            Db.UserDailyChallengeAttempts.Add(new UserDailyChallengeAttempt
+            {
+                UserId = user.Id,
+                DailyChallengeId = challenge.Id,
+                CorrectAnswers = correctAnswers,
+                TotalQuestions = totalQuestions,
+                ScorePercent = scorePercent,
+                RewardEarned = earnedReward,
+                Passed = passed,
+                AttemptNumber = attempt,
+                TakenAt = DateTime.UtcNow
+            });
+
+            var dbUser = await Db.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
+            if (dbUser is not null && earnedReward > 0)
+            {
+                dbUser.Experience += earnedReward;
+            }
+
+            await Db.SaveChangesAsync();
+            submitted = true;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

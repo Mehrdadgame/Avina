@@ -3,6 +3,7 @@
 @using Avina.Services
 @using Avina.Data
 @using Avina.Models
+@using Avina.Helpers
 @using Microsoft.EntityFrameworkCore
 @inject AvinaDbContext Db
 @inject AuthStateService AuthState
@@ -259,7 +260,7 @@
                                     <span>@item.Category</span>
                                     <span>👁 @item.ViewCount</span>
                                     <span>@(item.IsFree ? "رایگان" : $"{item.CoinPrice} 🪙")</span>
-                                    <span>@item.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                    <span>@item.CreatedAt.ToShamsiDate()</span>
                                 </div>
                             </div>
                             <div style="display:flex; gap:0.5rem; flex-shrink:0;">

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using Avina.Models
 @using Avina.Services
+@using Avina.Helpers
 @inject AuthStateService AuthState
 @inject INotificationService NotificationService
 @inject NavigationManager Nav
@@ -226,7 +227,7 @@
         if (delta.TotalHours < 1) return $"{(int)delta.TotalMinutes} دقیقه پیش";
         if (delta.TotalDays < 1) return $"{(int)delta.TotalHours} ساعت پیش";
         if (delta.TotalDays < 30) return $"{(int)delta.TotalDays} روز پیش";
-        return createdAt.ToString("yyyy/MM/dd");
+        return createdAt.ToShamsiDate();
     }
 
     public void Dispose()

@@ -2,13 +2,14 @@
 @using Avina.Services
 @using System.Text.Json
 @inject AuthStateService AuthState
+@inject IProfileAvatarService ProfileAvatarService
 @inject IJSRuntime JS
 @implements IDisposable
 
 @if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
 {
     <a href="/profile" class="user-profile">
-        <img src="@AuthState.CurrentUser.ProfileImage" alt="@AuthState.CurrentUser.Name" class="user-avatar">
+        <img src="@ProfileAvatarService.ResolveProfileImage(AuthState.CurrentUser.ProfileImage, AuthState.CurrentUser.Role)" alt="@AuthState.CurrentUser.Name" class="user-avatar">
         <div class="user-info">
             <p class="user-name">@AuthState.CurrentUser.Name</p>
             <p class="user-role">@AuthState.CurrentUser.Role</p>

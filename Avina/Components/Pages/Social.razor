@@ -1,0 +1,428 @@
+@page "/social"
+@rendermode InteractiveServer
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Avina.Services
+@inject ISocialFeedService SocialFeedService
+@inject ISocialImageStorageService SocialImageStorageService
+@inject IProfileAvatarService ProfileAvatarService
+@inject AuthStateService AuthState
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>دورهمی</PageTitle>
+
+<style>
+.social-page { display:grid; grid-template-columns:minmax(0, 1fr) 320px; gap:1.25rem; padding:1rem; }
+.social-main { display:flex; flex-direction:column; gap:1rem; }
+.social-panel { background:#1c2026; border:1px solid #303a4f; border-radius:1.25rem; overflow:hidden; }
+.social-composer { padding:1rem; }
+.social-title { color:#eef3ff; font-size:1.4rem; font-weight:900; margin:0 0 .35rem; }
+.social-subtitle { color:#9fb0d6; margin:0 0 1rem; line-height:1.8; }
+.composer-textarea, .composer-input, .comment-input {
+    width:100%; background:#0b0e15; border:1px solid #414753; border-radius:1rem; color:#e0e2ec;
+    font-family:'Vazirmatn',sans-serif; padding:.9rem 1rem;
+}
+.composer-textarea { min-height:120px; resize:vertical; }
+.composer-grid { display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:.75rem; margin-top:.75rem; }
+.composer-actions { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-top:.85rem; flex-wrap:wrap; }
+.social-btn {
+    border:none; border-radius:1rem; padding:.85rem 1.15rem; font-family:'Vazirmatn',sans-serif; font-weight:800;
+    cursor:pointer; transition:transform .2s ease, opacity .2s ease;
+}
+.social-btn:hover { transform:translateY(-1px); opacity:.94; }
+.social-btn.primary { background:linear-gradient(135deg,#4248d4,#9197ff); color:white; }
+.social-btn.ghost { background:#141a24; color:#aac7ff; border:1px solid #2f3c52; }
+.social-btn.follow { background:#172132; color:#d6e3ff; border:1px solid #395179; }
+.social-login-note { color:#b7c3de; font-size:.9rem; line-height:1.8; }
+.post-card { padding:1rem; display:flex; flex-direction:column; gap:.9rem; }
+.post-header { display:flex; gap:.85rem; align-items:flex-start; justify-content:space-between; }
+.post-author-wrap { display:flex; gap:.85rem; min-width:0; }
+.post-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; background:#1f2937; }
+.post-author-link { text-decoration:none; color:inherit; }
+.post-author { color:#eef3ff; font-weight:800; }
+.post-role { color:#9fb0d6; font-size:.8rem; margin-top:.2rem; }
+.post-time { color:#7f8ca8; font-size:.76rem; margin-top:.2rem; }
+.post-content { color:#e6ecff; line-height:2; white-space:pre-wrap; }
+.post-media { width:100%; border-radius:1rem; max-height:420px; object-fit:cover; border:1px solid #334155; background:#0b0e15; }
+.post-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
+.action-btn {
+    border:1px solid #2f3c52; background:#111823; color:#c7d3ef; border-radius:999px; padding:.55rem .9rem;
+    font-family:'Vazirmatn',sans-serif; font-size:.82rem; font-weight:700;
+}
+.action-btn.liked { color:#ffb4ab; border-color:rgba(255,180,171,.35); }
+.comment-list { display:flex; flex-direction:column; gap:.65rem; }
+.comment-card { background:#101621; border:1px solid #263244; border-radius:1rem; padding:.8rem; }
+.comment-head { display:flex; align-items:center; gap:.6rem; margin-bottom:.4rem; }
+.comment-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; }
+.comment-name { color:#eef3ff; font-size:.85rem; font-weight:800; }
+.comment-time { color:#7f8ca8; font-size:.72rem; }
+.comment-body { color:#c7d3ef; line-height:1.9; font-size:.85rem; white-space:pre-wrap; }
+.comment-form { display:flex; gap:.65rem; align-items:flex-start; }
+.social-side { display:flex; flex-direction:column; gap:1rem; }
+.suggestion-card { padding:1rem; }
+.suggestion-list { display:flex; flex-direction:column; gap:.75rem; }
+.suggestion-user {
+    display:flex; align-items:center; gap:.75rem; text-decoration:none; color:inherit; background:#101621;
+    border:1px solid #263244; border-radius:1rem; padding:.75rem;
+}
+.suggestion-user img { width:44px; height:44px; border-radius:50%; object-fit:cover; }
+.suggestion-meta-wrap { min-width:0; flex:1; }
+.suggestion-name { color:#eef3ff; font-weight:800; }
+.suggestion-meta { color:#9fb0d6; font-size:.8rem; }
+.feed-empty { padding:2rem; text-align:center; color:#9fb0d6; }
+.upload-pick { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-top:.75rem; }
+.upload-pill {
+    display:inline-flex; align-items:center; gap:.5rem; padding:.55rem .8rem; border-radius:999px;
+    border:1px solid #395179; background:#152033; color:#dce8ff; font-size:.82rem; font-weight:700;
+}
+.upload-hidden { position:relative; overflow:hidden; }
+.upload-hidden input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+@@media (max-width: 1100px) {
+    .social-page { grid-template-columns:1fr; }
+}
+@@media (max-width: 700px) {
+    .composer-grid { grid-template-columns:1fr; }
+    .comment-form { flex-direction:column; }
+    .post-header { flex-direction:column; }
+}
+</style>
+
+<div class="social-page">
+    <div class="social-main">
+        <section class="social-panel social-composer" id="composer">
+            <h1 class="social-title">دورهمی آوینا</h1>
+            <p class="social-subtitle">متن، تصویر یا ویدیو بگذار. ویدیو تا 100MB و تصویر تا 5MB پشتیبانی می‌شود.</p>
+
+            @if (currentUser is null)
+            {
+                <div class="social-login-note">برای گذاشتن پست باید وارد حساب شوی.</div>
+            }
+            else
+            {
+                <textarea class="composer-textarea" @bind="newPostContent" placeholder="متن پست..."></textarea>
+                <div class="composer-grid">
+                    <input class="composer-input" @bind="newPostImageUrl" placeholder="لینک تصویر اختیاری" />
+                    <div class="social-login-note">اگر فایل آپلود کنی، لینک به‌صورت خودکار جایگزین می‌شود.</div>
+                </div>
+                <div class="upload-pick">
+                    <label class="social-btn ghost upload-hidden">
+                        انتخاب فایل
+                        <InputFile OnChange="HandleMediaSelectedAsync" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov" />
+                    </label>
+                    @if (!string.IsNullOrWhiteSpace(selectedMediaName))
+                    {
+                        <span class="upload-pill">@selectedMediaType • @selectedMediaName</span>
+                    }
+                </div>
+                <div class="composer-actions">
+                    <div class="social-login-note">کاربر فعلی: <strong>@currentUser.Name</strong></div>
+                    <button class="social-btn primary" @onclick="CreatePostAsync" disabled="@isSubmittingPost">@(isSubmittingPost ? "در حال انتشار..." : "انتشار پست")</button>
+                </div>
+            }
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="social-panel feed-empty">@errorMessage</div>
+        }
+
+        @if (isLoading)
+        {
+            <div class="social-panel feed-empty">در حال بارگذاری...</div>
+        }
+        else if (feed?.Posts.Count == 0)
+        {
+            <div class="social-panel feed-empty">هنوز پستی ثبت نشده است.</div>
+        }
+        else if (feed is not null)
+        {
+            @foreach (var post in feed.Posts)
+            {
+                <article class="social-panel post-card">
+                    <div class="post-header">
+                        <div class="post-author-wrap">
+                            <img class="post-avatar" src="@ProfileAvatarService.ResolveProfileImage(post.AuthorImage, post.AuthorRole)" alt="@post.AuthorName" />
+                            <a class="post-author-link" href="/social/profile/@post.AuthorId">
+                                <div class="post-author">@post.AuthorName</div>
+                                <div class="post-role">@post.AuthorRole</div>
+                                <div class="post-time">@FormatRelative(post.CreatedAt)</div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="post-content">@post.Content</div>
+
+                    @if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+                    {
+                        <img class="post-media" src="@post.ImageUrl" alt="post image" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(post.VideoUrl))
+                    {
+                        <video class="post-media" src="@post.VideoUrl" controls autoplay muted playsinline preload="metadata"></video>
+                    }
+
+                    <div class="post-actions">
+                        <button class="action-btn @(post.IsLikedByCurrentUser ? "liked" : "")" @onclick="() => ToggleLikeAsync(post.Id)">
+                            Like @post.LikeCount
+                        </button>
+                        <button class="action-btn">Comment @post.CommentCount</button>
+                    </div>
+
+                    <div class="comment-list">
+                        @foreach (var comment in post.Comments)
+                        {
+                            <div class="comment-card">
+                                <div class="comment-head">
+                                    <img class="comment-avatar" src="@ProfileAvatarService.ResolveProfileImage(comment.UserImage, comment.UserRole)" alt="@comment.UserName" />
+                                    <div>
+                                        <div class="comment-name">@comment.UserName</div>
+                                        <div class="comment-time">@FormatRelative(comment.CreatedAt)</div>
+                                    </div>
+                                </div>
+                                <div class="comment-body">@comment.Content</div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (currentUser is not null)
+                    {
+                        <div class="comment-form">
+                            <input class="comment-input" @bind="commentDrafts[post.Id]" placeholder="کامنت..." />
+                            <button class="social-btn ghost" @onclick="() => AddCommentAsync(post.Id)">ارسال</button>
+                        </div>
+                    }
+                </article>
+            }
+        }
+    </div>
+
+    <aside class="social-side">
+        <section class="social-panel suggestion-card">
+            <h2 class="social-title" style="font-size:1.05rem;">اعضای فعال</h2>
+            <div class="suggestion-list">
+                @if (feed is not null)
+                {
+                    @foreach (var user in feed.SuggestedUsers)
+                    {
+                        <div class="suggestion-user">
+                            <a href="/social/profile/@user.Id" style="display:flex; align-items:center; gap:.75rem; text-decoration:none; color:inherit; flex:1;">
+                                <img src="@ProfileAvatarService.ResolveProfileImage(user.ProfileImage, user.Role)" alt="@user.Name" />
+                                <div class="suggestion-meta-wrap">
+                                    <div class="suggestion-name">@user.Name</div>
+                                    <div class="suggestion-meta">@user.Role</div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    </aside>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? UserId { get; set; }
+
+    private SocialFeedResultDto? feed;
+    private UserCacheDto? currentUser;
+    private bool isLoading;
+    private bool isSubmittingPost;
+    private string newPostContent = string.Empty;
+    private string newPostImageUrl = string.Empty;
+    private string newPostVideoUrl = string.Empty;
+    private string selectedMediaName = string.Empty;
+    private string selectedMediaType = string.Empty;
+    private string errorMessage = string.Empty;
+    private string? previousStateKey;
+    private readonly Dictionary<int, string> commentDrafts = new();
+
+    protected override void OnInitialized()
+    {
+        AuthState.StateChanged += HandleAuthStateChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadCurrentUserAsync();
+
+        var stateKey = $"{currentUser?.Id}:{UserId}";
+        if (stateKey == previousStateKey && feed is not null)
+        {
+            return;
+        }
+
+        previousStateKey = stateKey;
+        await LoadFeedAsync();
+    }
+
+    private async Task LoadCurrentUserAsync()
+    {
+        currentUser = AuthState.CurrentUser;
+        if (currentUser is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", "avina_user");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                currentUser = JsonSerializer.Deserialize<UserCacheDto>(json);
+                if (currentUser is not null)
+                {
+                    AuthState.SetUser(currentUser);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task LoadFeedAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            feed = await SocialFeedService.GetFeedAsync(currentUser?.Id, UserId);
+            foreach (var post in feed.Posts)
+            {
+                if (!commentDrafts.ContainsKey(post.Id))
+                {
+                    commentDrafts[post.Id] = string.Empty;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleMediaSelectedAsync(InputFileChangeEventArgs e)
+    {
+        errorMessage = string.Empty;
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var media = await SocialImageStorageService.SavePostMediaAsync(file);
+            selectedMediaName = file.Name;
+            selectedMediaType = media.MediaType;
+            if (string.Equals(media.MediaType, "video", StringComparison.OrdinalIgnoreCase))
+            {
+                newPostVideoUrl = media.Url;
+                newPostImageUrl = string.Empty;
+            }
+            else
+            {
+                newPostImageUrl = media.Url;
+                newPostVideoUrl = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task CreatePostAsync()
+    {
+        if (currentUser is null)
+        {
+            errorMessage = "برای ارسال پست باید وارد شوی.";
+            return;
+        }
+
+        isSubmittingPost = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            await SocialFeedService.CreatePostAsync(currentUser.Id, newPostContent, newPostImageUrl, newPostVideoUrl);
+            newPostContent = string.Empty;
+            newPostImageUrl = string.Empty;
+            newPostVideoUrl = string.Empty;
+            selectedMediaName = string.Empty;
+            selectedMediaType = string.Empty;
+            await LoadFeedAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmittingPost = false;
+        }
+    }
+
+    private async Task ToggleLikeAsync(int postId)
+    {
+        if (currentUser is null)
+        {
+            errorMessage = "برای لایک باید وارد شوی.";
+            return;
+        }
+
+        await SocialFeedService.ToggleLikeAsync(currentUser.Id, postId);
+        await LoadFeedAsync();
+    }
+
+    private async Task AddCommentAsync(int postId)
+    {
+        if (currentUser is null)
+        {
+            errorMessage = "برای کامنت باید وارد شوی.";
+            return;
+        }
+
+        if (!commentDrafts.TryGetValue(postId, out var commentText))
+        {
+            return;
+        }
+
+        await SocialFeedService.AddCommentAsync(currentUser.Id, postId, commentText);
+        commentDrafts[postId] = string.Empty;
+        await LoadFeedAsync();
+    }
+
+    private async Task HandleAuthStateChanged()
+    {
+        currentUser = AuthState.CurrentUser;
+        await InvokeAsync(async () =>
+        {
+            previousStateKey = null;
+            await LoadFeedAsync();
+            StateHasChanged();
+        });
+    }
+
+    private static string FormatRelative(DateTime value)
+    {
+        var diff = DateTime.UtcNow - value;
+        if (diff.TotalMinutes < 1) return "همین الان";
+        if (diff.TotalHours < 1) return $"{(int)diff.TotalMinutes} دقیقه پیش";
+        if (diff.TotalDays < 1) return $"{(int)diff.TotalHours} ساعت پیش";
+        return $"{(int)diff.TotalDays} روز پیش";
+    }
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= HandleAuthStateChanged;
+    }
+}

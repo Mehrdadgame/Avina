@@ -15,13 +15,15 @@ public class AuthController : ControllerBase
     private readonly JwtTokenService _jwtService;
     private readonly ILogger<AuthController> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IProfileAvatarService _profileAvatarService;
 
-    public AuthController(AvinaDbContext context, JwtTokenService jwtService, ILogger<AuthController> logger, IConfiguration configuration)
+    public AuthController(AvinaDbContext context, JwtTokenService jwtService, ILogger<AuthController> logger, IConfiguration configuration, IProfileAvatarService profileAvatarService)
     {
         _context = context;
         _jwtService = jwtService;
         _logger = logger;
         _configuration = configuration;
+        _profileAvatarService = profileAvatarService;
     }
 
     [HttpPost("register")]
@@ -48,6 +50,7 @@ public class AuthController : ControllerBase
 
         // Hash password
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+        var normalizedRole = _profileAvatarService.NormalizeRole("دانش‌آموز");
 
         // Create new user
         var user = new User
@@ -56,10 +59,10 @@ public class AuthController : ControllerBase
             Email = request.Email.Trim(),
             PasswordHash = passwordHash,
             PasswordSalt = "", // Not needed with bcrypt
-            Role = "دانش‌آموز",
+            Role = normalizedRole,
             Coin = 100, // Welcome bonus
             Level = 1,
-            ProfileImage = $"https://i.pravatar.cc/150?u={request.Email}",
+            ProfileImage = _profileAvatarService.GetDefaultAvatar(normalizedRole),
             CreatedAt = DateTime.UtcNow,
             LastLoginAt = DateTime.UtcNow
         };

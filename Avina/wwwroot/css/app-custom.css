@@ -45,6 +45,18 @@ html, body {
     color: var(--on-surface) !important;
     font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif !important;
     direction: rtl;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img, video, iframe, canvas, svg {
+    max-width: 100%;
+}
+
+table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
 }
 
 /* ====== BOOTSTRAP OVERRIDES - Force dark theme ====== */
@@ -385,6 +397,14 @@ html, body {
 }
 .search-box input::placeholder { color: var(--outline); }
 .search-icon { color: var(--on-surface-variant); }
+.search-submit-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .btn-notification, .btn-settings {
     background: none;
@@ -560,13 +580,27 @@ html, body {
         width: 100%;
     }
 
-    .search-box input { width: 120px; }
+    .top-header {
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .header-left, .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .search-box {
+        flex: 1;
+        min-width: 0;
+    }
+    .search-box input { width: 100%; }
     .main-content { padding: 1rem; }
 }
 
 @media (max-width: 480px) {
-    .search-box { display: none; }
     .top-header { padding: 0.75rem 1rem; }
     .main-content { padding: 0.75rem; }
     .btn-upload span:last-child { display: none; }
+    .btn-upload {
+        padding: 0.5rem 0.75rem;
+    }
 }

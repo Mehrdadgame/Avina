@@ -1,14 +1,13 @@
 @rendermode InteractiveServer
 @using Avina.Services
-@using System.Text.Json
 @inject AuthStateService AuthState
-@inject IJSRuntime JS
+@inject IProfileAvatarService ProfileAvatarService
 @implements IDisposable
 
 @if (AuthState.IsLoggedIn && AuthState.CurrentUser != null)
 {
     <a href="/profile" class="header-profile-link" title="پروفایل">
-        <img src="@AuthState.CurrentUser.ProfileImage" alt="پروفایل" class="header-avatar">
+        <img src="@ProfileAvatarService.ResolveProfileImage(AuthState.CurrentUser.ProfileImage, AuthState.CurrentUser.Role)" alt="پروفایل" class="header-avatar">
     </a>
 }
 else
