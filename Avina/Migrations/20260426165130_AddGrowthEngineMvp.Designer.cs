@@ -4,6 +4,7 @@ using Avina.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Avina.Migrations
 {
     [DbContext(typeof(AvinaDbContext))]
-    partial class AvinaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426165130_AddGrowthEngineMvp")]
+    partial class AddGrowthEngineMvp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2391,47 +2394,47 @@ namespace Avina.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "رشد در منطق، حل مسئله، تحلیل داده و تصمیم‌گیری.",
+                            Description = "Logic, problem solving, data and decision thinking.",
                             Icon = "analytics",
                             IsActive = true,
                             PathType = 1,
-                            Title = "مسیر تحلیلی"
+                            Title = "Analytical Path"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "رشد در ایده‌پردازی، طراحی، داستان‌گویی و خلق محتوا.",
+                            Description = "Storytelling, design, content and ideation.",
                             Icon = "palette",
                             IsActive = true,
                             PathType = 2,
-                            Title = "مسیر خلاق"
+                            Title = "Creative Path"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "رشد در ارتباط، گفت‌وگو، کار تیمی و رهبری.",
+                            Description = "Communication, teamwork and leadership growth.",
                             Icon = "groups",
                             IsActive = true,
                             PathType = 3,
-                            Title = "مسیر رهبری اجتماعی"
+                            Title = "Social Leadership Path"
                         },
                         new
                         {
                             Id = 4,
-                            Description = "رشد با ساخت پروژه‌های واقعی و تجربه عملی.",
+                            Description = "Build with hands-on projects and practical output.",
                             Icon = "build",
                             IsActive = true,
                             PathType = 4,
-                            Title = "مسیر سازنده عملی"
+                            Title = "Maker Practical Path"
                         },
                         new
                         {
                             Id = 5,
-                            Description = "رشد در همدلی، مسئولیت‌پذیری و اثرگذاری اجتماعی.",
+                            Description = "Empathy, responsibility and meaningful impact.",
                             Icon = "volunteer_activism",
                             IsActive = true,
                             PathType = 5,
-                            Title = "مسیر معنا و مراقبت"
+                            Title = "Care Meaning Path"
                         });
                 });
 
@@ -2774,10 +2777,10 @@ namespace Avina.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "۲۰ دقیقه بدون موبایل فقط روی یک کار مشخص تمرکز کن.",
+                            Description = "Work on one task for 20 minutes without phone distraction.",
                             Difficulty = 1,
                             EstimatedMinutes = 20,
-                            Goal = "افزایش توان تمرکز",
+                            Goal = "Build focus stamina",
                             IsActive = true,
                             MissionType = 2,
                             PathId = 1,
@@ -2786,16 +2789,16 @@ namespace Avina.Migrations
                             RewardXP = 30,
                             SkillId = 1,
                             SkillProgressGain = 18,
-                            Title = "تمرین تمرکز عمیق",
+                            Title = "Deep Focus Sprint",
                             ValidationType = 1
                         },
                         new
                         {
                             Id = 2,
-                            Description = "در یک کار روزمره سه الگوی تکرارشونده پیدا کن و بنویس.",
+                            Description = "Observe a daily system and write 3 repeating patterns.",
                             Difficulty = 2,
                             EstimatedMinutes = 15,
-                            Goal = "تقویت مشاهده تحلیلی",
+                            Goal = "Improve analytical observation",
                             IsActive = true,
                             MissionType = 1,
                             PathId = 1,
@@ -2804,16 +2807,16 @@ namespace Avina.Migrations
                             RewardXP = 25,
                             SkillId = 2,
                             SkillProgressGain = 15,
-                            Title = "شکار الگو",
+                            Title = "Pattern Hunt",
                             ValidationType = 1
                         },
                         new
                         {
                             Id = 3,
-                            Description = "یک معمای منطقی حل کن و روش حل خودت را توضیح بده.",
+                            Description = "Solve one logic puzzle and explain your strategy.",
                             Difficulty = 3,
                             EstimatedMinutes = 25,
-                            Goal = "تقویت استدلال منطقی",
+                            Goal = "Strengthen logical reasoning",
                             IsActive = true,
                             MissionType = 2,
                             PathId = 1,
@@ -2822,16 +2825,16 @@ namespace Avina.Migrations
                             RewardXP = 40,
                             SkillId = 3,
                             SkillProgressGain = 20,
-                            Title = "مرور معمای منطقی",
+                            Title = "Logic Puzzle Review",
                             ValidationType = 2
                         },
                         new
                         {
                             Id = 4,
-                            Description = "یک مشکل کوچک واقعی انتخاب کن و دو راه‌حل عملی پیشنهاد بده.",
+                            Description = "Pick one small real-life problem and propose 2 solutions.",
                             Difficulty = 4,
                             EstimatedMinutes = 35,
-                            Goal = "حل مسئله در دنیای واقعی",
+                            Goal = "Real-world problem solving",
                             IsActive = true,
                             MissionType = 3,
                             PathId = 1,
@@ -2840,16 +2843,16 @@ namespace Avina.Migrations
                             RewardXP = 70,
                             SkillId = 4,
                             SkillProgressGain = 28,
-                            Title = "حل یک مسئله واقعی",
+                            Title = "Solve a Real Problem",
                             ValidationType = 3
                         },
                         new
                         {
                             Id = 5,
-                            Description = "برای یک موضوع ساده، ۱۰ ایده متفاوت بنویس.",
+                            Description = "Write 10 different solutions for a simple daily challenge.",
                             Difficulty = 1,
                             EstimatedMinutes = 15,
-                            Goal = "گسترش خلاقیت",
+                            Goal = "Expand creativity",
                             IsActive = true,
                             MissionType = 5,
                             PathId = 2,
@@ -2858,16 +2861,16 @@ namespace Avina.Migrations
                             RewardXP = 32,
                             SkillId = 5,
                             SkillProgressGain = 18,
-                            Title = "چالش ۱۰ ایده",
+                            Title = "10 Ideas Challenge",
                             ValidationType = 1
                         },
                         new
                         {
                             Id = 6,
-                            Description = "یک داستان کوتاه در ۶ قاب (متن یا تصویر) بساز.",
+                            Description = "Create a short 6-frame visual or text story.",
                             Difficulty = 2,
                             EstimatedMinutes = 30,
-                            Goal = "تمرین داستان‌گویی",
+                            Goal = "Practice storytelling",
                             IsActive = true,
                             MissionType = 5,
                             PathId = 2,
@@ -2876,16 +2879,16 @@ namespace Avina.Migrations
                             RewardXP = 45,
                             SkillId = 6,
                             SkillProgressGain = 22,
-                            Title = "داستان ۶ قاب",
+                            Title = "Story in 6 Frames",
                             ValidationType = 2
                         },
                         new
                         {
                             Id = 7,
-                            Description = "یک خروجی خلاق نهایی منتشر کن و بازخورد بگیر.",
+                            Description = "Publish one final creative piece and reflect on feedback.",
                             Difficulty = 4,
                             EstimatedMinutes = 40,
-                            Goal = "تبدیل ایده به اجرا",
+                            Goal = "Ship creative work",
                             IsActive = true,
                             MissionType = 3,
                             PathId = 2,
@@ -2894,16 +2897,16 @@ namespace Avina.Migrations
                             RewardXP = 75,
                             SkillId = 7,
                             SkillProgressGain = 30,
-                            Title = "انتشار خروجی خلاق",
+                            Title = "Publish Creative Output",
                             ValidationType = 3
                         },
                         new
                         {
                             Id = 8,
-                            Description = "۱۰ دقیقه به حرف یک نفر گوش بده و ۳ نکته کلیدی بنویس.",
+                            Description = "Listen to someone for 10 minutes and summarize 3 insights.",
                             Difficulty = 1,
                             EstimatedMinutes = 15,
-                            Goal = "تقویت شنیدن و همدلی",
+                            Goal = "Improve listening and empathy",
                             IsActive = true,
                             MissionType = 4,
                             PathId = 3,
@@ -2912,16 +2915,16 @@ namespace Avina.Migrations
                             RewardXP = 35,
                             SkillId = 8,
                             SkillProgressGain = 18,
-                            Title = "تمرین شنیدن فعال",
+                            Title = "Active Listening Practice",
                             ValidationType = 1
                         },
                         new
                         {
                             Id = 9,
-                            Description = "یک موقعیت اختلاف را شبیه‌سازی کن و روش میانجی‌گری‌ات را ثبت کن.",
+                            Description = "Run a roleplay and document how you de-escalated conflict.",
                             Difficulty = 3,
                             EstimatedMinutes = 25,
-                            Goal = "تمرین مدیریت تعارض",
+                            Goal = "Practice mediation skills",
                             IsActive = true,
                             MissionType = 4,
                             PathId = 3,
@@ -2930,16 +2933,16 @@ namespace Avina.Migrations
                             RewardXP = 50,
                             SkillId = 9,
                             SkillProgressGain = 23,
-                            Title = "نقش‌آفرینی تعارض",
+                            Title = "Conflict Roleplay",
                             ValidationType = 2
                         },
                         new
                         {
                             Id = 10,
-                            Description = "یک گفت‌وگوی ۲۰ دقیقه‌ای تیمی را هدایت کن و یک بازخورد ثبت کن.",
+                            Description = "Lead a short group discussion and collect one feedback point.",
                             Difficulty = 4,
                             EstimatedMinutes = 30,
-                            Goal = "تقویت رهبری تیم",
+                            Goal = "Develop leadership",
                             IsActive = true,
                             MissionType = 3,
                             PathId = 3,
@@ -2948,16 +2951,16 @@ namespace Avina.Migrations
                             RewardXP = 80,
                             SkillId = 10,
                             SkillProgressGain = 32,
-                            Title = "هدایت جلسه کوتاه",
+                            Title = "Lead a 20-min Session",
                             ValidationType = 3
                         },
                         new
                         {
                             Id = 11,
-                            Description = "یک خروجی عملی کوچک با ابزارهای موجود بساز.",
+                            Description = "Build a simple practical output with available tools.",
                             Difficulty = 2,
                             EstimatedMinutes = 35,
-                            Goal = "اجرای عملی",
+                            Goal = "Hands-on execution",
                             IsActive = true,
                             MissionType = 2,
                             PathId = 4,
@@ -2966,16 +2969,16 @@ namespace Avina.Migrations
                             RewardXP = 48,
                             SkillId = 11,
                             SkillProgressGain = 22,
-                            Title = "ساخت ابزار کوچک",
+                            Title = "Build Mini Tool",
                             ValidationType = 2
                         },
                         new
                         {
                             Id = 12,
-                            Description = "خروجی دیروز را براساس یک بازخورد بهبود بده.",
+                            Description = "Improve yesterday's output based on one feedback item.",
                             Difficulty = 3,
                             EstimatedMinutes = 25,
-                            Goal = "یادگیری بهبود تدریجی",
+                            Goal = "Learn iterative improvement",
                             IsActive = true,
                             MissionType = 6,
                             PathId = 4,
@@ -2984,16 +2987,16 @@ namespace Avina.Migrations
                             RewardXP = 65,
                             SkillId = 12,
                             SkillProgressGain = 26,
-                            Title = "حلقه بهبود",
+                            Title = "Iteration Loop",
                             ValidationType = 3
                         },
                         new
                         {
                             Id = 13,
-                            Description = "با یک نفر درباره تجربه سختش گفت‌وگو کن و برداشتت را بنویس.",
+                            Description = "Ask someone about a hard experience and write what you learned.",
                             Difficulty = 2,
                             EstimatedMinutes = 20,
-                            Goal = "رشد همدلی",
+                            Goal = "Grow empathy",
                             IsActive = true,
                             MissionType = 4,
                             PathId = 5,
@@ -3002,16 +3005,16 @@ namespace Avina.Migrations
                             RewardXP = 38,
                             SkillId = 13,
                             SkillProgressGain = 20,
-                            Title = "گفت‌وگوی همدلانه",
+                            Title = "Empathy Interview",
                             ValidationType = 1
                         },
                         new
                         {
                             Id = 14,
-                            Description = "یک تعهد مشخص تعریف کن و تا پایان روز انجامش بده.",
+                            Description = "Define one commitment and prove completion by end of day.",
                             Difficulty = 3,
                             EstimatedMinutes = 20,
-                            Goal = "تقویت مسئولیت‌پذیری",
+                            Goal = "Build accountability",
                             IsActive = true,
                             MissionType = 3,
                             PathId = 5,
@@ -3020,16 +3023,16 @@ namespace Avina.Migrations
                             RewardXP = 58,
                             SkillId = 14,
                             SkillProgressGain = 24,
-                            Title = "قول مسئولیت",
+                            Title = "Responsibility Promise",
                             ValidationType = 2
                         },
                         new
                         {
                             Id = 15,
-                            Description = "یک اقدام واقعی برای کمک به اطرافیان انجام بده و مدرک ثبت کن.",
+                            Description = "Take one action that helps your community and share evidence.",
                             Difficulty = 5,
                             EstimatedMinutes = 45,
-                            Goal = "اثرگذاری معنادار",
+                            Goal = "Create meaningful impact",
                             IsActive = true,
                             MissionType = 3,
                             PathId = 5,
@@ -3038,7 +3041,7 @@ namespace Avina.Migrations
                             RewardXP = 95,
                             SkillId = 15,
                             SkillProgressGain = 35,
-                            Title = "اقدام حمایت اجتماعی",
+                            Title = "Community Support Action",
                             ValidationType = 3
                         });
                 });
@@ -3313,7 +3316,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "دلیل اصلی اختلاف را تحلیل می‌کنم",
+                            OptionText = "Analyze root cause of conflict",
                             QuestionId = 1,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3329,7 +3332,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "یک راه‌حل خلاق پیشنهاد می‌دهم",
+                            OptionText = "Propose a creative alternative",
                             QuestionId = 1,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3345,7 +3348,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "بین اعضا میانجی‌گری می‌کنم",
+                            OptionText = "Mediate between members",
                             QuestionId = 1,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3361,7 +3364,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 1,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "کار را تقسیم و مسئولیت‌ها را مشخص می‌کنم",
+                            OptionText = "Split work and set clear owners",
                             QuestionId = 1,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 2,
@@ -3377,7 +3380,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 1,
                             OptionKey = "A",
-                            OptionText = "حل معما و چالش منطقی",
+                            OptionText = "Solve logic puzzles",
                             QuestionId = 2,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3393,7 +3396,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "طراحی، نوشتن یا تولید محتوای خلاق",
+                            OptionText = "Create art/content",
                             QuestionId = 2,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3409,7 +3412,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "شرکت در فعالیت گروهی",
+                            OptionText = "Join group activities",
                             QuestionId = 2,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3425,7 +3428,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "ساخت یک خروجی عملی",
+                            OptionText = "Build something practical",
                             QuestionId = 2,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 2,
@@ -3441,7 +3444,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 1,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "کار را به قدم‌های کوچک‌تر تقسیم می‌کنم",
+                            OptionText = "Break it into smaller steps",
                             QuestionId = 3,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3457,7 +3460,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "روش جدید و متفاوت امتحان می‌کنم",
+                            OptionText = "Try a new experimental route",
                             QuestionId = 3,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3473,7 +3476,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "از یک دوست یا هم‌تیمی کمک می‌گیرم",
+                            OptionText = "Ask for peer support",
                             QuestionId = 3,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3489,7 +3492,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 1,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "با استمرار ادامه می‌دهم تا حل شود",
+                            OptionText = "Keep trying consistently",
                             QuestionId = 3,
                             ResilienceScoreDelta = 2,
                             ResponsibilityScoreDelta = 0,
@@ -3505,7 +3508,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "اول ساختار و مفاهیم را می‌خوانم",
+                            OptionText = "Read structure and concepts first",
                             QuestionId = 4,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3521,7 +3524,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "نمونه‌ها و ایده‌ها را بررسی می‌کنم",
+                            OptionText = "Explore examples and inspiration",
                             QuestionId = 4,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3537,7 +3540,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "با دیگران گفت‌وگو می‌کنم",
+                            OptionText = "Discuss it with others",
                             QuestionId = 4,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3553,7 +3556,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 1,
                             OptionKey = "D",
-                            OptionText = "یک پروژه عملی کوچک می‌زنم",
+                            OptionText = "Do a practical mini-project",
                             QuestionId = 4,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 2,
@@ -3569,7 +3572,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "گرفتن یک تصمیم هوشمندانه",
+                            OptionText = "Making a smart decision",
                             QuestionId = 5,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3585,7 +3588,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "خلق یک خروجی متفاوت",
+                            OptionText = "Creating something unique",
                             QuestionId = 5,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3601,7 +3604,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "موفق شدن یک تیم با کمک من",
+                            OptionText = "Helping a team succeed",
                             QuestionId = 5,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 1,
@@ -3617,7 +3620,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 2,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "تمام کردن یک تعهد سخت",
+                            OptionText = "Finishing a hard commitment",
                             QuestionId = 5,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 0,
@@ -3633,7 +3636,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "با تحلیل واضح راهنمایی می‌کنم",
+                            OptionText = "Offer a clear analysis",
                             QuestionId = 6,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 1,
@@ -3649,7 +3652,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "ایده خلاق امیدبخش می‌دهم",
+                            OptionText = "Bring a hopeful creative idea",
                             QuestionId = 6,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3665,7 +3668,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "با دقت گوش می‌دهم و همدلی می‌کنم",
+                            OptionText = "Listen and empathize",
                             QuestionId = 6,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3681,7 +3684,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "خودم مسئولیت کمک را می‌گیرم",
+                            OptionText = "Take responsibility to help directly",
                             QuestionId = 6,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 2,
@@ -3697,7 +3700,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 2,
                             FocusScoreDelta = 1,
                             OptionKey = "A",
-                            OptionText = "با چک‌لیست و برنامه منظم جلو می‌روم",
+                            OptionText = "Use a structured checklist",
                             QuestionId = 7,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3713,7 +3716,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 1,
                             OptionKey = "B",
-                            OptionText = "محیط را عوض می‌کنم و دوباره شروع می‌کنم",
+                            OptionText = "Change environment and restart",
                             QuestionId = 7,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 0,
@@ -3729,7 +3732,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 1,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "با شریک مطالعه و تعهد مشترک پیش می‌روم",
+                            OptionText = "Study with accountability partner",
                             QuestionId = 7,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3745,7 +3748,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 2,
                             OptionKey = "D",
-                            OptionText = "تایمر می‌گذارم و تا پایان می‌روم",
+                            OptionText = "Set timer and force completion",
                             QuestionId = 7,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 0,
@@ -3761,7 +3764,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "A",
-                            OptionText = "چالش داده‌محور و تحلیلی",
+                            OptionText = "Data-driven challenge",
                             QuestionId = 8,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3777,7 +3780,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "B",
-                            OptionText = "چالش پروژه خلاق",
+                            OptionText = "Creative project challenge",
                             QuestionId = 8,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3793,7 +3796,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 0,
                             FocusScoreDelta = 0,
                             OptionKey = "C",
-                            OptionText = "چالش رهبری اجتماعی",
+                            OptionText = "Community leadership challenge",
                             QuestionId = 8,
                             ResilienceScoreDelta = 0,
                             ResponsibilityScoreDelta = 0,
@@ -3809,7 +3812,7 @@ namespace Avina.Migrations
                             DisciplineScoreDelta = 1,
                             FocusScoreDelta = 0,
                             OptionKey = "D",
-                            OptionText = "چالش عملی دنیای واقعی",
+                            OptionText = "Hands-on real-world mission",
                             QuestionId = 8,
                             ResilienceScoreDelta = 1,
                             ResponsibilityScoreDelta = 2,
@@ -3847,56 +3850,56 @@ namespace Avina.Migrations
                             Id = 1,
                             DisplayOrder = 1,
                             IsActive = true,
-                            QuestionText = "اگر در یک پروژه گروهی اختلاف پیش بیاید، معمولاً اول چه کاری می‌کنی؟"
+                            QuestionText = "In a team conflict, what do you usually do first?"
                         },
                         new
                         {
                             Id = 2,
                             DisplayOrder = 2,
                             IsActive = true,
-                            QuestionText = "اگر یک بعدازظهر آزاد داشته باشی، کدام فعالیت برایت جذاب‌تر است؟"
+                            QuestionText = "You have a free afternoon. Which activity is most exciting for you?"
                         },
                         new
                         {
                             Id = 3,
                             DisplayOrder = 3,
                             IsActive = true,
-                            QuestionText = "وقتی یک کار سخت می‌شود، واکنش پیش‌فرض تو چیست؟"
+                            QuestionText = "A task feels difficult. What is your default response?"
                         },
                         new
                         {
                             Id = 4,
                             DisplayOrder = 4,
                             IsActive = true,
-                            QuestionText = "وقتی می‌خواهی موضوع جدیدی یاد بگیری، از کجا شروع می‌کنی؟"
+                            QuestionText = "When learning a new topic, how do you start?"
                         },
                         new
                         {
                             Id = 5,
                             DisplayOrder = 5,
                             IsActive = true,
-                            QuestionText = "کدام نتیجه بیشتر باعث احساس افتخار در تو می‌شود؟"
+                            QuestionText = "Which outcome makes you proudest?"
                         },
                         new
                         {
                             Id = 6,
                             DisplayOrder = 6,
                             IsActive = true,
-                            QuestionText = "وقتی دیگران به کمک نیاز دارند، معمولاً چه برخوردی داری؟"
+                            QuestionText = "When others need support, how do you react?"
                         },
                         new
                         {
                             Id = 7,
                             DisplayOrder = 7,
                             IsActive = true,
-                            QuestionText = "حواست‌پرتی‌ها را چطور مدیریت می‌کنی؟"
+                            QuestionText = "How do you manage distractions?"
                         },
                         new
                         {
                             Id = 8,
                             DisplayOrder = 8,
                             IsActive = true,
-                            QuestionText = "کدام نوع چالش برای تو انگیزه‌بخش‌تر است؟"
+                            QuestionText = "Which challenge sounds most motivating?"
                         });
                 });
 
@@ -4192,152 +4195,152 @@ namespace Avina.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "حفظ توجه روی یک کار مشخص.",
+                            Description = "Maintain attention on one task.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 1,
                             PathId = 1,
-                            Title = "تمرکز"
+                            Title = "Focus"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "دیدن الگوها و جزئیات مهم.",
+                            Description = "Notice patterns and details.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 2,
                             PathId = 1,
-                            Title = "مشاهده"
+                            Title = "Observation"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "استدلال منظم و تحلیل علت و معلول.",
+                            Description = "Reasoning and argument structure.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 3,
                             PathId = 1,
-                            Title = "تفکر منطقی"
+                            Title = "Logical Thinking"
                         },
                         new
                         {
                             Id = 4,
-                            Description = "شکستن مسائل واقعی و رسیدن به راه‌حل.",
+                            Description = "Break down and solve real problems.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 4,
                             PathId = 1,
-                            Title = "حل مسئله"
+                            Title = "Problem Solving"
                         },
                         new
                         {
                             Id = 5,
-                            Description = "تولید چندین ایده خلاق برای یک مسئله.",
+                            Description = "Generate multiple creative options.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 1,
                             PathId = 2,
-                            Title = "ایده‌پردازی"
+                            Title = "Idea Generation"
                         },
                         new
                         {
                             Id = 6,
-                            Description = "بیان ایده با روایت جذاب.",
+                            Description = "Explain ideas with narrative.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 2,
                             PathId = 2,
-                            Title = "داستان‌گویی"
+                            Title = "Storytelling"
                         },
                         new
                         {
                             Id = 7,
-                            Description = "تبدیل ایده به خروجی واقعی.",
+                            Description = "Ship a creative output.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 3,
                             PathId = 2,
-                            Title = "اجرای خلاق"
+                            Title = "Creative Execution"
                         },
                         new
                         {
                             Id = 8,
-                            Description = "گوش‌دادن دقیق و بازتاب درست.",
+                            Description = "Listen and reflect effectively.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 1,
                             PathId = 3,
-                            Title = "شنیدن فعال"
+                            Title = "Active Listening"
                         },
                         new
                         {
                             Id = 9,
-                            Description = "مدیریت اختلاف با گفت‌وگوی امن.",
+                            Description = "Resolve disagreement safely.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 2,
                             PathId = 3,
-                            Title = "میانجی‌گری تعارض"
+                            Title = "Conflict Mediation"
                         },
                         new
                         {
                             Id = 10,
-                            Description = "هدایت تیم با وضوح و همدلی.",
+                            Description = "Lead small teams with clarity.",
                             IsCoreSkill = true,
                             Level = 3,
                             Order = 3,
                             PathId = 3,
-                            Title = "رهبری تیم"
+                            Title = "Team Leadership"
                         },
                         new
                         {
                             Id = 11,
-                            Description = "ساخت پروژه‌های کوچک کاربردی.",
+                            Description = "Build practical mini-projects.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 1,
                             PathId = 4,
-                            Title = "ساخت عملی"
+                            Title = "Hands-on Build"
                         },
                         new
                         {
                             Id = 12,
-                            Description = "بهبود خروجی براساس بازخورد.",
+                            Description = "Improve output through feedback.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 2,
                             PathId = 4,
-                            Title = "تکرار و بهبود"
+                            Title = "Iteration"
                         },
                         new
                         {
                             Id = 13,
-                            Description = "درک احساس و نگاه دیگران.",
+                            Description = "Understand others' perspective.",
                             IsCoreSkill = true,
                             Level = 1,
                             Order = 1,
                             PathId = 5,
-                            Title = "همدلی"
+                            Title = "Empathy"
                         },
                         new
                         {
                             Id = 14,
-                            Description = "پذیرفتن مسئولیت اثر رفتار خود.",
+                            Description = "Take ownership of impact.",
                             IsCoreSkill = true,
                             Level = 2,
                             Order = 2,
                             PathId = 5,
-                            Title = "مسئولیت‌پذیری"
+                            Title = "Responsibility"
                         },
                         new
                         {
                             Id = 15,
-                            Description = "کمک موثر به جامعه و اطرافیان.",
+                            Description = "Contribute to community growth.",
                             IsCoreSkill = true,
                             Level = 3,
                             Order = 3,
                             PathId = 5,
-                            Title = "حمایت اجتماعی"
+                            Title = "Community Support"
                         });
                 });
 

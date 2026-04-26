@@ -86,6 +86,7 @@ builder.Services.AddScoped<ISocialFeedService, SocialFeedService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ISocialImageStorageService, SocialImageStorageService>();
 builder.Services.AddScoped<IProfileAvatarService, ProfileAvatarService>();
+builder.Services.AddScoped<IGrowthEngineService, GrowthEngineService>();
 
 var app = builder.Build();
 

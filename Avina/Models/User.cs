@@ -4,9 +4,12 @@ public class User
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string PasswordSalt { get; set; } = string.Empty;
+    public int? Age { get; set; }
+    public string? AvatarUrl { get; set; }
     public string? ProfileImage { get; set; }
     public string? Bio { get; set; }
     public string Role { get; set; } = "دانش‌آموز";
@@ -28,4 +31,10 @@ public class User
     public virtual ICollection<SocialPostLike> SocialPostLikes { get; set; } = new List<SocialPostLike>();
     public virtual ICollection<UserFollow> FollowersMap { get; set; } = new List<UserFollow>();
     public virtual ICollection<UserFollow> FollowingMap { get; set; } = new List<UserFollow>();
+    public virtual GrowthProfile? GrowthProfile { get; set; }
+    public virtual ICollection<UserGrowthPath> GrowthPaths { get; set; } = new List<UserGrowthPath>();
+    public virtual ICollection<UserSkillProgress> SkillProgresses { get; set; } = new List<UserSkillProgress>();
+    public virtual ICollection<MissionSubmission> MissionSubmissions { get; set; } = new List<MissionSubmission>();
+    public virtual ICollection<RewardTransaction> RewardTransactions { get; set; } = new List<RewardTransaction>();
+    public virtual ICollection<OnboardingAttempt> OnboardingAttempts { get; set; } = new List<OnboardingAttempt>();
 }

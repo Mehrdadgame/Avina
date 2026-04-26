@@ -1,0 +1,358 @@
+@page "/onboarding"
+@rendermode InteractiveServer
+@using System.Text.Json
+@using Avina.Models
+@using Avina.Services
+@inject AuthStateService AuthState
+@inject IGrowthEngineService GrowthEngineService
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<style>
+    .onboard-page {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 2rem 1.2rem 2.5rem;
+        display: grid;
+        gap: 1rem;
+    }
+
+    .onboard-surface {
+        background: #171c24;
+        border: 1px solid #2f394b;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .onboard-title {
+        margin: 0 0 0.45rem;
+        color: #edf3ff;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    .onboard-subtitle {
+        margin: 0;
+        color: #a8b7cf;
+        font-size: 0.9rem;
+    }
+
+    .question-box {
+        background: #10161f;
+        border: 1px solid #2f3a4d;
+        border-radius: 8px;
+        padding: 0.85rem;
+        display: grid;
+        gap: 0.6rem;
+    }
+
+    .question-title {
+        margin: 0;
+        color: #f0f4ff;
+        font-size: 0.96rem;
+        font-weight: 700;
+    }
+
+    .option-label {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.55rem;
+        align-items: start;
+        background: #1a2330;
+        border: 1px solid #34435a;
+        border-radius: 8px;
+        padding: 0.6rem 0.65rem;
+        cursor: pointer;
+    }
+
+    .option-label.active {
+        border-color: #5b8df2;
+        background: rgba(91, 141, 242, 0.14);
+    }
+
+    .option-label span {
+        color: #d4def1;
+        font-size: 0.87rem;
+        line-height: 1.6;
+    }
+
+    .action-row {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .btn-main {
+        border: none;
+        border-radius: 8px;
+        background: #3578f6;
+        color: #fff;
+        padding: 0.55rem 0.95rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .btn-main:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .btn-alt {
+        border: 1px solid #3d4c66;
+        border-radius: 8px;
+        background: transparent;
+        color: #d2ddf2;
+        padding: 0.55rem 0.95rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .notice {
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.84rem;
+        border: 1px solid;
+    }
+
+    .notice.warn {
+        background: rgba(255, 183, 77, 0.12);
+        border-color: rgba(255, 183, 77, 0.35);
+        color: #ffc978;
+    }
+
+    .score-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+    }
+
+    .score-item {
+        background: #10161f;
+        border: 1px solid #2d3a4f;
+        border-radius: 8px;
+        padding: 0.55rem 0.6rem;
+        color: #d8e3f8;
+        font-size: 0.83rem;
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+
+<div class="onboard-page">
+    @if (!AuthState.IsLoggedIn || AuthState.CurrentUser is null)
+    {
+        <section class="onboard-surface">
+            <h1 class="onboard-title">آزمون شروع مسیر</h1>
+            <p class="onboard-subtitle">اول وارد حساب کاربری شوید، سپس این صفحه را ادامه دهید.</p>
+            <div class="action-row" style="margin-top:0.8rem;">
+                <a class="btn-main" href="/login">ورود</a>
+            </div>
+        </section>
+    }
+    else if (isLoading)
+    {
+        <section class="onboard-surface">
+            <h1 class="onboard-title">در حال بارگذاری سوالات آزمون...</h1>
+        </section>
+    }
+    else
+    {
+        <section class="onboard-surface">
+            <h1 class="onboard-title">آزمون سناریومحور</h1>
+            <p class="onboard-subtitle">به همه سوالات پاسخ بده تا پروفایل رشد اولیه و مسیر پیشنهادی ساخته شود.</p>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <section class="onboard-surface">
+                <div class="notice warn">@errorMessage</div>
+            </section>
+        }
+
+        @if (result is null)
+        {
+            @foreach (var question in questions)
+            {
+                <section class="question-box" @key="question.Id">
+                    <h2 class="question-title">@question.DisplayOrder. @question.QuestionText</h2>
+                    @foreach (var option in question.Options)
+                    {
+                        var selected = selectedOptions.TryGetValue(question.Id, out var selectedId) && selectedId == option.Id;
+                        <label class="option-label @(selected ? "active" : string.Empty)">
+                            <input type="radio"
+                                   name="@($"q_{question.Id}")"
+                                   checked="@selected"
+                                   @onchange="@(() => SelectOption(question.Id, option.Id))" />
+                            <span>@option.OptionText</span>
+                        </label>
+                    }
+                </section>
+            }
+
+            <section class="onboard-surface">
+                <div class="action-row">
+                    <button class="btn-main" @onclick="SubmitAsync" disabled="@isSubmitting">
+                        @(isSubmitting ? "در حال ثبت..." : "ساخت پروفایل رشد من")
+                    </button>
+                    <button class="btn-alt" @onclick="ResetAnswers">پاک کردن پاسخ‌ها</button>
+                    <span class="onboard-subtitle">@selectedOptions.Count / @questions.Count پاسخ داده شده</span>
+                </div>
+            </section>
+        }
+        else
+        {
+            <section class="onboard-surface">
+                <h2 class="onboard-title">مسیر پیشنهادی شما: @result.RecommendedPathTitle</h2>
+                <p class="onboard-subtitle">پروفایل رشد ساخته شد و مسیر اصلی شما فعال است.</p>
+                <div class="score-grid">
+                    @foreach (var score in result.Scores.OrderByDescending(s => s.Value))
+                    {
+                        <div class="score-item">
+                            <span>@score.Key</span>
+                            <strong>@score.Value</strong>
+                        </div>
+                    }
+                </div>
+                <div class="action-row" style="margin-top:0.75rem;">
+                    <button class="btn-main" @onclick="@(() => Nav.NavigateTo("/"))">رفتن به ماموریت امروز</button>
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private const string StorageKey = "avina_user";
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string errorMessage = string.Empty;
+    private List<OnboardingQuestionDto> questions = new();
+    private readonly Dictionary<int, int> selectedOptions = new();
+    private OnboardingResultDto? result;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RestoreUserFromStorageAsync();
+            await LoadQuestionsAsync();
+        }
+    }
+
+    private async Task RestoreUserFromStorageAsync()
+    {
+        if (AuthState.IsLoggedIn)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
+
+            var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+            if (user is not null)
+            {
+                AuthState.SetUser(user);
+            }
+        }
+        catch
+        {
+            // Ignore malformed local storage state.
+        }
+    }
+
+    private async Task LoadQuestionsAsync()
+    {
+        errorMessage = string.Empty;
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        if (!AuthState.IsLoggedIn || AuthState.CurrentUser is null)
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            questions = await GrowthEngineService.GetOnboardingQuestionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void SelectOption(int questionId, int optionId)
+    {
+        selectedOptions[questionId] = optionId;
+    }
+
+    private void ResetAnswers()
+    {
+        selectedOptions.Clear();
+        result = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (AuthState.CurrentUser is null)
+        {
+            errorMessage = "ابتدا وارد حساب شوید.";
+            return;
+        }
+
+        if (selectedOptions.Count != questions.Count)
+        {
+            errorMessage = "لطفاً به همه سوالات پاسخ بدهید.";
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var request = new OnboardingSubmitRequest
+            {
+                UserId = AuthState.CurrentUser.Id,
+                FullName = AuthState.CurrentUser.Name,
+                Answers = selectedOptions
+                    .Select(x => new OnboardingAnswerRequest
+                    {
+                        QuestionId = x.Key,
+                        OptionId = x.Value
+                    })
+                    .ToList()
+            };
+
+            result = await GrowthEngineService.SubmitOnboardingAsync(request);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

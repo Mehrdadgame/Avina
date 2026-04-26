@@ -1,0 +1,467 @@
+@page "/admin/growth"
+@rendermode InteractiveServer
+@using Avina.Models
+@using Avina.Services
+@inject IGrowthEngineService GrowthEngineService
+
+<style>
+    .admin-page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 2rem 1.2rem 2.5rem;
+        display: grid;
+        gap: 1rem;
+    }
+
+    .admin-surface {
+        background: #171c24;
+        border: 1px solid #2f3a4c;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .admin-title {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #eef4ff;
+    }
+
+    .admin-sub {
+        margin: 0;
+        color: #a6b5cc;
+        font-size: 0.86rem;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.55rem;
+    }
+
+    .input, .select, .textarea {
+        width: 100%;
+        border: 1px solid #33445c;
+        border-radius: 8px;
+        background: #0f141d;
+        color: #eff4ff;
+        padding: 0.6rem 0.65rem;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+    }
+
+    .textarea {
+        min-height: 86px;
+        resize: vertical;
+    }
+
+    .btn-main {
+        border: none;
+        border-radius: 8px;
+        background: #3578f6;
+        color: #fff;
+        padding: 0.52rem 0.9rem;
+        font-weight: 700;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+
+    .btn-main:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .btn-danger {
+        border: 1px solid #784242;
+        border-radius: 8px;
+        background: rgba(255, 82, 82, 0.12);
+        color: #ffb8b8;
+        padding: 0.5rem 0.85rem;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    th, td {
+        border-bottom: 1px solid #2b3649;
+        padding: 0.45rem 0.35rem;
+        color: #d8e2f6;
+        vertical-align: top;
+        text-align: right;
+    }
+
+    th {
+        color: #9eb1d3;
+        font-weight: 700;
+    }
+
+    .notice {
+        border: 1px solid rgba(91, 141, 242, 0.3);
+        background: rgba(91, 141, 242, 0.1);
+        color: #cde0ff;
+        padding: 0.55rem 0.65rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+    }
+</style>
+
+<div class="admin-page">
+    <section class="admin-surface">
+        <h1 class="admin-title">پنل ادمین هسته رشد (نسخه اولیه)</h1>
+        <p class="admin-sub">مدیریت مسیرها، مهارت‌ها، ماموریت‌ها و بررسی ثبت ماموریت‌ها</p>
+        @if (!string.IsNullOrWhiteSpace(statusMessage))
+        {
+            <div class="notice" style="margin-top:0.7rem;">@statusMessage</div>
+        }
+    </section>
+
+    <section class="admin-surface">
+        <h2 class="admin-title">مدیریت مسیرها</h2>
+        <div class="grid-3">
+            <input class="input" placeholder="عنوان مسیر" @bind="pathForm.Title" />
+            <select class="select" @bind="pathForm.PathType">
+                @foreach (var type in Enum.GetValues<PathType>())
+                {
+                    <option value="@type">@ToPathTypeFa(type)</option>
+                }
+            </select>
+            <input class="input" placeholder="آیکن (متنی)" @bind="pathForm.Icon" />
+        </div>
+        <textarea class="textarea" style="margin-top:0.55rem;" placeholder="توضیح مسیر" @bind="pathForm.Description"></textarea>
+        <div style="margin-top:0.55rem;">
+            <button class="btn-main" @onclick="CreatePathAsync">افزودن مسیر</button>
+        </div>
+        <div style="margin-top:0.75rem; overflow:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th><th>عنوان</th><th>نوع مسیر</th><th>فعال</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var path in paths)
+                    {
+                        <tr>
+                            <td>@path.Id</td>
+                            <td>@path.Title</td>
+                            <td>@ToPathTypeFa(path.PathType)</td>
+                            <td>@(path.IsActive ? "بله" : "خیر")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-surface">
+        <h2 class="admin-title">مدیریت مهارت‌ها</h2>
+        <div class="grid-3">
+            <select class="select" @bind="skillForm.PathId">
+                <option value="0">انتخاب مسیر</option>
+                @foreach (var path in paths)
+                {
+                    <option value="@path.Id">@path.Title</option>
+                }
+            </select>
+            <input class="input" placeholder="عنوان مهارت" @bind="skillForm.Title" />
+            <input class="input" placeholder="ترتیب نمایش" type="number" min="1" @bind="skillForm.Order" />
+        </div>
+        <textarea class="textarea" style="margin-top:0.55rem;" placeholder="توضیح مهارت" @bind="skillForm.Description"></textarea>
+        <div style="margin-top:0.55rem;">
+            <button class="btn-main" @onclick="CreateSkillAsync">افزودن مهارت</button>
+        </div>
+        <div style="margin-top:0.75rem; overflow:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th><th>مسیر</th><th>مهارت</th><th>ترتیب</th><th>سطح</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var skill in skills)
+                    {
+                        <tr>
+                            <td>@skill.Id</td>
+                            <td>@paths.FirstOrDefault(p => p.Id == skill.PathId)?.Title</td>
+                            <td>@skill.Title</td>
+                            <td>@skill.Order</td>
+                            <td>@skill.Level</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-surface">
+        <h2 class="admin-title">ساخت ماموریت</h2>
+        <div class="grid-3">
+            <input class="input" placeholder="عنوان ماموریت" @bind="missionForm.Title" />
+            <select class="select" @bind="missionForm.PathId">
+                <option value="0">انتخاب مسیر</option>
+                @foreach (var path in paths)
+                {
+                    <option value="@path.Id">@path.Title</option>
+                }
+            </select>
+            <select class="select" @bind="missionForm.SkillId">
+                <option value="0">انتخاب مهارت</option>
+                @foreach (var skill in FilteredSkills)
+                {
+                    <option value="@skill.Id">@skill.Title</option>
+                }
+            </select>
+        </div>
+        <div class="grid-3" style="margin-top:0.55rem;">
+            <select class="select" @bind="missionForm.MissionType">
+                @foreach (var type in Enum.GetValues<MissionType>())
+                {
+                    <option value="@type">@ToMissionTypeFa(type)</option>
+                }
+            </select>
+            <select class="select" @bind="missionForm.ValidationType">
+                @foreach (var type in Enum.GetValues<MissionValidationType>())
+                {
+                    <option value="@type">@ToValidationTypeFa(type)</option>
+                }
+            </select>
+            <select class="select" @bind="missionForm.RequiredOutputType">
+                @foreach (var type in Enum.GetValues<RequiredOutputType>())
+                {
+                    <option value="@type">@ToOutputTypeFa(type)</option>
+                }
+            </select>
+        </div>
+        <div class="grid-3" style="margin-top:0.55rem;">
+            <input class="input" type="number" min="1" max="5" placeholder="سطح سختی (۱ تا ۵)" @bind="missionForm.Difficulty" />
+            <input class="input" type="number" min="5" placeholder="زمان تخمینی (دقیقه)" @bind="missionForm.EstimatedMinutes" />
+            <input class="input" type="number" min="1" placeholder="افزایش پیشرفت مهارت" @bind="missionForm.SkillProgressGain" />
+        </div>
+        <div class="grid-3" style="margin-top:0.55rem;">
+            <input class="input" type="number" min="1" placeholder="پاداش امتیاز تجربه" @bind="missionForm.RewardXP" />
+            <input class="input" type="number" min="0" placeholder="پاداش کوین" @bind="missionForm.RewardCoin" />
+            <input class="input" placeholder="هدف ماموریت" @bind="missionForm.Goal" />
+        </div>
+        <textarea class="textarea" style="margin-top:0.55rem;" placeholder="شرح ماموریت" @bind="missionForm.Description"></textarea>
+        <div style="margin-top:0.55rem;">
+            <button class="btn-main" @onclick="CreateMissionAsync">ایجاد ماموریت</button>
+        </div>
+        <div style="margin-top:0.75rem; overflow:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th><th>مسیر</th><th>مهارت</th><th>عنوان</th><th>نوع</th><th>سختی</th><th>اعتبارسنجی</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mission in missions)
+                    {
+                        <tr>
+                            <td>@mission.Id</td>
+                            <td>@paths.FirstOrDefault(p => p.Id == mission.PathId)?.Title</td>
+                            <td>@skills.FirstOrDefault(s => s.Id == mission.SkillId)?.Title</td>
+                            <td>@mission.Title</td>
+                            <td>@ToMissionTypeFa(mission.MissionType)</td>
+                            <td>@mission.Difficulty</td>
+                            <td>@ToValidationTypeFa(mission.ValidationType)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="admin-surface">
+        <h2 class="admin-title">بررسی ثبت ماموریت‌ها</h2>
+        <p class="admin-sub">ماموریت‌های در انتظار بررسی مستندات یا تایید ادمین</p>
+        <div style="margin-top:0.65rem; overflow:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th><th>کاربر</th><th>ماموریت</th><th>زمان ثبت</th><th>پاسخ</th><th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (pendingSubmissions.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6">در حال حاضر ثبتی برای بررسی وجود ندارد.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var submission in pendingSubmissions)
+                        {
+                            <tr>
+                                <td>@submission.Id</td>
+                                <td>@submission.User.Name</td>
+                                <td>@submission.Mission.Title</td>
+                                <td>@submission.SubmittedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(submission.TextAnswer))
+                                    {
+                                        <div>@submission.TextAnswer</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(submission.MediaUrl))
+                                    {
+                                        <div><a href="@submission.MediaUrl" target="_blank">@submission.MediaUrl</a></div>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                        <button class="btn-main" @onclick="() => ReviewAsync(submission.Id, true)">تایید</button>
+                                        <button class="btn-danger" @onclick="() => ReviewAsync(submission.Id, false)">رد</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@code {
+    private readonly GrowthPathUpsertRequest pathForm = new();
+    private readonly SkillUpsertRequest skillForm = new() { Order = 1, Level = 1 };
+    private readonly MissionUpsertRequest missionForm = new()
+    {
+        Difficulty = 1,
+        EstimatedMinutes = 15,
+        RewardXP = 20,
+        RewardCoin = 10,
+        SkillProgressGain = 20
+    };
+
+    private List<GrowthPath> paths = new();
+    private List<Skill> skills = new();
+    private List<Mission> missions = new();
+    private List<MissionSubmission> pendingSubmissions = new();
+    private string statusMessage = string.Empty;
+
+    private IEnumerable<Skill> FilteredSkills =>
+        missionForm.PathId <= 0 ? Enumerable.Empty<Skill>() : skills.Where(s => s.PathId == missionForm.PathId).OrderBy(s => s.Order);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        paths = await GrowthEngineService.GetPathsAsync();
+        skills = await GrowthEngineService.GetSkillsAsync();
+        missions = await GrowthEngineService.GetMissionsAsync();
+        pendingSubmissions = await GrowthEngineService.GetPendingSubmissionsAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CreatePathAsync()
+    {
+        if (string.IsNullOrWhiteSpace(pathForm.Title))
+        {
+            statusMessage = "عنوان مسیر الزامی است.";
+            return;
+        }
+
+        await GrowthEngineService.CreatePathAsync(pathForm);
+        statusMessage = "مسیر با موفقیت ایجاد شد.";
+        pathForm.Title = string.Empty;
+        pathForm.Description = string.Empty;
+        pathForm.Icon = string.Empty;
+        await ReloadAsync();
+    }
+
+    private async Task CreateSkillAsync()
+    {
+        if (skillForm.PathId <= 0 || string.IsNullOrWhiteSpace(skillForm.Title))
+        {
+            statusMessage = "انتخاب مسیر و عنوان مهارت الزامی است.";
+            return;
+        }
+
+        await GrowthEngineService.CreateSkillAsync(skillForm);
+        statusMessage = "مهارت با موفقیت ایجاد شد.";
+        skillForm.Title = string.Empty;
+        skillForm.Description = string.Empty;
+        skillForm.Order = 1;
+        await ReloadAsync();
+    }
+
+    private async Task CreateMissionAsync()
+    {
+        if (missionForm.PathId <= 0 || missionForm.SkillId <= 0 || string.IsNullOrWhiteSpace(missionForm.Title))
+        {
+            statusMessage = "انتخاب مسیر، مهارت و عنوان ماموریت الزامی است.";
+            return;
+        }
+
+        await GrowthEngineService.CreateMissionAsync(missionForm);
+        statusMessage = "ماموریت با موفقیت ایجاد شد.";
+        missionForm.Title = string.Empty;
+        missionForm.Description = string.Empty;
+        missionForm.Goal = string.Empty;
+        missionForm.PathId = 0;
+        missionForm.SkillId = 0;
+        missionForm.Difficulty = 1;
+        missionForm.EstimatedMinutes = 15;
+        missionForm.SkillProgressGain = 20;
+        missionForm.RewardXP = 20;
+        missionForm.RewardCoin = 10;
+        await ReloadAsync();
+    }
+
+    private async Task ReviewAsync(int submissionId, bool approve)
+    {
+        await GrowthEngineService.ReviewSubmissionAsync(submissionId, approve, approve ? "از پنل ادمین تایید شد." : "از پنل ادمین رد شد.");
+        statusMessage = approve ? "ثبت ماموریت تایید شد." : "ثبت ماموریت رد شد.";
+        await ReloadAsync();
+    }
+
+    private static string ToPathTypeFa(PathType pathType) => pathType switch
+    {
+        PathType.Analytical => "تحلیلی",
+        PathType.Creative => "خلاق",
+        PathType.SocialLeadership => "رهبری اجتماعی",
+        PathType.MakerPractical => "عملی‌سازنده",
+        PathType.CareMeaning => "معنا و مراقبت",
+        _ => "نامشخص"
+    };
+
+    private static string ToMissionTypeFa(MissionType missionType) => missionType switch
+    {
+        MissionType.Educational => "آموزشی",
+        MissionType.Practice => "تمرینی",
+        MissionType.RealWorld => "دنیای واقعی",
+        MissionType.Social => "اجتماعی",
+        MissionType.Creative => "خلاق",
+        MissionType.LongTerm => "بلندمدت",
+        _ => "نامشخص"
+    };
+
+    private static string ToValidationTypeFa(MissionValidationType validationType) => validationType switch
+    {
+        MissionValidationType.SelfReport => "خوداظهاری",
+        MissionValidationType.EvidenceRequired => "نیازمند مدرک",
+        MissionValidationType.AdminReview => "بررسی ادمین",
+        _ => "نامشخص"
+    };
+
+    private static string ToOutputTypeFa(RequiredOutputType outputType) => outputType switch
+    {
+        RequiredOutputType.None => "بدون خروجی",
+        RequiredOutputType.Text => "متن",
+        RequiredOutputType.Image => "تصویر",
+        RequiredOutputType.Video => "ویدیو",
+        RequiredOutputType.Checkbox => "تیک تایید",
+        RequiredOutputType.QuizAnswer => "پاسخ آزمون",
+        _ => "نامشخص"
+    };
+}

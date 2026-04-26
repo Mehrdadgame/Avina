@@ -35,6 +35,19 @@ public class AvinaDbContext : DbContext
     public DbSet<DailyChallenge> DailyChallenges { get; set; } = null!;
     public DbSet<DailyChallengeQuestion> DailyChallengeQuestions { get; set; } = null!;
     public DbSet<UserDailyChallengeAttempt> UserDailyChallengeAttempts { get; set; } = null!;
+    public DbSet<GrowthProfile> GrowthProfiles { get; set; } = null!;
+    public DbSet<GrowthPath> GrowthPaths { get; set; } = null!;
+    public DbSet<UserGrowthPath> UserGrowthPaths { get; set; } = null!;
+    public DbSet<Skill> Skills { get; set; } = null!;
+    public DbSet<SkillDependency> SkillDependencies { get; set; } = null!;
+    public DbSet<UserSkillProgress> UserSkillProgresses { get; set; } = null!;
+    public DbSet<Mission> Missions { get; set; } = null!;
+    public DbSet<MissionSubmission> MissionSubmissions { get; set; } = null!;
+    public DbSet<RewardTransaction> RewardTransactions { get; set; } = null!;
+    public DbSet<OnboardingQuestion> OnboardingQuestions { get; set; } = null!;
+    public DbSet<OnboardingOption> OnboardingOptions { get; set; } = null!;
+    public DbSet<OnboardingAttempt> OnboardingAttempts { get; set; } = null!;
+    public DbSet<OnboardingAnswer> OnboardingAnswers { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -188,7 +201,135 @@ public class AvinaDbContext : DbContext
         modelBuilder.Entity<UserDailyChallengeAttempt>()
             .HasIndex(a => new { a.UserId, a.DailyChallengeId, a.AttemptNumber }).IsUnique();
 
+        modelBuilder.Entity<GrowthProfile>()
+            .HasOne(g => g.User)
+            .WithOne(u => u.GrowthProfile)
+            .HasForeignKey<GrowthProfile>(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserGrowthPath>()
+            .HasOne(up => up.User)
+            .WithMany(u => u.GrowthPaths)
+            .HasForeignKey(up => up.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserGrowthPath>()
+            .HasOne(up => up.GrowthPath)
+            .WithMany(p => p.UserPaths)
+            .HasForeignKey(up => up.GrowthPathId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserGrowthPath>()
+            .HasIndex(up => new { up.UserId, up.GrowthPathId })
+            .IsUnique();
+
+        modelBuilder.Entity<Skill>()
+            .HasOne(s => s.Path)
+            .WithMany(p => p.Skills)
+            .HasForeignKey(s => s.PathId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Skill>()
+            .HasIndex(s => new { s.PathId, s.Order })
+            .IsUnique();
+
+        modelBuilder.Entity<SkillDependency>()
+            .HasOne(sd => sd.Skill)
+            .WithMany(s => s.Dependencies)
+            .HasForeignKey(sd => sd.SkillId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SkillDependency>()
+            .HasOne(sd => sd.RequiredSkill)
+            .WithMany(s => s.RequiredBy)
+            .HasForeignKey(sd => sd.RequiredSkillId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<SkillDependency>()
+            .HasIndex(sd => new { sd.SkillId, sd.RequiredSkillId })
+            .IsUnique();
+
+        modelBuilder.Entity<UserSkillProgress>()
+            .HasOne(sp => sp.User)
+            .WithMany(u => u.SkillProgresses)
+            .HasForeignKey(sp => sp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserSkillProgress>()
+            .HasOne(sp => sp.Skill)
+            .WithMany(s => s.UserProgresses)
+            .HasForeignKey(sp => sp.SkillId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserSkillProgress>()
+            .HasIndex(sp => new { sp.UserId, sp.SkillId })
+            .IsUnique();
+
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.Path)
+            .WithMany(p => p.Missions)
+            .HasForeignKey(m => m.PathId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.Skill)
+            .WithMany(s => s.Missions)
+            .HasForeignKey(m => m.SkillId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Mission>()
+            .HasIndex(m => new { m.PathId, m.SkillId, m.Difficulty, m.IsActive });
+
+        modelBuilder.Entity<MissionSubmission>()
+            .HasOne(ms => ms.User)
+            .WithMany(u => u.MissionSubmissions)
+            .HasForeignKey(ms => ms.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<MissionSubmission>()
+            .HasOne(ms => ms.Mission)
+            .WithMany(m => m.Submissions)
+            .HasForeignKey(ms => ms.MissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<MissionSubmission>()
+            .HasIndex(ms => new { ms.UserId, ms.SubmittedAt });
+
+        modelBuilder.Entity<RewardTransaction>()
+            .HasOne(rt => rt.User)
+            .WithMany(u => u.RewardTransactions)
+            .HasForeignKey(rt => rt.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<RewardTransaction>()
+            .HasIndex(rt => new { rt.UserId, rt.SourceType, rt.SourceId });
+
+        modelBuilder.Entity<OnboardingQuestion>()
+            .HasIndex(q => new { q.IsActive, q.DisplayOrder });
+        modelBuilder.Entity<OnboardingOption>()
+            .HasOne(o => o.Question)
+            .WithMany(q => q.Options)
+            .HasForeignKey(o => o.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OnboardingAttempt>()
+            .HasOne(a => a.User)
+            .WithMany(u => u.OnboardingAttempts)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OnboardingAttempt>()
+            .HasOne(a => a.RecommendedPath)
+            .WithMany()
+            .HasForeignKey(a => a.RecommendedPathId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<OnboardingAnswer>()
+            .HasOne(a => a.Attempt)
+            .WithMany(a => a.Answers)
+            .HasForeignKey(a => a.AttemptId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OnboardingAnswer>()
+            .HasOne(a => a.Question)
+            .WithMany()
+            .HasForeignKey(a => a.QuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<OnboardingAnswer>()
+            .HasOne(a => a.Option)
+            .WithMany()
+            .HasForeignKey(a => a.OptionId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<OnboardingAnswer>()
+            .HasIndex(a => new { a.AttemptId, a.QuestionId })
+            .IsUnique();
+
         SeedData(modelBuilder);
+        SeedGrowthEngineData(modelBuilder);
     }
 
     private void SeedData(ModelBuilder modelBuilder)
@@ -426,6 +567,127 @@ public class AvinaDbContext : DbContext
         );
 
         SeedDailyChallenges(modelBuilder, now);
+    }
+
+    private static void SeedGrowthEngineData(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<GrowthPath>().HasData(
+            new GrowthPath { Id = 1, Title = "مسیر تحلیلی", Description = "رشد در منطق، حل مسئله، تحلیل داده و تصمیم‌گیری.", PathType = PathType.Analytical, Icon = "analytics", IsActive = true },
+            new GrowthPath { Id = 2, Title = "مسیر خلاق", Description = "رشد در ایده‌پردازی، طراحی، داستان‌گویی و خلق محتوا.", PathType = PathType.Creative, Icon = "palette", IsActive = true },
+            new GrowthPath { Id = 3, Title = "مسیر رهبری اجتماعی", Description = "رشد در ارتباط، گفت‌وگو، کار تیمی و رهبری.", PathType = PathType.SocialLeadership, Icon = "groups", IsActive = true },
+            new GrowthPath { Id = 4, Title = "مسیر سازنده عملی", Description = "رشد با ساخت پروژه‌های واقعی و تجربه عملی.", PathType = PathType.MakerPractical, Icon = "build", IsActive = true },
+            new GrowthPath { Id = 5, Title = "مسیر معنا و مراقبت", Description = "رشد در همدلی، مسئولیت‌پذیری و اثرگذاری اجتماعی.", PathType = PathType.CareMeaning, Icon = "volunteer_activism", IsActive = true }
+        );
+
+        modelBuilder.Entity<Skill>().HasData(
+            new Skill { Id = 1, PathId = 1, Title = "تمرکز", Description = "حفظ توجه روی یک کار مشخص.", Order = 1, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 2, PathId = 1, Title = "مشاهده", Description = "دیدن الگوها و جزئیات مهم.", Order = 2, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 3, PathId = 1, Title = "تفکر منطقی", Description = "استدلال منظم و تحلیل علت و معلول.", Order = 3, Level = 2, IsCoreSkill = true },
+            new Skill { Id = 4, PathId = 1, Title = "حل مسئله", Description = "شکستن مسائل واقعی و رسیدن به راه‌حل.", Order = 4, Level = 2, IsCoreSkill = true },
+
+            new Skill { Id = 5, PathId = 2, Title = "ایده‌پردازی", Description = "تولید چندین ایده خلاق برای یک مسئله.", Order = 1, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 6, PathId = 2, Title = "داستان‌گویی", Description = "بیان ایده با روایت جذاب.", Order = 2, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 7, PathId = 2, Title = "اجرای خلاق", Description = "تبدیل ایده به خروجی واقعی.", Order = 3, Level = 2, IsCoreSkill = true },
+
+            new Skill { Id = 8, PathId = 3, Title = "شنیدن فعال", Description = "گوش‌دادن دقیق و بازتاب درست.", Order = 1, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 9, PathId = 3, Title = "میانجی‌گری تعارض", Description = "مدیریت اختلاف با گفت‌وگوی امن.", Order = 2, Level = 2, IsCoreSkill = true },
+            new Skill { Id = 10, PathId = 3, Title = "رهبری تیم", Description = "هدایت تیم با وضوح و همدلی.", Order = 3, Level = 3, IsCoreSkill = true },
+
+            new Skill { Id = 11, PathId = 4, Title = "ساخت عملی", Description = "ساخت پروژه‌های کوچک کاربردی.", Order = 1, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 12, PathId = 4, Title = "تکرار و بهبود", Description = "بهبود خروجی براساس بازخورد.", Order = 2, Level = 2, IsCoreSkill = true },
+
+            new Skill { Id = 13, PathId = 5, Title = "همدلی", Description = "درک احساس و نگاه دیگران.", Order = 1, Level = 1, IsCoreSkill = true },
+            new Skill { Id = 14, PathId = 5, Title = "مسئولیت‌پذیری", Description = "پذیرفتن مسئولیت اثر رفتار خود.", Order = 2, Level = 2, IsCoreSkill = true },
+            new Skill { Id = 15, PathId = 5, Title = "حمایت اجتماعی", Description = "کمک موثر به جامعه و اطرافیان.", Order = 3, Level = 3, IsCoreSkill = true }
+        );
+
+        modelBuilder.Entity<SkillDependency>().HasData(
+            new SkillDependency { Id = 1, SkillId = 2, RequiredSkillId = 1 },
+            new SkillDependency { Id = 2, SkillId = 3, RequiredSkillId = 2 },
+            new SkillDependency { Id = 3, SkillId = 4, RequiredSkillId = 3 },
+            new SkillDependency { Id = 4, SkillId = 6, RequiredSkillId = 5 },
+            new SkillDependency { Id = 5, SkillId = 7, RequiredSkillId = 6 },
+            new SkillDependency { Id = 6, SkillId = 9, RequiredSkillId = 8 },
+            new SkillDependency { Id = 7, SkillId = 10, RequiredSkillId = 9 },
+            new SkillDependency { Id = 8, SkillId = 12, RequiredSkillId = 11 },
+            new SkillDependency { Id = 9, SkillId = 14, RequiredSkillId = 13 },
+            new SkillDependency { Id = 10, SkillId = 15, RequiredSkillId = 14 }
+        );
+
+        modelBuilder.Entity<Mission>().HasData(
+            new Mission { Id = 1, Title = "تمرین تمرکز عمیق", Description = "۲۰ دقیقه بدون موبایل فقط روی یک کار مشخص تمرکز کن.", Goal = "افزایش توان تمرکز", PathId = 1, SkillId = 1, MissionType = MissionType.Practice, Difficulty = 1, EstimatedMinutes = 20, RequiredOutputType = RequiredOutputType.Checkbox, ValidationType = MissionValidationType.SelfReport, RewardXP = 30, RewardCoin = 12, SkillProgressGain = 18, IsActive = true },
+            new Mission { Id = 2, Title = "شکار الگو", Description = "در یک کار روزمره سه الگوی تکرارشونده پیدا کن و بنویس.", Goal = "تقویت مشاهده تحلیلی", PathId = 1, SkillId = 2, MissionType = MissionType.Educational, Difficulty = 2, EstimatedMinutes = 15, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.SelfReport, RewardXP = 25, RewardCoin = 8, SkillProgressGain = 15, IsActive = true },
+            new Mission { Id = 3, Title = "مرور معمای منطقی", Description = "یک معمای منطقی حل کن و روش حل خودت را توضیح بده.", Goal = "تقویت استدلال منطقی", PathId = 1, SkillId = 3, MissionType = MissionType.Practice, Difficulty = 3, EstimatedMinutes = 25, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.EvidenceRequired, RewardXP = 40, RewardCoin = 18, SkillProgressGain = 20, IsActive = true },
+            new Mission { Id = 4, Title = "حل یک مسئله واقعی", Description = "یک مشکل کوچک واقعی انتخاب کن و دو راه‌حل عملی پیشنهاد بده.", Goal = "حل مسئله در دنیای واقعی", PathId = 1, SkillId = 4, MissionType = MissionType.RealWorld, Difficulty = 4, EstimatedMinutes = 35, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.AdminReview, RewardXP = 70, RewardCoin = 35, SkillProgressGain = 28, IsActive = true },
+
+            new Mission { Id = 5, Title = "چالش ۱۰ ایده", Description = "برای یک موضوع ساده، ۱۰ ایده متفاوت بنویس.", Goal = "گسترش خلاقیت", PathId = 2, SkillId = 5, MissionType = MissionType.Creative, Difficulty = 1, EstimatedMinutes = 15, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.SelfReport, RewardXP = 32, RewardCoin = 14, SkillProgressGain = 18, IsActive = true },
+            new Mission { Id = 6, Title = "داستان ۶ قاب", Description = "یک داستان کوتاه در ۶ قاب (متن یا تصویر) بساز.", Goal = "تمرین داستان‌گویی", PathId = 2, SkillId = 6, MissionType = MissionType.Creative, Difficulty = 2, EstimatedMinutes = 30, RequiredOutputType = RequiredOutputType.Image, ValidationType = MissionValidationType.EvidenceRequired, RewardXP = 45, RewardCoin = 22, SkillProgressGain = 22, IsActive = true },
+            new Mission { Id = 7, Title = "انتشار خروجی خلاق", Description = "یک خروجی خلاق نهایی منتشر کن و بازخورد بگیر.", Goal = "تبدیل ایده به اجرا", PathId = 2, SkillId = 7, MissionType = MissionType.RealWorld, Difficulty = 4, EstimatedMinutes = 40, RequiredOutputType = RequiredOutputType.Image, ValidationType = MissionValidationType.AdminReview, RewardXP = 75, RewardCoin = 36, SkillProgressGain = 30, IsActive = true },
+
+            new Mission { Id = 8, Title = "تمرین شنیدن فعال", Description = "۱۰ دقیقه به حرف یک نفر گوش بده و ۳ نکته کلیدی بنویس.", Goal = "تقویت شنیدن و همدلی", PathId = 3, SkillId = 8, MissionType = MissionType.Social, Difficulty = 1, EstimatedMinutes = 15, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.SelfReport, RewardXP = 35, RewardCoin = 16, SkillProgressGain = 18, IsActive = true },
+            new Mission { Id = 9, Title = "نقش‌آفرینی تعارض", Description = "یک موقعیت اختلاف را شبیه‌سازی کن و روش میانجی‌گری‌ات را ثبت کن.", Goal = "تمرین مدیریت تعارض", PathId = 3, SkillId = 9, MissionType = MissionType.Social, Difficulty = 3, EstimatedMinutes = 25, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.EvidenceRequired, RewardXP = 50, RewardCoin = 24, SkillProgressGain = 23, IsActive = true },
+            new Mission { Id = 10, Title = "هدایت جلسه کوتاه", Description = "یک گفت‌وگوی ۲۰ دقیقه‌ای تیمی را هدایت کن و یک بازخورد ثبت کن.", Goal = "تقویت رهبری تیم", PathId = 3, SkillId = 10, MissionType = MissionType.RealWorld, Difficulty = 4, EstimatedMinutes = 30, RequiredOutputType = RequiredOutputType.Video, ValidationType = MissionValidationType.AdminReview, RewardXP = 80, RewardCoin = 40, SkillProgressGain = 32, IsActive = true },
+
+            new Mission { Id = 11, Title = "ساخت ابزار کوچک", Description = "یک خروجی عملی کوچک با ابزارهای موجود بساز.", Goal = "اجرای عملی", PathId = 4, SkillId = 11, MissionType = MissionType.Practice, Difficulty = 2, EstimatedMinutes = 35, RequiredOutputType = RequiredOutputType.Image, ValidationType = MissionValidationType.EvidenceRequired, RewardXP = 48, RewardCoin = 20, SkillProgressGain = 22, IsActive = true },
+            new Mission { Id = 12, Title = "حلقه بهبود", Description = "خروجی دیروز را براساس یک بازخورد بهبود بده.", Goal = "یادگیری بهبود تدریجی", PathId = 4, SkillId = 12, MissionType = MissionType.LongTerm, Difficulty = 3, EstimatedMinutes = 25, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.AdminReview, RewardXP = 65, RewardCoin = 28, SkillProgressGain = 26, IsActive = true },
+
+            new Mission { Id = 13, Title = "گفت‌وگوی همدلانه", Description = "با یک نفر درباره تجربه سختش گفت‌وگو کن و برداشتت را بنویس.", Goal = "رشد همدلی", PathId = 5, SkillId = 13, MissionType = MissionType.Social, Difficulty = 2, EstimatedMinutes = 20, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.SelfReport, RewardXP = 38, RewardCoin = 18, SkillProgressGain = 20, IsActive = true },
+            new Mission { Id = 14, Title = "قول مسئولیت", Description = "یک تعهد مشخص تعریف کن و تا پایان روز انجامش بده.", Goal = "تقویت مسئولیت‌پذیری", PathId = 5, SkillId = 14, MissionType = MissionType.RealWorld, Difficulty = 3, EstimatedMinutes = 20, RequiredOutputType = RequiredOutputType.Text, ValidationType = MissionValidationType.EvidenceRequired, RewardXP = 58, RewardCoin = 27, SkillProgressGain = 24, IsActive = true },
+            new Mission { Id = 15, Title = "اقدام حمایت اجتماعی", Description = "یک اقدام واقعی برای کمک به اطرافیان انجام بده و مدرک ثبت کن.", Goal = "اثرگذاری معنادار", PathId = 5, SkillId = 15, MissionType = MissionType.RealWorld, Difficulty = 5, EstimatedMinutes = 45, RequiredOutputType = RequiredOutputType.Image, ValidationType = MissionValidationType.AdminReview, RewardXP = 95, RewardCoin = 45, SkillProgressGain = 35, IsActive = true }
+        );
+
+        modelBuilder.Entity<OnboardingQuestion>().HasData(
+            new OnboardingQuestion { Id = 1, DisplayOrder = 1, QuestionText = "اگر در یک پروژه گروهی اختلاف پیش بیاید، معمولاً اول چه کاری می‌کنی؟", IsActive = true },
+            new OnboardingQuestion { Id = 2, DisplayOrder = 2, QuestionText = "اگر یک بعدازظهر آزاد داشته باشی، کدام فعالیت برایت جذاب‌تر است؟", IsActive = true },
+            new OnboardingQuestion { Id = 3, DisplayOrder = 3, QuestionText = "وقتی یک کار سخت می‌شود، واکنش پیش‌فرض تو چیست؟", IsActive = true },
+            new OnboardingQuestion { Id = 4, DisplayOrder = 4, QuestionText = "وقتی می‌خواهی موضوع جدیدی یاد بگیری، از کجا شروع می‌کنی؟", IsActive = true },
+            new OnboardingQuestion { Id = 5, DisplayOrder = 5, QuestionText = "کدام نتیجه بیشتر باعث احساس افتخار در تو می‌شود؟", IsActive = true },
+            new OnboardingQuestion { Id = 6, DisplayOrder = 6, QuestionText = "وقتی دیگران به کمک نیاز دارند، معمولاً چه برخوردی داری؟", IsActive = true },
+            new OnboardingQuestion { Id = 7, DisplayOrder = 7, QuestionText = "حواست‌پرتی‌ها را چطور مدیریت می‌کنی؟", IsActive = true },
+            new OnboardingQuestion { Id = 8, DisplayOrder = 8, QuestionText = "کدام نوع چالش برای تو انگیزه‌بخش‌تر است؟", IsActive = true }
+        );
+
+        modelBuilder.Entity<OnboardingOption>().HasData(
+            new OnboardingOption { Id = 1, QuestionId = 1, OptionKey = "A", OptionText = "دلیل اصلی اختلاف را تحلیل می‌کنم", AnalyticalScoreDelta = 3, CuriosityScoreDelta = 1 },
+            new OnboardingOption { Id = 2, QuestionId = 1, OptionKey = "B", OptionText = "یک راه‌حل خلاق پیشنهاد می‌دهم", CreativityScoreDelta = 3, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 3, QuestionId = 1, OptionKey = "C", OptionText = "بین اعضا میانجی‌گری می‌کنم", SocialScoreDelta = 3, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 4, QuestionId = 1, OptionKey = "D", OptionText = "کار را تقسیم و مسئولیت‌ها را مشخص می‌کنم", ResponsibilityScoreDelta = 2, DisciplineScoreDelta = 1 },
+
+            new OnboardingOption { Id = 5, QuestionId = 2, OptionKey = "A", OptionText = "حل معما و چالش منطقی", AnalyticalScoreDelta = 2, FocusScoreDelta = 1 },
+            new OnboardingOption { Id = 6, QuestionId = 2, OptionKey = "B", OptionText = "طراحی، نوشتن یا تولید محتوای خلاق", CreativityScoreDelta = 3, CuriosityScoreDelta = 1 },
+            new OnboardingOption { Id = 7, QuestionId = 2, OptionKey = "C", OptionText = "شرکت در فعالیت گروهی", SocialScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 8, QuestionId = 2, OptionKey = "D", OptionText = "ساخت یک خروجی عملی", ResponsibilityScoreDelta = 2, ResilienceScoreDelta = 1 },
+
+            new OnboardingOption { Id = 9, QuestionId = 3, OptionKey = "A", OptionText = "کار را به قدم‌های کوچک‌تر تقسیم می‌کنم", AnalyticalScoreDelta = 2, DisciplineScoreDelta = 1 },
+            new OnboardingOption { Id = 10, QuestionId = 3, OptionKey = "B", OptionText = "روش جدید و متفاوت امتحان می‌کنم", CreativityScoreDelta = 2, CuriosityScoreDelta = 2 },
+            new OnboardingOption { Id = 11, QuestionId = 3, OptionKey = "C", OptionText = "از یک دوست یا هم‌تیمی کمک می‌گیرم", SocialScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 12, QuestionId = 3, OptionKey = "D", OptionText = "با استمرار ادامه می‌دهم تا حل شود", ResilienceScoreDelta = 2, DisciplineScoreDelta = 1 },
+
+            new OnboardingOption { Id = 13, QuestionId = 4, OptionKey = "A", OptionText = "اول ساختار و مفاهیم را می‌خوانم", AnalyticalScoreDelta = 3 },
+            new OnboardingOption { Id = 14, QuestionId = 4, OptionKey = "B", OptionText = "نمونه‌ها و ایده‌ها را بررسی می‌کنم", CreativityScoreDelta = 2, CuriosityScoreDelta = 1 },
+            new OnboardingOption { Id = 15, QuestionId = 4, OptionKey = "C", OptionText = "با دیگران گفت‌وگو می‌کنم", SocialScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 16, QuestionId = 4, OptionKey = "D", OptionText = "یک پروژه عملی کوچک می‌زنم", ResponsibilityScoreDelta = 2, FocusScoreDelta = 1 },
+
+            new OnboardingOption { Id = 17, QuestionId = 5, OptionKey = "A", OptionText = "گرفتن یک تصمیم هوشمندانه", AnalyticalScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 18, QuestionId = 5, OptionKey = "B", OptionText = "خلق یک خروجی متفاوت", CreativityScoreDelta = 3 },
+            new OnboardingOption { Id = 19, QuestionId = 5, OptionKey = "C", OptionText = "موفق شدن یک تیم با کمک من", SocialScoreDelta = 2, ResponsibilityScoreDelta = 1 },
+            new OnboardingOption { Id = 20, QuestionId = 5, OptionKey = "D", OptionText = "تمام کردن یک تعهد سخت", DisciplineScoreDelta = 2, ResilienceScoreDelta = 1 },
+
+            new OnboardingOption { Id = 21, QuestionId = 6, OptionKey = "A", OptionText = "با تحلیل واضح راهنمایی می‌کنم", AnalyticalScoreDelta = 2, ResponsibilityScoreDelta = 1 },
+            new OnboardingOption { Id = 22, QuestionId = 6, OptionKey = "B", OptionText = "ایده خلاق امیدبخش می‌دهم", CreativityScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 23, QuestionId = 6, OptionKey = "C", OptionText = "با دقت گوش می‌دهم و همدلی می‌کنم", SocialScoreDelta = 2, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 24, QuestionId = 6, OptionKey = "D", OptionText = "خودم مسئولیت کمک را می‌گیرم", ResponsibilityScoreDelta = 2, ResilienceScoreDelta = 1 },
+
+            new OnboardingOption { Id = 25, QuestionId = 7, OptionKey = "A", OptionText = "با چک‌لیست و برنامه منظم جلو می‌روم", DisciplineScoreDelta = 2, FocusScoreDelta = 1 },
+            new OnboardingOption { Id = 26, QuestionId = 7, OptionKey = "B", OptionText = "محیط را عوض می‌کنم و دوباره شروع می‌کنم", CreativityScoreDelta = 1, ResilienceScoreDelta = 1, FocusScoreDelta = 1 },
+            new OnboardingOption { Id = 27, QuestionId = 7, OptionKey = "C", OptionText = "با شریک مطالعه و تعهد مشترک پیش می‌روم", SocialScoreDelta = 1, DisciplineScoreDelta = 1, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 28, QuestionId = 7, OptionKey = "D", OptionText = "تایمر می‌گذارم و تا پایان می‌روم", FocusScoreDelta = 2, ResilienceScoreDelta = 1 },
+
+            new OnboardingOption { Id = 29, QuestionId = 8, OptionKey = "A", OptionText = "چالش داده‌محور و تحلیلی", AnalyticalScoreDelta = 3 },
+            new OnboardingOption { Id = 30, QuestionId = 8, OptionKey = "B", OptionText = "چالش پروژه خلاق", CreativityScoreDelta = 3 },
+            new OnboardingOption { Id = 31, QuestionId = 8, OptionKey = "C", OptionText = "چالش رهبری اجتماعی", SocialScoreDelta = 3, ConfidenceScoreDelta = 1 },
+            new OnboardingOption { Id = 32, QuestionId = 8, OptionKey = "D", OptionText = "چالش عملی دنیای واقعی", ResponsibilityScoreDelta = 2, ResilienceScoreDelta = 1, DisciplineScoreDelta = 1 }
+        );
     }
 
     private static void SeedDailyChallenges(ModelBuilder modelBuilder, DateTime now)

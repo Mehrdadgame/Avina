@@ -61,6 +61,7 @@ public class AuthService : IAuthService
             var user = new User
             {
                 Name = name.Trim(),
+                FullName = name.Trim(),
                 Email = email.Trim(),
                 PasswordHash = passwordHash,
                 PasswordSalt = "",
@@ -68,6 +69,7 @@ public class AuthService : IAuthService
                 Coin = 100,
                 Level = 1,
                 ProfileImage = _profileAvatarService.GetDefaultAvatar(normalizedRole),
+                AvatarUrl = _profileAvatarService.GetDefaultAvatar(normalizedRole),
                 CreatedAt = DateTime.UtcNow,
                 LastLoginAt = DateTime.UtcNow
             };

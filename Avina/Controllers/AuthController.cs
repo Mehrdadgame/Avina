@@ -56,6 +56,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Name = request.Name.Trim(),
+            FullName = request.Name.Trim(),
             Email = request.Email.Trim(),
             PasswordHash = passwordHash,
             PasswordSalt = "", // Not needed with bcrypt
@@ -63,6 +64,7 @@ public class AuthController : ControllerBase
             Coin = 100, // Welcome bonus
             Level = 1,
             ProfileImage = _profileAvatarService.GetDefaultAvatar(normalizedRole),
+            AvatarUrl = _profileAvatarService.GetDefaultAvatar(normalizedRole),
             CreatedAt = DateTime.UtcNow,
             LastLoginAt = DateTime.UtcNow
         };

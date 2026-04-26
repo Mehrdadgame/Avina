@@ -9,51 +9,58 @@ window.addEventListener('scroll', () => {
 });
 
 // Mobile sidebar toggle
-document.addEventListener('DOMContentLoaded', function() {
-    function initSidebar() {
-        const toggleBtn = document.getElementById('toggleSidebar');
-        const sidebar = document.querySelector('.sidebar');
-        if (!toggleBtn || !sidebar) return;
+function initSidebar() {
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const sidebar = document.querySelector('.sidebar');
+    if (!toggleBtn || !sidebar) return;
 
-        // Create backdrop if not exists
-        let backdrop = document.querySelector('.sidebar-backdrop');
-        if (!backdrop) {
-            backdrop = document.createElement('div');
-            backdrop.className = 'sidebar-backdrop';
-            document.body.appendChild(backdrop);
-        }
+    let backdrop = document.querySelector('.sidebar-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+    }
 
-        function openSidebar() {
-            sidebar.classList.add('open');
-            backdrop.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeSidebar() {
-            sidebar.classList.remove('open');
-            backdrop.classList.remove('active');
-            document.body.style.overflow = '';
-        }
+    const openSidebar = () => {
+        sidebar.classList.add('open');
+        backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
 
+    const closeSidebar = () => {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    if (!toggleBtn.dataset.boundSidebarToggle) {
         toggleBtn.addEventListener('click', () => {
             if (sidebar.classList.contains('open')) closeSidebar();
             else openSidebar();
         });
-
-        backdrop.addEventListener('click', closeSidebar);
-
-        // Close on nav link click (mobile)
-        sidebar.querySelectorAll('.nav-item').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) closeSidebar();
-            });
-        });
+        toggleBtn.dataset.boundSidebarToggle = '1';
     }
 
-    initSidebar();
+    if (!backdrop.dataset.boundSidebarBackdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+        backdrop.dataset.boundSidebarBackdrop = '1';
+    }
 
-    // Re-init after Blazor navigation (enhanced nav)
-    document.addEventListener('blazor:navigated', initSidebar);
-});
+    sidebar.querySelectorAll('.nav-item').forEach(link => {
+        if (link.dataset.boundSidebarNav) {
+            return;
+        }
+
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) closeSidebar();
+        });
+        link.dataset.boundSidebarNav = '1';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initSidebar);
+document.addEventListener('blazor:navigated', initSidebar);
+document.addEventListener('enhancedload', initSidebar);
 
 // Local storage utilities
 const AppStorage = {

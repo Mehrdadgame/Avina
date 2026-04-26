@@ -1,1185 +1,442 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
-@using Avina.Services
+@using System.Text.Json
 @using Avina.Models
-@using System.Text
-@inject IHomeService HomeService
-@inject NavigationManager Nav
+@using Avina.Services
+@inject AuthStateService AuthState
+@inject IGrowthEngineService GrowthEngineService
+@inject IJSRuntime JS
 
 <style>
-.home-container {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 100px);
-    padding: 2rem;
-    animation: fadeIn 0.6s ease-out;
-}
-
-/* Featured Hero Section */
-.hero-section {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1.5rem;
-    height: 420px;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    margin-bottom: 2rem;
-    group: true;
-}
-
-.hero-image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.7;
-    transition: all 0.7s ease;
-}
-
-.hero-section:hover .hero-image {
-    transform: scale(1.05);
-}
-
-.hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, #0f172a, rgba(15, 23, 42, 0.4), transparent);
-}
-
-.hero-content {
-    position: relative;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 3rem;
-    max-width: 50%;
-    z-index: 10;
-}
-
-.hero-badge {
-    display: inline-block;
-    background: rgba(156, 39, 93, 0.2);
-    border: 1px solid #9d365d;
-    color: #f472b6;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 1rem;
-    width: fit-content;
-}
-
-.hero-badge-text {
-    color: rgba(244, 114, 182, 0.8);
-    font-size: 0.9rem;
-    margin-right: 0.5rem;
-}
-
-.hero-title {
-    font-size: 3rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1.2;
-    margin-bottom: 1.5rem;
-}
-
-.hero-description {
-    color: rgba(244, 114, 182, 0.8);
-    font-size: 1rem;
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-.hero-buttons {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.btn-hero {
-    padding: 0.9rem 2rem;
-    border-radius: 9999px;
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-}
-
-.btn-primary-hero {
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    color: white;
-}
-
-.btn-primary-hero:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.3);
-}
-
-.btn-secondary-hero {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    backdrop-filter: blur(10px);
-}
-
-.btn-secondary-hero:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.hero-stats {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 1rem;
-    border-radius: 1rem;
-    display: none;
-}
-
-.hero-stats.show {
-    display: flex;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: white;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.stat-divider {
-    width: 1px;
-    height: 2.5rem;
-    background: rgba(255, 255, 255, 0.2);
-    margin: 0 1.5rem;
-}
-
-/* Category Filters */
-.filters-section {
-    margin-bottom: 2.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    overflow-x: auto;
-    padding-bottom: 1rem;
-}
-
-.filter-buttons {
-    display: flex;
-    gap: 0.75rem;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-}
-
-.filter-btn {
-    padding: 0.625rem 1.5rem;
-    border: none;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.filter-btn.active {
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    color: white;
-}
-
-.filter-btn.inactive {
-    background-color: #1e293b;
-    color: #94a3b8;
-    border: 1px solid #334155;
-}
-
-.filter-btn.inactive:hover {
-    background-color: rgba(124, 58, 237, 0.1);
-    border-color: #7c3aed;
-}
-
-.sort-btn {
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.sort-btn:hover {
-    background-color: #1e293b;
-    color: #a78bfa;
-}
-
-/* Content Grid */
-.content-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-    animation: slideUp 0.6s ease-out;
-}
-.content-card {
-    display: flex;
-    flex-direction: column;
-    animation: slideUp 0.6s ease-out;
-    animation-fill-mode: both;
-    cursor: pointer;
-    transition: transform .2s ease;
-}
-.content-card:hover { transform: translateY(-4px); }
-
-.content-card:nth-child(1) { animation-delay: 0.1s; }
-.content-card:nth-child(2) { animation-delay: 0.2s; }
-.content-card:nth-child(3) { animation-delay: 0.3s; }
-.content-card:nth-child(4) { animation-delay: 0.4s; }
-
-.card-image-container {
-    position: relative;
-    aspect-ratio: 4/5;
-    overflow: hidden;
-    border-radius: 1rem;
-    background-color: #1e293b;
-    margin-bottom: 1rem;
-    group: true;
-}
-
-.card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: all 0.5s ease;
-}
-
-.card-image-container:hover .card-image {
-    transform: scale(1.1);
-}
-
-.card-bookmark {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    backdrop-filter: blur(10px);
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.5rem;
-    border-radius: 9999px;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1.2rem;
-}
-
-.card-bookmark:hover {
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-}
-
-.card-tag {
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    background: white;
-    color: #38274c;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: 0.5rem;
-}
-
-.card-title {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #f1f5f9;
-    line-height: 1.3;
-}
-
-.card-price {
-    font-weight: 700;
-    color: #7c3aed;
-}
-
-.card-creator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.card-creator-avatar {
-    width: 1.25rem;
-    height: 1.25rem;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.card-creator-name {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    font-weight: 500;
-}
-
-.card-stats {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 0.75rem;
-    color: #94a3b8;
-}
-
-.card-stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-/* Curated Section */
-.curated-section {
-    margin-top: 5rem;
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #f1f5f9;
-    margin-bottom: 2rem;
-}
-
-.bento-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    auto-rows: 240px;
-}
-
-.bento-item {
-    position: relative;
-    border-radius: 1rem;
-    overflow: hidden;
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    border: 1px solid #334155;
-    transition: all 0.3s ease;
-}
-
-.bento-item:hover {
-    border-color: #7c3aed;
-    box-shadow: 0 15px 40px rgba(124, 58, 237, 0.2);
-}
-
-.bento-large {
-    grid-column: span 2;
-    grid-row: span 2;
-}
-
-.bento-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: all 0.7s ease;
-}
-
-.bento-item:hover .bento-image {
-    transform: scale(1.05);
-}
-
-.bento-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent);
-}
-
-.bento-content {
-    position: absolute;
-    bottom: 2rem;
-    left: 2rem;
-    z-index: 10;
-}
-
-.bento-badge {
-    color: #a78bfa;
-    font-size: 0.75rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.5rem;
-}
-
-.bento-title {
-    font-size: 1.75rem;
-    font-weight: 900;
-    color: white;
-    margin-bottom: 1rem;
-}
-
-.bento-btn {
-    background: white;
-    color: #38274c;
-    border: none;
-    padding: 0.625rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.bento-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-.bento-card {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.bento-card-icon {
-    font-size: 2rem;
-    color: #7c3aed;
-    margin-bottom: 1rem;
-}
-
-.bento-card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 0.5rem;
-}
-
-.bento-card-desc {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    margin-bottom: 1rem;
-}
-
-.bento-card-link {
-    color: #7c3aed;
-    font-weight: 700;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.bento-card-link:hover {
-    color: #ec4899;
-    gap: 0.75rem;
-}
-
-.bento-stats {
-    padding: 2rem;
-    text-align: center;
-    background: linear-gradient(135deg, #7c3aed, #ec4899);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.bento-stats-number {
-    font-size: 2rem;
-    font-weight: 900;
-    color: white;
-    margin-bottom: 0.5rem;
-}
-
-.bento-stats-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 1.5rem;
-}
-
-.avatar-group {
-    display: flex;
-    gap: -0.75rem;
-    justify-content: center;
-}
-
-.avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    border: 2px solid #7c3aed;
-    object-fit: cover;
-    margin-left: -0.75rem;
-}
-
-.avatar:first-child {
-    margin-left: 0;
-}
-
-.avatar-count {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background: #a78bfa;
-    color: white;
-    border: 2px solid #7c3aed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 900;
-    margin-left: -0.75rem;
-}
-
-.featured-auto-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.featured-auto-card {
-    background: #1b202b;
-    border: 1px solid #303a4f;
-    border-radius: 1rem;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-    animation: slideUp .45s ease both;
-}
-
-.featured-auto-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 18px 35px rgba(15, 23, 42, .4);
-    border-color: #566897;
-}
-
-.featured-auto-cover {
-    height: 130px;
-    background: linear-gradient(135deg, #1c2638, #111827);
-    display: flex;
-    align-items: end;
-    justify-content: end;
-    padding: 0.6rem;
-}
-
-.featured-auto-badge {
-    background: rgba(14, 24, 42, .65);
-    border: 1px solid rgba(157, 181, 255, .45);
-    color: #d8e3ff;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-.featured-auto-body { padding: 0.85rem; }
-.featured-auto-title {
-    margin: 0 0 0.35rem;
-    color: #eef3ff;
-    font-size: 0.9rem;
-    font-weight: 800;
-    line-height: 1.5;
-    min-height: 2.6rem;
-}
-
-.featured-auto-sub {
-    margin: 0;
-    color: #96a4c6;
-    font-size: 0.78rem;
-}
+    .growth-dashboard {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 2.5rem;
+        display: grid;
+        gap: 1rem;
+    }
+
+    .surface {
+        background: #171c24;
+        border: 1px solid #2d3747;
+        border-radius: 10px;
+    }
+
+    .header-band {
+        padding: 1.2rem 1.2rem 1.1rem;
+        display: grid;
+        gap: 0.5rem;
+    }
+
+    .header-band h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #eef3ff;
+    }
+
+    .header-band p {
+        margin: 0;
+        color: #aab7cd;
+        font-size: 0.92rem;
+    }
+
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.65rem;
+        padding: 0 1rem 1rem;
+    }
+
+    .metric {
+        background: #111620;
+        border: 1px solid #2d3747;
+        border-radius: 8px;
+        padding: 0.65rem 0.7rem;
+        min-height: 76px;
+    }
+
+    .metric .label {
+        font-size: 0.74rem;
+        color: #8ea0c0;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .metric .value {
+        font-weight: 800;
+        color: #f2f6ff;
+        font-size: 0.96rem;
+        line-height: 1.35;
+    }
+
+    .mission-panel {
+        padding: 1rem;
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .mission-title {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #f3f7ff;
+        font-weight: 800;
+    }
+
+    .mission-desc {
+        margin: 0;
+        color: #c1cde0;
+        line-height: 1.75;
+        font-size: 0.9rem;
+    }
+
+    .mission-meta {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .chip {
+        background: #111620;
+        border: 1px solid #334159;
+        color: #b8c8e5;
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .action-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-main {
+        border: none;
+        border-radius: 8px;
+        background: #3578f6;
+        color: #fff;
+        padding: 0.55rem 0.95rem;
+        font-weight: 700;
+        font-size: 0.84rem;
+        cursor: pointer;
+    }
+
+    .btn-main:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .btn-alt {
+        border: 1px solid #3a4965;
+        border-radius: 8px;
+        background: transparent;
+        color: #c8d4e8;
+        padding: 0.55rem 0.95rem;
+        font-weight: 700;
+        font-size: 0.84rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .submit-panel {
+        border-top: 1px solid #2b3649;
+        padding-top: 0.8rem;
+        display: grid;
+        gap: 0.55rem;
+    }
+
+    .input {
+        width: 100%;
+        border: 1px solid #34435b;
+        border-radius: 8px;
+        background: #0f141d;
+        color: #f1f5ff;
+        padding: 0.6rem 0.7rem;
+        font-size: 0.87rem;
+        box-sizing: border-box;
+    }
+
+    .notice {
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.82rem;
+        border: 1px solid;
+    }
+
+    .notice.ok {
+        background: rgba(76, 175, 80, 0.12);
+        border-color: rgba(76, 175, 80, 0.32);
+        color: #9be5a2;
+    }
+
+    .notice.warn {
+        background: rgba(255, 183, 77, 0.12);
+        border-color: rgba(255, 183, 77, 0.35);
+        color: #ffc978;
+    }
 </style>
 
-<div class="home-container">
-    <!-- Hero Carousel -->
-    <section class="carousel-section" style="position:relative; overflow:hidden; border-radius:1.5rem; height:420px; margin-bottom:2rem; direction:ltr;">
-        <!-- Slides track -->
-        <div class="carousel-track" style="display:flex; height:100%; transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); transform:translateX(@(heroIndex * -100)%);">
-            @foreach (var slide in heroSlides)
-            {
-                <div style="min-width:100%; height:100%; position:relative; flex:0 0 100%; flex-shrink:0;">
-                    <img src="@ResolveImage(slide.Image, "content")" alt="@FixMojibake(slide.Title)" style="width:100%; height:100%; object-fit:cover; display:block;" />
-                    <div style="position:absolute; inset:0; background:linear-gradient(to right, rgba(11,14,21,0.9) 0%, rgba(11,14,21,0.5) 50%, transparent 100%);"></div>
-                    <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:2rem 2.5rem; max-width:60%; z-index:10; overflow:hidden; direction:rtl; text-align:right;">
-                        <div class="hero-badge" style="margin-bottom:0.75rem; font-size:0.75rem;">
-                            <span>@FixMojibake(slide.Badge)</span>
-                        </div>
-                        <h1 class="hero-title" style="font-size:1.85rem; font-weight:900; color:white; line-height:1.25; margin-bottom:0.75rem;">@FixMojibake(slide.Title)</h1>
-                        <p class="hero-description" style="color:rgba(224,226,236,0.85); font-size:0.85rem; margin-bottom:1.25rem; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">@FixMojibake(slide.Description)</p>
-                        <div class="hero-buttons" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                            <a href="@slide.PrimaryLink" class="btn-hero btn-primary-hero" style="padding:0.65rem 1.4rem; font-size:0.875rem; white-space:nowrap;">@FixMojibake(slide.PrimaryLabel)</a>
-                            <a href="@slide.SecondaryLink" class="btn-hero btn-secondary-hero" style="padding:0.65rem 1.4rem; font-size:0.875rem; white-space:nowrap;">@FixMojibake(slide.SecondaryLabel)</a>
-                        </div>
-                    </div>
-                    <!-- Stats badge -->
-                    <div class="hero-stats show" style="position:absolute; bottom:1.5rem; left:2rem; top:auto; z-index:10; direction:rtl;">
-                        <div class="stat-item"><div class="stat-number">@slide.Stat1</div><div class="stat-label">@FixMojibake(slide.Stat1Label)</div></div>
-                        <div class="stat-divider"></div>
-                        <div class="stat-item"><div class="stat-number">@slide.Stat2</div><div class="stat-label">@FixMojibake(slide.Stat2Label)</div></div>
-                    </div>
-                </div>
-            }
-        </div>
-        <!-- Prev / Next buttons -->
-        <button @onclick="PrevHero" style="position:absolute; top:50%; right:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);">&lsaquo;</button>
-        <button @onclick="NextHero" style="position:absolute; top:50%; left:1.25rem; transform:translateY(-50%); z-index:20; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; width:44px; height:44px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:background 0.2s; backdrop-filter:blur(6px);">&rsaquo;</button>
-        <!-- Dot indicators -->
-        <div style="position:absolute; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:0.5rem;">
-            @for (int i = 0; i < heroSlides.Count; i++)
-            {
-                int idx = i;
-                <button @onclick="@(() => SetHeroSlide(idx))" style="width:@(heroIndex == idx ? "28px" : "8px"); height:8px; border-radius:9999px; border:none; background:@(heroIndex == idx ? "rgba(170,199,255,0.9)" : "rgba(255,255,255,0.35)"); cursor:pointer; transition:all 0.35s ease; padding:0;"></button>
-            }
-        </div>
-    </section>
-    <!-- Filters -->
-    <section class="filters-section">
-        <div class="filter-buttons">
-            @foreach (var filter in discoveryFilters)
-            {
-                <button class="filter-btn @(activeDiscoveryFilter == filter.Key ? "active" : "inactive")"
-                        @onclick="@(() => SetDiscoveryFilter(filter.Key))">
-                    @filter.Label
-                </button>
-            }
-        </div>
-        <button class="sort-btn">مرتب‌سازی: محبوب‌ترین</button>
-    </section>
-
-    <!-- Content Grid -->
-    <section class="content-grid">
-        @foreach (var item in VisibleDiscoverItems)
-        {
-            <div class="content-card" @key="item.SourceType + '-' + item.Id" @onclick="@(() => Nav.NavigateTo(item.LinkUrl))">
-                <div class="card-image-container">
-                    <img class="card-image" src="@ResolveImage(item.ImageUrl, item.SourceType)" alt="@item.Title" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80';">
-                    <button type="button" class="card-bookmark">*</button>
-                    <div class="card-tag">@FixMojibake(item.Category)</div>
-                </div>
-                <div class="card-header">
-                    <h3 class="card-title">@FixMojibake(item.Title)</h3>
-                    <span class="card-price">@FixMojibake(item.PriceLabel)</span>
-                </div>
-                <div class="card-creator">
-                    <img class="card-creator-avatar" src="https://i.pravatar.cc/150?img=@((item.Id % 40) + 1)" alt="@item.Creator">
-                    <span class="card-creator-name">@FixMojibake(item.Creator)</span>
-                </div>
-                <div class="card-stats">
-                    <div class="card-stat-item">
-                        <span>لایک</span>
-                        <span>@item.Likes.ToString("N0")</span>
-                    </div>
-                    <div class="card-stat-item">
-                        <span>بازدید</span>
-                        <span>@item.Views.ToString("N0")</span>
-                    </div>
-                </div>
+<div class="growth-dashboard">
+    @if (!AuthState.IsLoggedIn || AuthState.CurrentUser is null)
+    {
+        <section class="surface header-band">
+            <h1>هسته رشد آخرین نگهبان</h1>
+            <p>برای دیدن ماموریت پیشنهادی امروز، ابتدا وارد حساب کاربری شوید.</p>
+            <div class="action-row">
+                <a class="btn-main" href="/login">ورود</a>
             </div>
-        }
-    </section>
-
-    <!-- Daily Challenges Section -->
-    <section class="curated-section">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
-            <h2 class="section-title" style="margin-bottom:0;">چالش‌های روزانه</h2>
-            <a href="/life-path" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده همه</a>
-        </div>
-        <div style="display:flex; gap:1.25rem; overflow-x:auto; padding-bottom:1rem;">
-            @foreach (var ch in homeSections?.DailyChallenges ?? Enumerable.Empty<DailyChallengeCardDto>())
-            {
-                <div @onclick="@(() => Nav.NavigateTo($"/challenge/{ch.Id}"))"
-                     style="min-width:270px; background:#1c2026; border-radius:1rem; padding:1.25rem; border-top:4px solid @ch.BorderColor; flex-shrink:0; transition:transform 0.2s ease, box-shadow 0.2s ease; cursor:pointer;"
-                     onmouseenter="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 32px rgba(0,0,0,0.3)'"
-                     onmouseleave="this.style.transform=''; this.style.boxShadow=''">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                        <div style="width:44px; height:44px; border-radius:0.75rem; background:rgba(170,199,255,0.1); display:flex; align-items:center; justify-content:center; font-size:1.5rem;">@ch.Icon</div>
-                        <span style="font-size:0.75rem; font-weight:700; color:@ch.BorderColor; background:rgba(170,199,255,0.08); padding:0.25rem 0.625rem; border-radius:9999px;">+@(ch.RewardPoints) pts</span>
-                    </div>
-                    <p style="font-weight:700; color:#e0e2ec; margin-bottom:0.5rem; font-size:0.95rem;">@ch.Title</p>
-                    <p style="font-size:0.8rem; color:#8b919f; margin-bottom:1.25rem; line-height:1.5;">@ch.Description</p>
-                    <button type="button" style="width:100%; padding:0.5rem; border:1px solid #414753; color:#e0e2ec; font-weight:700; border-radius:0.75rem; background:transparent; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:0.85rem; transition:all 0.2s;"
-                            onmouseenter="this.style.background='rgba(170,199,255,0.1)'; this.style.borderColor='#aac7ff'"
-                            onmouseleave="this.style.background='transparent'; this.style.borderColor='#414753'">
-                        شروع چالش • @ch.QuestionCount سوال
-                    </button>
-                </div>
-            }
-        </div>
-    </section>
-
-    <!-- ===== PRODUCT SECTIONS FROM STORE ===== -->
-
-    @if (homeSections != null)
-    {
-        @if (homeSections.Latest.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">جدیدترین محصولات</h2>
-                    <a href="/store" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده همه ←</a>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @foreach (var item in homeSections.Latest)
-                    {
-                        <div @onclick="@(() => Nav.NavigateTo($"/product/{item.Id}"))" class="content-section-card" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:120px; position:relative;">
-                                <img src="@ResolveImage(item.ThumbnailPath, "product")" alt="@item.Title" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80';" />
-                                @if (!item.IsFree) {
-                                    <span style="position:absolute; top:6px; left:6px; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:9999px;">@item.CoinPrice.ToString("N0") ت</span>
-                                }
-                            </div>
-                            <div style="padding:0.75rem;">
-                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
-                                <span style="font-size:0.7rem; color:#8b919f;">@item.Category</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-
-        @if (homeSections.TopWeek.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">برترین‌های هفته</h2>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @{ int twRank = 1; }
-                    @foreach (var item in homeSections.TopWeek)
-                    {
-                        int rank = twRank++;
-                        <div @onclick="@(() => Nav.NavigateTo($"/product/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:120px; position:relative;">
-                                <img src="@ResolveImage(item.ThumbnailPath, "product")" alt="@item.Title" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80';" />
-                                <span style="position:absolute; top:6px; right:6px; background:rgba(255,182,80,0.2); color:#ffb650; border:1px solid rgba(255,182,80,0.4); font-size:0.65rem; font-weight:900; padding:2px 7px; border-radius:9999px;">#@rank</span>
-                            </div>
-                            <div style="padding:0.75rem;">
-                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
-                                <span style="font-size:0.7rem; color:#ffb650;">@item.WeeklyViews خرید در هفته</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-
-        @if (homeSections.TopMonth.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">برترین‌های ماه</h2>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @{ int tmRank = 1; }
-                    @foreach (var item in homeSections.TopMonth)
-                    {
-                        int rank = tmRank++;
-                        <div @onclick="@(() => Nav.NavigateTo($"/product/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:120px; position:relative;">
-                                <img src="@ResolveImage(item.ThumbnailPath, "product")" alt="@item.Title" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80';" />
-                                <span style="position:absolute; top:6px; right:6px; background:rgba(100,200,255,0.2); color:#64c8ff; border:1px solid rgba(100,200,255,0.3); font-size:0.65rem; font-weight:900; padding:2px 7px; border-radius:9999px;">#@rank</span>
-                            </div>
-                            <div style="padding:0.75rem;">
-                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
-                                <span style="font-size:0.7rem; color:#64c8ff;">@item.MonthlyViews خرید در ماه</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-
-        @if (homeSections.Bestseller.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">پرفروش‌ترین‌ها</h2>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @foreach (var item in homeSections.Bestseller)
-                    {
-                        <div @onclick="@(() => Nav.NavigateTo($"/product/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:120px; position:relative;">
-                                <img src="@ResolveImage(item.ThumbnailPath, "product")" alt="@item.Title" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1589998059171-988d887df646?w=1200&q=80';" />
-                                <span style="position:absolute; top:6px; left:6px; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; font-size:0.65rem; font-weight:700; padding:2px 7px; border-radius:9999px;">@item.CoinPrice.ToString("N0") ت</span>
-                            </div>
-                            <div style="padding:0.75rem;">
-                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
-                                <span style="font-size:0.7rem; color:#a78bfa;">@item.PurchaseCount خرید</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-
-        @if (homeSections.MostViewed.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">پربازدیدترین‌ها</h2>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @foreach (var item in homeSections.MostViewed)
-                    {
-                        <div @onclick="@(() => Nav.NavigateTo($"/product/{item.Id}"))" style="min-width:200px; max-width:200px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:120px; position:relative;">
-                                <img src="@ResolveImage(item.ThumbnailPath, "product")" alt="@item.Title" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=1200&q=80';" />
-                            </div>
-                            <div style="padding:0.75rem;">
-                                <p style="font-size:0.8rem; font-weight:700; color:#e0e2ec; margin-bottom:0.25rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@item.Title</p>
-                                <span style="font-size:0.7rem; color:#7dd3a8;">@item.ViewCount بازدید</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-
-        <!-- Featured Courses from DB -->
-        @if (homeSections.FeaturedCourses.Any())
-        {
-            <section class="curated-section">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-                    <h2 class="section-title" style="margin-bottom:0;">دوره‌های ویژه</h2>
-                    <a href="/school" style="color:#aac7ff; font-weight:700; font-size:0.875rem; text-decoration:none;">مشاهده همه ←</a>
-                </div>
-                <div style="display:flex; gap:1rem; overflow-x:auto; padding-bottom:0.75rem;">
-                    @foreach (var course in homeSections.FeaturedCourses)
-                    {
-                        <div @onclick="@(() => Nav.NavigateTo($"/course/{course.Id}"))" style="min-width:240px; max-width:240px; background:#1c2026; border-radius:1rem; overflow:hidden; cursor:pointer; flex-shrink:0; transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-4px)'" onmouseleave="this.style.transform=''">
-                            <div style="height:130px; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:3rem;">🎓</div>
-                            <div style="padding:0.875rem;">
-                                <p style="font-size:0.85rem; font-weight:700; color:#e0e2ec; margin-bottom:0.375rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">@course.Title</p>
-                                <p style="font-size:0.75rem; color:#8b919f; margin-bottom:0.5rem;">@course.Instructor</p>
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span style="font-size:0.7rem; color:#fbbf24;">⭐ @course.Rating.ToString("F1")</span>
-                                    <span style="font-size:0.75rem; font-weight:700; color:@(course.IsFree ? "#7dd3a8" : "#a78bfa");">@(course.IsFree ? "رایگان" : $"{course.CoinPrice:N0} ت")</span>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </section>
-        }
-    }
-    else if (sectionsLoading)
-    {
-        <section class="curated-section">
-            <div style="text-align:center; padding:2rem; color:#8b919f;">در حال بارگذاری محتوا...</div>
         </section>
     }
-
-    <!-- Curated Section -->
-    @if (homeSections?.FeaturedPicks.Any() == true)
+    else if (isLoading)
     {
-        <section class="curated-section">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; gap:0.8rem; flex-wrap:wrap;">
-                <h2 class="section-title" style="margin-bottom:0;">منتخب هوشمند + منتخب دستی</h2>
-                <span style="font-size:0.78rem; color:#9fb0d6; border:1px solid #374669; border-radius:999px; padding:0.25rem 0.7rem;">
-                    مدیریت‌پذیر از دیتابیس
-                </span>
+        <section class="surface header-band">
+            <h1>در حال بارگذاری داشبورد رشد...</h1>
+            <p>در حال خواندن پروفایل، مسیر فعال و ماموریت امروز.</p>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <section class="surface header-band">
+            <h1>داشبورد رشد</h1>
+            <div class="notice warn">@errorMessage</div>
+        </section>
+    }
+    else if (dashboard is not null)
+    {
+        <section class="surface">
+            <div class="header-band">
+                <h1>@dashboard.UserName</h1>
+                <p>در صفحه اصلی فقط قدم بعدی رشدت را می‌بینی.</p>
             </div>
-            <div class="featured-auto-grid">
-                @foreach (var pick in homeSections.FeaturedPicks)
+            <div class="metrics">
+                <div class="metric">
+                    <span class="label">مسیر فعال</span>
+                    <span class="value">@dashboard.ActivePath</span>
+                </div>
+                <div class="metric">
+                    <span class="label">مهارت فعلی</span>
+                    <span class="value">@dashboard.CurrentSkill</span>
+                </div>
+                <div class="metric">
+                    <span class="label">سطح</span>
+                    <span class="value">@dashboard.Level</span>
+                </div>
+                <div class="metric">
+                    <span class="label">پیشرفت تجربه</span>
+                    <span class="value">@dashboard.XP (تا سطح بعد: @dashboard.XPToNextLevel)</span>
+                </div>
+                <div class="metric">
+                    <span class="label">کوین</span>
+                    <span class="value">@dashboard.Coin</span>
+                </div>
+                <div class="metric">
+                    <span class="label">رکورد روزانه</span>
+                    <span class="value">@dashboard.DailyStreak روز</span>
+                </div>
+            </div>
+        </section>
+
+        @if (dashboard.NeedsOnboarding)
+        {
+            <section class="surface mission-panel">
+                <h2 class="mission-title">شروع آزمون اولیه</h2>
+                <p class="mission-desc">آزمون سناریومحور را کامل کن تا هسته رشد اولین ماموریتت را پیشنهاد دهد.</p>
+                <div class="action-row">
+                    <a class="btn-main" href="/onboarding">شروع آزمون</a>
+                </div>
+            </section>
+        }
+        else if (dashboard.TodayMission is not null)
+        {
+            <section class="surface mission-panel">
+                <h2 class="mission-title">@dashboard.TodayMission.MissionTitle</h2>
+                <p class="mission-desc">@dashboard.TodayMission.MissionDescription</p>
+
+                <div class="mission-meta">
+                    <span class="chip">@dashboard.TodayMission.EstimatedTime دقیقه</span>
+                    <span class="chip">سختی @dashboard.TodayMission.Difficulty</span>
+                    <span class="chip">@dashboard.TodayMission.RewardXP امتیاز تجربه</span>
+                    <span class="chip">@dashboard.TodayMission.RewardCoin کوین</span>
+                    <span class="chip">@dashboard.TodayMission.ConnectedPath</span>
+                    <span class="chip">@dashboard.TodayMission.ConnectedSkill</span>
+                </div>
+
+                <div class="notice ok">@dashboard.TodayMission.ReasonForRecommendation</div>
+
+                <div class="action-row">
+                    <button class="btn-main" @onclick="ToggleSubmitPanel">ادامه</button>
+                    <a class="btn-alt" href="/onboarding">اجرای دوباره آزمون</a>
+                </div>
+
+                @if (showSubmitPanel)
                 {
-                    <div class="featured-auto-card" @onclick="@(() => Nav.NavigateTo(pick.LinkUrl))">
-                        <div class="featured-auto-cover" style="background-image:linear-gradient(to top,rgba(14,18,28,.9),rgba(14,18,28,.15)),url('@ResolveImage(pick.ImageUrl, pick.Type)'); background-size:cover; background-position:center;">
-                            <span class="featured-auto-badge">@FixMojibake(pick.Badge)</span>
+                    <div class="submit-panel">
+                        <textarea class="input" rows="4" placeholder="نتیجه انجام ماموریت را بنویس..." @bind="textAnswer"></textarea>
+                        <input class="input" placeholder="لینک رسانه (اختیاری - تصویر/ویدیو)" @bind="mediaUrl" />
+                        <div class="action-row">
+                            <button class="btn-main" @onclick="SubmitMissionAsync" disabled="@isSubmitting">
+                                @(isSubmitting ? "در حال ثبت..." : "ثبت ماموریت")
+                            </button>
                         </div>
-                        <div class="featured-auto-body">
-                            <p class="featured-auto-title">@FixMojibake(pick.Title)</p>
-                            <p class="featured-auto-sub">@FixMojibake(pick.Subtitle)</p>
-                        </div>
+                        @if (!string.IsNullOrWhiteSpace(submitMessage))
+                        {
+                            <div class="notice @(submitWasSuccess ? "ok" : "warn")">@submitMessage</div>
+                        }
                     </div>
                 }
-            </div>
-        </section>
-    }
-    else
-    {
-        <section class="curated-section">
-            <h2 class="section-title">برای شما انتخاب شده</h2>
-            <div class="bento-grid">
-                <div class="bento-item bento-large">
-                    <img class="bento-image" src="https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1200&q=80" alt="کلاس ویژه">
-                    <div class="bento-overlay"></div>
-                    <div class="bento-content">
-                        <div class="bento-badge">🎓 کلاس ویژه</div>
-                        <h3 class="bento-title">هنر مدیریت زندگی</h3>
-                        <button class="bento-btn">همین الان ببین</button>
-                    </div>
-                </div>
-
-                <div class="bento-item bento-card">
-                    <div>
-                        <div class="bento-card-icon">✨</div>
-                        <h3 class="bento-card-title">کیوریشن هوشمند</h3>
-                        <p class="bento-card-desc">محتوای مناسب سطح تو با برچسب‌های هوش مصنوعی انتخاب می‌شود.</p>
-                    </div>
-                    <div class="bento-card-link">
-                        امتحان کن <span>←</span>
-                    </div>
-                </div>
-
-                <div class="bento-item bento-stats">
-                    <div class="bento-stats-number">100K+</div>
-                    <div class="bento-stats-label">دانش‌آموز این هفته</div>
-                    <div class="avatar-group">
-                        <img class="avatar" src="https://i.pravatar.cc/150?img=2" alt="">
-                        <img class="avatar" src="https://i.pravatar.cc/150?img=3" alt="">
-                        <img class="avatar" src="https://i.pravatar.cc/150?img=4" alt="">
-                        <div class="avatar-count">+12</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
+        }
     }
 </div>
 
 @code {
-    private HomeSectionsDto? homeSections;
-    private bool sectionsLoading = true;
-
-    private static string ContentTypeIcon(string type) => type switch
-    {
-        "Video" => "🎬",
-        "Audio" => "🎵",
-        "PDF" => "📄",
-        "Image" => "🖼️",
-        _ => "📁"
-    };
-
-    private class HeroSlide
-    {
-        public string Image { get; set; } = "";
-        public string Badge { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string PrimaryLabel { get; set; } = "";
-        public string PrimaryLink { get; set; } = "";
-        public string SecondaryLabel { get; set; } = "";
-        public string SecondaryLink { get; set; } = "";
-        public string Stat1 { get; set; } = "";
-        public string Stat1Label { get; set; } = "";
-        public string Stat2 { get; set; } = "";
-        public string Stat2Label { get; set; } = "";
-    }
-
-    private static readonly string[] CourseImages = {
-        "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&q=80",
-        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&q=80",
-        "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=400&q=80",
-        "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=400&q=80",
-    };
-
-    private List<HeroSlide> heroSlides = new();
-    private int heroIndex = 0;
-    private System.Threading.Timer? _carouselTimer;
-    private string activeDiscoveryFilter = "all";
-    private readonly (string Key, string Label)[] discoveryFilters =
-    [
-        ("all", "همه"),
-        ("school", "مدرسه"),
-        ("game", "بازی"),
-        ("study", "مطالعه"),
-        ("skill", "مهارت")
-    ];
-
-    private IEnumerable<HomeDiscoverItemDto> VisibleDiscoverItems =>
-        (homeSections?.DiscoverItems ?? Enumerable.Empty<HomeDiscoverItemDto>())
-            .Where(item => activeDiscoveryFilter == "all" || item.FilterKey == activeDiscoveryFilter);
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            homeSections = await HomeService.GetHomeSectionsAsync();
-            ApplyDynamicHeroFromDb();
-        }
-        catch { /* silently fail if DB not available */ }
-        finally { sectionsLoading = false; }
-    }
+    private const string StorageKey = "avina_user";
+    private DashboardDto? dashboard;
+    private bool isLoading = true;
+    private bool showSubmitPanel;
+    private bool isSubmitting;
+    private string textAnswer = string.Empty;
+    private string mediaUrl = string.Empty;
+    private string submitMessage = string.Empty;
+    private bool submitWasSuccess;
+    private string errorMessage = string.Empty;
 
     protected override void OnInitialized()
     {
-        heroSlides = new List<HeroSlide>
-        {
-            new HeroSlide
-            {
-                Image = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1600&q=80",
-                Badge = "مدرسه آنلاین",
-                Title = "مسیر یادگیری خودت را همین امروز شروع کن",
-                Description = "از دوره‌های جدید دیدن کن و چالش روزانه را انجام بده تا امتیاز بگیری.",
-                PrimaryLabel = "ورود به مدرسه",
-                PrimaryLink = "/school",
-                SecondaryLabel = "مشاهده پروفایل",
-                SecondaryLink = "/profile",
-                Stat1 = "120K+",
-                Stat1Label = "دانش‌آموز",
-                Stat2 = "2,400+",
-                Stat2Label = "دوره فعال"
-            },
-            new HeroSlide
-            {
-                Image = "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1600&q=80",
-                Badge = "فروشگاه",
-                Title = "محصولات محبوب فروشگاه را ببین",
-                Description = "بهترین محصولات هفته و ماه مستقیماً از فروشگاه نمایش داده می‌شوند.",
-                PrimaryLabel = "رفتن به فروشگاه",
-                PrimaryLink = "/store",
-                SecondaryLabel = "جزئیات بیشتر",
-                SecondaryLink = "/store",
-                Stat1 = "300+",
-                Stat1Label = "محصول",
-                Stat2 = "روزانه",
-                Stat2Label = "به‌روزرسانی"
-            }
-        };
+        AuthState.StateChanged += OnAuthStateChanged;
     }
 
-    private void ApplyDynamicHeroFromDb()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (homeSections?.HeroBanners == null || !homeSections.HeroBanners.Any())
+        if (firstRender)
+        {
+            await RestoreUserFromStorageAsync();
+            await LoadDashboardAsync();
+        }
+    }
+
+    private async Task OnAuthStateChanged()
+    {
+        await LoadDashboardAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RestoreUserFromStorageAsync()
+    {
+        if (AuthState.IsLoggedIn)
         {
             return;
         }
 
-        heroSlides = homeSections.HeroBanners.Select(b => new HeroSlide
+        try
         {
-            Image = b.ImageUrl,
-            Badge = b.Badge,
-            Title = b.Title,
-            Description = b.Description,
-            PrimaryLabel = b.PrimaryLabel,
-            PrimaryLink = b.PrimaryLink,
-            SecondaryLabel = b.SecondaryLabel,
-            SecondaryLink = b.SecondaryLink,
-            Stat1 = b.Stat1,
-            Stat1Label = b.Stat1Label,
-            Stat2 = b.Stat2,
-            Stat2Label = b.Stat2Label
-        }).ToList();
-
-        heroIndex = 0;
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _carouselTimer = new System.Threading.Timer(_ =>
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (string.IsNullOrWhiteSpace(json))
             {
-                InvokeAsync(() =>
-                {
-                    heroIndex = (heroIndex + 1) % heroSlides.Count;
-                    StateHasChanged();
-                });
-            }, null, 5000, 5000);
-        }
-    }
+                return;
+            }
 
-    private void NextHero()
-    {
-        if (heroSlides.Count == 0) return;
-        heroIndex = (heroIndex + 1) % heroSlides.Count;
-    }
-
-    private void PrevHero()
-    {
-        if (heroSlides.Count == 0) return;
-        heroIndex = (heroIndex - 1 + heroSlides.Count) % heroSlides.Count;
-    }
-
-    private void SetHeroSlide(int i)
-    {
-        if (heroSlides.Count == 0) return;
-        heroIndex = Math.Clamp(i, 0, heroSlides.Count - 1);
-    }
-    private void SetDiscoveryFilter(string key)
-    {
-        activeDiscoveryFilter = key;
-    }
-
-    private static string ResolveImage(string? imageUrl, string? sourceType)
-    {
-        if (string.IsNullOrWhiteSpace(imageUrl))
-        {
-            return sourceType?.ToLowerInvariant() switch
+            var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+            if (user is not null)
             {
-                "course" => "https://images.unsplash.com/photo-1434030216411-0b793f4b6f97?w=1200&q=80",
-                "content" => "https://images.unsplash.com/photo-1516116216624-53e697900ea0?w=1200&q=80",
-                _ => "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80"
-            };
+                AuthState.SetUser(user);
+            }
         }
-
-        var normalized = imageUrl.Trim();
-        if (normalized.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-            normalized.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
-            normalized.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        catch
         {
-            return normalized;
+            // Ignore malformed local storage state.
         }
-
-        return normalized.StartsWith('/') ? normalized : $"/{normalized}";
     }
 
-    private static string FixMojibake(string? value)
+    private async Task LoadDashboardAsync()
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
+        submitMessage = string.Empty;
+        errorMessage = string.Empty;
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
 
-        if (!value.Contains('Ø') && !value.Contains('Ù') && !value.Contains('â') && !value.Contains('ð'))
+        if (!AuthState.IsLoggedIn || AuthState.CurrentUser is null)
         {
-            return value;
+            dashboard = null;
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+            return;
         }
 
         try
         {
-            var bytes = Encoding.Latin1.GetBytes(value);
-            return Encoding.UTF8.GetString(bytes);
+            dashboard = await GrowthEngineService.GetDashboardAsync(AuthState.CurrentUser.Id);
         }
-        catch
+        catch (Exception ex)
         {
-            return value;
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
+    private void ToggleSubmitPanel()
+    {
+        showSubmitPanel = !showSubmitPanel;
+        submitMessage = string.Empty;
+    }
 
-    public void Dispose() { _carouselTimer?.Dispose(); }
+    private async Task SubmitMissionAsync()
+    {
+        if (dashboard?.TodayMission is null || AuthState.CurrentUser is null)
+        {
+            return;
+        }
+
+        isSubmitting = true;
+        submitMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var result = await GrowthEngineService.SubmitMissionAsync(
+                AuthState.CurrentUser.Id,
+                dashboard.TodayMission.MissionId,
+                textAnswer,
+                mediaUrl);
+
+            submitWasSuccess = result.Status is MissionSubmissionStatus.AutoApproved or MissionSubmissionStatus.Pending;
+            submitMessage = $"{result.Message} (وضعیت: {ToSubmissionStatusFa(result.Status)}، امتیاز تجربه: {result.GrantedXP}، کوین: {result.GrantedCoin})";
+
+            textAnswer = string.Empty;
+            mediaUrl = string.Empty;
+            await LoadDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            submitWasSuccess = false;
+            submitMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private static string ToSubmissionStatusFa(MissionSubmissionStatus status) => status switch
+    {
+        MissionSubmissionStatus.Pending => "در انتظار بررسی",
+        MissionSubmissionStatus.Approved => "تاییدشده",
+        MissionSubmissionStatus.Rejected => "ردشده",
+        MissionSubmissionStatus.AutoApproved => "تایید خودکار",
+        _ => "نامشخص"
+    };
+
+    public void Dispose()
+    {
+        AuthState.StateChanged -= OnAuthStateChanged;
+    }
 }
