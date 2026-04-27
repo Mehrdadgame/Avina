@@ -183,7 +183,7 @@
 <div class="growth-dashboard">
     @if (!AuthState.IsLoggedIn || AuthState.CurrentUser is null)
     {
-        <section class="surface header-band">
+        <section class="surface header-band animate-page">
             <h1>هسته رشد آخرین نگهبان</h1>
             <p>برای دیدن ماموریت پیشنهادی امروز، ابتدا وارد حساب کاربری شوید.</p>
             <div class="action-row">
@@ -193,26 +193,26 @@
     }
     else if (isLoading)
     {
-        <section class="surface header-band">
+        <section class="surface header-band animate-page">
             <h1>در حال بارگذاری داشبورد رشد...</h1>
             <p>در حال خواندن پروفایل، مسیر فعال و ماموریت امروز.</p>
         </section>
     }
     else if (!string.IsNullOrWhiteSpace(errorMessage))
     {
-        <section class="surface header-band">
+        <section class="surface header-band animate-page">
             <h1>داشبورد رشد</h1>
             <div class="notice warn">@errorMessage</div>
         </section>
     }
     else if (dashboard is not null)
     {
-        <section class="surface">
+        <section class="surface animate-page">
             <div class="header-band">
                 <h1>@dashboard.UserName</h1>
                 <p>در صفحه اصلی فقط قدم بعدی رشدت را می‌بینی.</p>
             </div>
-            <div class="metrics">
+            <div class="metrics animate-page delay-1">
                 <div class="metric">
                     <span class="label">مسیر فعال</span>
                     <span class="value">@dashboard.ActivePath</span>
@@ -242,7 +242,7 @@
 
         @if (dashboard.NeedsOnboarding)
         {
-            <section class="surface mission-panel">
+            <section class="surface mission-panel animate-page delay-2">
                 <h2 class="mission-title">شروع آزمون اولیه</h2>
                 <p class="mission-desc">آزمون سناریومحور را کامل کن تا هسته رشد اولین ماموریتت را پیشنهاد دهد.</p>
                 <div class="action-row">
@@ -252,7 +252,7 @@
         }
         else if (dashboard.TodayMission is not null)
         {
-            <section class="surface mission-panel">
+            <section class="surface mission-panel animate-page delay-2">
                 <h2 class="mission-title">@dashboard.TodayMission.MissionTitle</h2>
                 <p class="mission-desc">@dashboard.TodayMission.MissionDescription</p>
 
@@ -407,7 +407,7 @@
                 textAnswer,
                 mediaUrl);
 
-            submitWasSuccess = result.Status is MissionSubmissionStatus.AutoApproved or MissionSubmissionStatus.Pending;
+            submitWasSuccess = result.Status is MissionSubmissionStatus.AutoApproved or MissionSubmissionStatus.Approved;
             submitMessage = $"{result.Message} (وضعیت: {ToSubmissionStatusFa(result.Status)}، امتیاز تجربه: {result.GrantedXP}، کوین: {result.GrantedCoin})";
 
             textAnswer = string.Empty;

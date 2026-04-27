@@ -1,203 +1,1101 @@
 @page "/life-path"
 @rendermode InteractiveServer
+@using System.Globalization
+@using System.Text.Json
+@using Avina.Data
+@using Avina.Models
+@using Avina.Services
+@using Microsoft.EntityFrameworkCore
+@inject AuthStateService AuthState
+@inject IGrowthEngineService GrowthEngineService
+@inject IDbContextFactory<AvinaDbContext> DbFactory
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 
-<div class="p-5 md:p-8 lg:p-10 space-y-8 overflow-x-hidden">
+<PageTitle>مسیر من | نقشه رشد</PageTitle>
 
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 animate-page">
-        <div>
-            <h1 class="text-3xl md:text-4xl font-black text-on-background mb-1">آخرین نگهبان</h1>
-            <p class="text-on-surface-variant">تحلیل مسیر رشد و شکوفایی استعدادهای تو</p>
-        </div>
-        <div class="flex items-center gap-2 bg-surface-container-low p-1.5 rounded-full">
-            <button class="@GetPeriodClass("monthly") px-5 py-1.5 rounded-full text-sm font-medium transition-colors" @onclick='() => SetPeriod("monthly")'>ماهانه</button>
-            <button class="@GetPeriodClass("weekly") px-5 py-1.5 rounded-full text-sm font-bold transition-colors" @onclick='() => SetPeriod("weekly")'>هفتگی</button>
-        </div>
-    </div>
+<style>
+    .growth-map-page {
+        position: relative;
+        isolation: isolate;
+        direction: rtl;
+        min-height: 100%;
+        padding: 1.5rem;
+        display: grid;
+        gap: 1.25rem;
+        color: #eef3ff;
+    }
 
-    <!-- Top Bento Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    .growth-map-page::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background:
+            radial-gradient(circle at 14% 14%, rgba(170, 199, 255, .08), transparent 24%),
+            radial-gradient(circle at 84% 10%, rgba(125, 211, 168, .06), transparent 22%),
+            radial-gradient(circle at 78% 82%, rgba(227, 113, 31, .05), transparent 20%);
+        opacity: .75;
+        animation: lifePathAtmosphere 28s ease-in-out infinite alternate;
+    }
 
-        <!-- Talent Profile -->
-        <div class="lg:col-span-7 bg-surface-container-low rounded-2xl p-7 relative overflow-hidden card-lift animate-page delay-1">
-            <div class="relative z-10">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 class="text-xl font-extrabold text-on-background mb-1">پروفایل استعداد</h2>
-                        <p class="text-on-surface-variant text-sm">نقاط قوت غالب شما بر اساس فعالیت‌های اخیر</p>
-                    </div>
-                    <span class="material-symbols-outlined text-primary text-4xl">psychology</span>
+    .growth-map-page > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .growth-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .growth-panel {
+        background: #1c2026;
+        border: 1px solid #414753;
+        border-radius: 1rem;
+        padding: 1.15rem;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, .18);
+    }
+
+    .hero-main {
+        background:
+            linear-gradient(135deg, rgba(66, 72, 212, .20), rgba(125, 211, 168, .10)),
+            #1c2026;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .eyebrow {
+        color: #7dd3a8;
+        font-size: .82rem;
+        font-weight: 900;
+        margin-bottom: .45rem;
+    }
+
+    .growth-title {
+        margin: 0;
+        font-size: clamp(1.55rem, 3vw, 2.5rem);
+        font-weight: 950;
+        line-height: 1.35;
+        letter-spacing: 0;
+    }
+
+    .growth-copy {
+        color: #c1c6d5;
+        line-height: 1.9;
+        margin: .75rem 0 0;
+        max-width: 820px;
+    }
+
+    .hero-actions,
+    .path-actions,
+    .quick-links,
+    .chips {
+        display: flex;
+        gap: .65rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .hero-actions {
+        margin-top: 1rem;
+    }
+
+    .btn-growth {
+        border: 1px solid transparent;
+        border-radius: .75rem;
+        min-height: 42px;
+        padding: .65rem 1rem;
+        font-family: 'Vazirmatn', sans-serif;
+        font-weight: 900;
+        color: #eef3ff;
+        background: #111823;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .btn-growth:hover {
+        transform: translateY(-1px);
+        border-color: #52627d;
+        color: #fff;
+    }
+
+    .btn-growth.primary {
+        background: linear-gradient(135deg, #4248d4, #9197ff);
+        color: white;
+    }
+
+    .btn-growth.soft {
+        background: rgba(170, 199, 255, .12);
+        border-color: rgba(170, 199, 255, .22);
+        color: #d8e4ff;
+    }
+
+    .btn-growth.good {
+        background: rgba(125, 211, 168, .12);
+        border-color: rgba(125, 211, 168, .28);
+        color: #7dd3a8;
+    }
+
+    .growth-ring {
+        width: 132px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #101621;
+        border: 1px solid rgba(255,255,255,.12);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .growth-ring-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+
+    .growth-ring-track {
+        fill: none;
+        stroke: rgba(255, 255, 255, .10);
+        stroke-width: 10;
+    }
+
+    .growth-ring-value {
+        fill: none;
+        stroke: #7dd3a8;
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-dasharray: 282.743;
+        animation: ringStrokeFill 1.15s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        animation-delay: var(--delay, 0s);
+    }
+
+    .growth-ring-inner {
+        width: 96px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #1c2026;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        border: 1px solid #303846;
+    }
+
+    .growth-ring strong {
+        font-size: 1.65rem;
+        line-height: 1;
+    }
+
+    .growth-ring span {
+        color: #9fb0d6;
+        font-size: .72rem;
+        font-weight: 800;
+    }
+
+    .state-card {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .state-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: .7rem;
+        border-bottom: 1px solid #30343d;
+        color: #c1c6d5;
+    }
+
+    .state-row:last-child {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .state-row strong {
+        color: #eef3ff;
+        text-align: left;
+    }
+
+    .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: end;
+        margin-bottom: .85rem;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 1.08rem;
+        font-weight: 950;
+    }
+
+    .section-subtitle {
+        margin: .25rem 0 0;
+        color: #9ca8bd;
+        font-size: .86rem;
+        line-height: 1.8;
+    }
+
+    .path-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: .85rem;
+    }
+
+    .path-card {
+        background: #20242c;
+        border: 1px solid #3c4351;
+        border-radius: .9rem;
+        padding: 1rem;
+        display: grid;
+        gap: .8rem;
+        align-content: start;
+        cursor: pointer;
+        transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .path-card:hover,
+    .path-card.selected {
+        transform: translateY(-2px);
+        border-color: #aac7ff;
+        background: #242a35;
+    }
+
+    .path-card.primary-path {
+        border-color: rgba(125, 211, 168, .55);
+    }
+
+    .path-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+    .path-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: .8rem;
+        display: grid;
+        place-items: center;
+        background: #101621;
+        flex-shrink: 0;
+    }
+
+    .path-icon-symbol {
+        font-size: 1.45rem;
+        line-height: 1;
+        color: #aac7ff;
+    }
+
+    .path-name {
+        margin: 0;
+        color: #eef3ff;
+        font-size: 1rem;
+        font-weight: 950;
+    }
+
+    .path-desc {
+        color: #aab4c7;
+        font-size: .82rem;
+        line-height: 1.75;
+        margin: .2rem 0 0;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: .25rem .65rem;
+        background: #111823;
+        border: 1px solid #303846;
+        color: #c8d4ee;
+        font-size: .76rem;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .chip.good {
+        color: #7dd3a8;
+        border-color: rgba(125, 211, 168, .3);
+        background: rgba(125, 211, 168, .08);
+    }
+
+    .progress-track {
+        height: 9px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #111823;
+        border: 1px solid #303846;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: var(--progress);
+        border-radius: inherit;
+        background: linear-gradient(90deg, #7dd3a8, #aac7ff);
+    }
+
+    .map-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .skill-tree {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .skill-node {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: .85rem;
+        position: relative;
+    }
+
+    .skill-node:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        top: 50px;
+        right: 23px;
+        width: 2px;
+        height: calc(100% - 8px);
+        background: #303846;
+    }
+
+    .skill-marker {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #101621;
+        border: 2px solid #414753;
+        color: #9fb0d6;
+        font-weight: 950;
+        z-index: 1;
+    }
+
+    .skill-node.done .skill-marker {
+        border-color: #7dd3a8;
+        color: #7dd3a8;
+    }
+
+    .skill-node.open .skill-marker {
+        border-color: #aac7ff;
+        color: #aac7ff;
+    }
+
+    .skill-body {
+        background: #20242c;
+        border: 1px solid #3c4351;
+        border-radius: .9rem;
+        padding: 1rem;
+        display: grid;
+        gap: .7rem;
+    }
+
+    .skill-title-row {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        align-items: flex-start;
+    }
+
+    .skill-title {
+        margin: 0;
+        font-size: .98rem;
+        font-weight: 950;
+    }
+
+    .skill-desc {
+        margin: .2rem 0 0;
+        color: #aab4c7;
+        font-size: .84rem;
+        line-height: 1.75;
+    }
+
+    .stage-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .5rem;
+    }
+
+    .stage {
+        background: #111823;
+        border: 1px solid #303846;
+        border-radius: .7rem;
+        padding: .55rem;
+        color: #97a4ba;
+        font-size: .74rem;
+        font-weight: 850;
+        text-align: center;
+    }
+
+    .stage.active {
+        color: #eef3ff;
+        border-color: #aac7ff;
+        background: rgba(170, 199, 255, .10);
+    }
+
+    .side-stack {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .signal-list {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .signal-row {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) 38px;
+        gap: .6rem;
+        align-items: center;
+        font-size: .8rem;
+        color: #c1c6d5;
+    }
+
+    .mission-box {
+        background: linear-gradient(135deg, rgba(125, 211, 168, .12), rgba(170, 199, 255, .08));
+        border: 1px solid rgba(125, 211, 168, .25);
+        border-radius: .9rem;
+        padding: 1rem;
+    }
+
+    .mission-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 950;
+    }
+
+    .mission-desc {
+        color: #c1c6d5;
+        line-height: 1.8;
+        font-size: .84rem;
+        margin: .45rem 0 .75rem;
+    }
+
+    .empty-box {
+        background: #20242c;
+        border: 1px dashed #414753;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        color: #c1c6d5;
+        line-height: 1.9;
+    }
+
+    @@media (max-width: 980px) {
+        .growth-hero,
+        .map-layout,
+        .hero-main {
+            grid-template-columns: 1fr;
+        }
+
+        .growth-ring {
+            width: 120px;
+            justify-self: start;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .growth-map-page {
+            padding: 1rem;
+        }
+
+        .stage-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-head,
+        .skill-title-row {
+            display: grid;
+        }
+    }
+
+    @@keyframes lifePathAtmosphere {
+        from {
+            transform: translate3d(0, 0, 0) scale(1);
+            opacity: .58;
+        }
+
+        to {
+            transform: translate3d(0, -10px, 0) scale(1.04);
+            opacity: .82;
+        }
+    }
+
+    @@keyframes ringStrokeFill {
+        from {
+            stroke-dashoffset: 282.743;
+        }
+
+        to {
+            stroke-dashoffset: var(--ring-target, 282.743);
+        }
+    }
+</style>
+
+<div class="growth-map-page">
+    <section class="growth-hero">
+        <div class="growth-panel hero-main animate-page">
+            <div>
+                <div class="eyebrow">نقشه رشد، نه انتخاب قطعی</div>
+                <h1 class="growth-title">مسیر من</h1>
+                <p class="growth-copy">
+                    اینجا مسیر تو مثل یک درخت مهارت زنده ساخته می‌شود: قابل تغییر، قابل ترکیب و وابسته به رفتارت در مأموریت‌ها.
+                    هر قدم از آشنایی شروع می‌شود، با تمرین تثبیت می‌شود و در دنیای واقعی معنا پیدا می‌کند.
+                </p>
+                <div class="hero-actions">
+                    @if (!IsLoggedIn)
+                    {
+                        <a class="btn-growth primary" href="/login">ورود / ثبت‌نام</a>
+                    }
+                    else if (dashboard?.NeedsOnboarding == true)
+                    {
+                        <a class="btn-growth primary" href="/onboarding">ساخت نقشه رشد</a>
+                    }
+                    else
+                    {
+                        <a class="btn-growth primary" href="/">انجام قدم امروز</a>
+                        <a class="btn-growth soft" href="/onboarding">بازسنجی مسیر</a>
+                    }
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div class="space-y-5">
-                        @foreach (var talent in talents)
-                        {
+            </div>
+            <div class="growth-ring" style="--delay:0.10s">
+                <svg class="growth-ring-svg" viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="growth-ring-track" cx="50" cy="50" r="45"></circle>
+                    <circle class="growth-ring-value" cx="50" cy="50" r="45" style="--ring-target:@RingDashOffset"></circle>
+                </svg>
+                <div class="growth-ring-inner">
+                    <div>
+                        <strong>@GrowthIndex</strong>
+                        <span>شاخص رشد</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="growth-panel state-card animate-page delay-1">
+            <div class="state-row">
+                <span>مسیر فعال</span>
+                <strong>@(dashboard?.ActivePath ?? "در حال خواندن...")</strong>
+            </div>
+            <div class="state-row">
+                <span>مهارت بعدی</span>
+                <strong>@(dashboard?.CurrentSkill ?? "نامشخص")</strong>
+            </div>
+            <div class="state-row">
+                <span>تداوم رشد</span>
+                <strong>@(dashboard?.DailyStreak ?? 0) روز</strong>
+            </div>
+            <div class="state-row">
+                <span>تجربه / کوین</span>
+                <strong>@(dashboard?.XP ?? 0) XP / @(dashboard?.Coin ?? 0)</strong>
+            </div>
+        </aside>
+    </section>
+
+    @if (isLoading)
+    {
+        <div class="empty-box">در حال ساخت نقشه رشد...</div>
+    }
+    else if (!IsLoggedIn)
+    {
+        <div class="empty-box">
+            برای اینکه نقشه رشد شخصی، قابل تغییر و متصل به فعالیت‌ها ساخته شود، ابتدا وارد حساب شو.
+        </div>
+    }
+    else
+    {
+        <section class="growth-panel animate-page delay-2">
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">مسیرهای رشد</h2>
+                    <p class="section-subtitle">یک مسیر می‌تواند اصلی باشد و مسیرهای دیگر به آن اضافه شوند؛ اینجا هیچ انتخابی قفل دائمی نیست.</p>
+                </div>
+                <div class="quick-links">
+                    <a class="btn-growth soft" href="/school">یادگیری</a>
+                    <a class="btn-growth soft" href="/games">تمرین بازی‌محور</a>
+                    <a class="btn-growth soft" href="/social">تعامل اجتماعی</a>
+                </div>
+            </div>
+
+            <div class="path-grid">
+                @{
+                    var pathIndex = 0;
+                }
+                @foreach (var path in pathNodes)
+                {
+                    <article class="path-card @(path.IsPrimary ? "primary-path" : "") @(selectedPathId == path.Path.Id ? "selected" : "") animate-page"
+                             style="@($"--delay:{pathIndex * 0.08:F2}s")"
+                             @onclick="() => SelectPath(path.Path.Id)">
+                        <div class="path-top">
                             <div>
-                                <div class="flex justify-between mb-1.5">
-                                    <span class="font-bold text-sm">@talent.Name</span>
-                                    <span class="font-bold text-sm" style="color: @talent.Color;">@talent.Percent٪</span>
-                                </div>
-                                <div class="w-full h-2.5 bg-surface-container-highest rounded-full overflow-hidden">
-                                    <div class="h-full rounded-full progress-bar"
-                                         style="width:@(talent.Percent)%; background: linear-gradient(to left, @talent.Color, @talent.ColorLight); animation-delay:@(talent.Delay)s;"></div>
-                                </div>
+                                <h3 class="path-name">@path.Path.Title</h3>
+                                <p class="path-desc">@path.Path.Description</p>
                             </div>
+                            <div class="path-icon">
+                                <span class="material-symbols-outlined path-icon-symbol" style="font-variation-settings:'FILL' 1;">@PathIcon(path.Path)</span>
+                            </div>
+                        </div>
+                        <div class="chips">
+                            @if (path.IsPrimary)
+                            {
+                                <span class="chip good">مسیر اصلی</span>
+                            }
+                            else if (path.IsActive)
+                            {
+                                <span class="chip">مسیر ترکیبی</span>
+                            }
+                            else
+                            {
+                                <span class="chip">قابل افزودن</span>
+                            }
+                            <span class="chip">@path.CompletedSkills/@path.TotalSkills مهارت</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="@($"--progress:{path.ProgressPercent}%; --delay:{pathIndex * 0.08 + 0.04:F2}s")"></div>
+                        </div>
+                        <div class="path-actions">
+                            @if (!path.IsPrimary)
+                            {
+                                <button class="btn-growth good" @onclick:stopPropagation="true" @onclick="() => SetPrimaryPathAsync(path.Path.Id)">اصلی شود</button>
+                            }
+                            @if (!path.IsActive)
+                            {
+                                <button class="btn-growth soft" @onclick:stopPropagation="true" @onclick="() => AddPathAsync(path.Path.Id)">افزودن به نقشه</button>
+                            }
+                        </div>
+                    </article>
+                    pathIndex++;
+                }
+            </div>
+        </section>
+
+        <section class="map-layout">
+            <div class="growth-panel animate-page delay-3">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">@SelectedPathTitle</h2>
+                        <p class="section-subtitle">هر مهارت سه لایه دارد: آشنایی، تمرین، و اجرای واقعی. وابستگی‌ها نشان می‌دهند قبل از جهش بعدی چه چیزی باید تقویت شود.</p>
+                    </div>
+                    <span class="chip good">@SelectedPathProgress% پیشرفت</span>
+                </div>
+
+                @if (SelectedPath?.Skills.Count == 0)
+                {
+                    <div class="empty-box">برای این مسیر هنوز مهارتی تعریف نشده است.</div>
+                }
+                else
+                {
+                    <div class="skill-tree">
+                        @{
+                            var skillIndex = 0;
+                        }
+                        @foreach (var skill in SelectedPath!.Skills)
+                        {
+                            <article class="skill-node @SkillNodeClass(skill) animate-page"
+                                     style="@($"--delay:{skillIndex * 0.08:F2}s")">
+                                <div class="skill-marker">@SkillMarker(skill)</div>
+                                <div class="skill-body">
+                                    <div class="skill-title-row">
+                                        <div>
+                                            <h3 class="skill-title">@skill.Skill.Title</h3>
+                                            <p class="skill-desc">@skill.Skill.Description</p>
+                                        </div>
+                                        <span class="chip">@SkillStatusLabel(skill.Status)</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="@($"--progress:{skill.ProgressPercent}%; --delay:{skillIndex * 0.08 + 0.04:F2}s")"></div>
+                                    </div>
+
+                                    <div class="stage-grid">
+                                        <div class="stage @(skill.ProgressPercent < 35 ? "active" : "")">۱. آشنایی سریع</div>
+                                        <div class="stage @(skill.ProgressPercent >= 35 && skill.ProgressPercent < 75 ? "active" : "")">۲. تمرین متنوع</div>
+                                        <div class="stage @(skill.ProgressPercent >= 75 ? "active" : "")">۳. رفتار واقعی</div>
+                                    </div>
+
+                                    <div class="chips">
+                                        <span class="chip">@skill.MissionCount مأموریت</span>
+                                        <span class="chip">@skill.CompletedMissionCount انجام‌شده</span>
+                                        @if (skill.RequiredSkills.Count > 0)
+                                        {
+                                            <span class="chip">پیش‌نیاز: @string.Join("، ", skill.RequiredSkills)</span>
+                                        }
+                                    </div>
+                                </div>
+                            </article>
+                            skillIndex++;
                         }
                     </div>
-                    <!-- Growth Index Circle -->
-                    <div class="flex justify-center relative">
-                        <div class="w-40 h-40 rounded-full border-8 border-white flex items-center justify-center relative bg-white shadow-xl">
-                            <span class="material-symbols-outlined text-5xl text-primary opacity-10 absolute">star</span>
-                            <div class="text-center relative z-10">
-                                <span class="block text-4xl font-black text-primary">۷۴</span>
-                                <span class="text-xs text-on-surface-variant font-bold">شاخص رشد</span>
+                }
+            </div>
+
+            <aside class="side-stack">
+                <div class="growth-panel animate-page delay-4">
+                    <div class="section-head">
+                        <div>
+                            <h2 class="section-title">سیگنال‌های رفتاری</h2>
+                            <p class="section-subtitle">این امتیازها با آزمون، مأموریت و نوع فعالیت تغییر می‌کنند.</p>
+                        </div>
+                    </div>
+                    <div class="signal-list">
+                        @{
+                            var signalIndex = 0;
+                        }
+                        @foreach (var signal in signals)
+                        {
+                            <div class="signal-row animate-page" style="@($"--delay:{signalIndex * 0.06:F2}s")">
+                                <span>@signal.Label</span>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="@($"--progress:{signal.Percent}%; --delay:{signalIndex * 0.06 + 0.03:F2}s")"></div>
+                                </div>
+                                <strong>@signal.Percent</strong>
                             </div>
+                            signalIndex++;
+                        }
+                    </div>
+                </div>
+
+                <div class="mission-box animate-page delay-5">
+                    @if (dashboard?.NeedsOnboarding == true)
+                    {
+                        <h2 class="mission-title">اول نقشه را بساز</h2>
+                        <p class="mission-desc">چند سناریو پاسخ بده تا مسیر اولیه ساخته شود؛ بعد می‌توانی آن را تغییر یا ترکیب کنی.</p>
+                        <a class="btn-growth primary" href="/onboarding">شروع آزمون</a>
+                    }
+                    else if (dashboard?.TodayMission is not null)
+                    {
+                        <h2 class="mission-title">@dashboard.TodayMission.MissionTitle</h2>
+                        <p class="mission-desc">@dashboard.TodayMission.MissionDescription</p>
+                        <div class="chips">
+                            <span class="chip">@dashboard.TodayMission.ConnectedSkill</span>
+                            <span class="chip">@dashboard.TodayMission.EstimatedTime دقیقه</span>
+                            <span class="chip">سختی @dashboard.TodayMission.Difficulty</span>
                         </div>
-                        <div class="badge-float absolute -top-3 -right-3 bg-tertiary-container text-on-tertiary-container px-3 py-1.5 rounded-xl font-bold shadow-lg border-white border-4 text-xs">تفکر تحلیلی</div>
-                    </div>
-                </div>
-            </div>
-            <div class="absolute top-0 right-0 w-48 h-48 bg-primary opacity-5 rounded-full -mr-24 -mt-24 pointer-events-none"></div>
-        </div>
-
-        <!-- Test CTA -->
-        <div class="lg:col-span-5 animate-page delay-2">
-            <div class="h-full bg-gradient-to-br from-secondary-container to-secondary rounded-2xl p-7 text-white relative overflow-hidden shadow-xl cursor-pointer active:scale-95 transition-transform min-h-[200px]">
-                <div class="relative z-10 flex flex-col h-full">
-                    <h2 class="text-2xl font-black mb-3 leading-tight">تست جدید<br />استعدادیابی</h2>
-                    <p class="text-white/80 text-sm mb-6 leading-relaxed">خودت رو بهتر بشناس و مسیر قهرمانیت رو همین امروز بساز.</p>
-                    <div class="mt-auto flex items-center gap-2 font-bold text-sm">
-                        <span>شروع آزمون</span>
-                        <span class="material-symbols-outlined">arrow_back</span>
-                    </div>
-                </div>
-                <span class="material-symbols-outlined absolute -bottom-6 -left-6 text-[10rem] opacity-15 -rotate-12 pointer-events-none">lightbulb</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Weekly Planner + Mood Tracker -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-page delay-3">
-
-        <!-- Weekly Planner -->
-        <div class="lg:col-span-2 bg-surface-container-low rounded-2xl p-7">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-extrabold text-on-background">برنامه‌ریز هفته</h2>
-                <span class="text-on-surface-variant text-xs font-medium bg-surface-container-lowest px-3 py-1 rounded-full">تعادل: عالی</span>
-            </div>
-            <div class="flex items-end justify-between gap-1.5 h-52">
-                @foreach (var day in weekDays)
-                {
-                    <div class="flex-1 flex flex-col items-center gap-2 h-full cursor-default">
-                        <div class="flex-1 w-full flex flex-col justify-end gap-0.5">
-                            <div class="w-full bg-secondary-container rounded-t opacity-80" style="height:@(day.Game)%"></div>
-                            <div class="w-full bg-primary-container opacity-80" style="height:@(day.Study)%"></div>
-                            <div class="w-full bg-surface-container-highest rounded-b opacity-80" style="height:@(day.Rest)%"></div>
+                        <div class="hero-actions">
+                            <a class="btn-growth primary" href="/">ثبت انجام مأموریت</a>
                         </div>
-                        <span class="text-[10px] font-bold text-on-surface-variant">@day.Name</span>
-                    </div>
-                }
-            </div>
-            <div class="mt-6 flex flex-wrap gap-5 justify-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-primary-container"></div>
-                    <span class="text-xs font-bold">آموزش</span>
+                    }
+                    else
+                    {
+                        <h2 class="mission-title">قدم بعدی آماده نیست</h2>
+                        <p class="mission-desc">وقتی برای مسیر انتخابی مهارت و مأموریت تعریف شود، پیشنهاد امروز اینجا نمایش داده می‌شود.</p>
+                    }
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-secondary-container"></div>
-                    <span class="text-xs font-bold">بازی</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-surface-container-highest"></div>
-                    <span class="text-xs font-bold">استراحت</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mood Tracker -->
-        <div class="bg-surface-container-lowest rounded-2xl p-7 shadow-sm flex flex-col">
-            <h2 class="text-xl font-extrabold text-on-background mb-1">حالت روحی امروز</h2>
-            <p class="text-on-surface-variant text-sm mb-6">حال امروزت را انتخاب کن</p>
-            <div class="grid grid-cols-2 gap-3 flex-1">
-                @foreach (var mood in moods)
-                {
-                    bool isSelected = selectedMood == mood.Key;
-                    <button class="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 active:scale-95 @(isSelected ? mood.ActiveClass + " border-transparent scale-105 shadow-lg" : "bg-surface-container-low border-transparent hover:border-outline-variant")"
-                            @onclick="() => SelectMood(mood.Key)">
-                        <span style="font-size:2.2rem; line-height:1; display:block;">@mood.Emoji</span>
-                        <span class="font-bold text-sm @(isSelected ? "text-white" : "text-on-surface")">@mood.Label</span>
-                    </button>
-                }
-            </div>
-            @if (!string.IsNullOrEmpty(selectedMood))
-            {
-                <div class="mt-4 bg-surface-container-low p-3 rounded-xl flex items-center gap-2">
-                    <span style="font-size:1.1rem;">@moods.First(m => m.Key == selectedMood).Emoji</span>
-                    <span class="text-xs font-bold text-on-surface">حالت «@moods.First(m => m.Key == selectedMood).Label» ثبت شد ✓</span>
-                </div>
-            }
-            <div class="mt-3 bg-surface-container-low p-3.5 rounded-xl flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span style="font-size:1rem;">📅</span>
-                    <span class="text-xs font-bold">ثبت شده در ۷ روز گذشته</span>
-                </div>
-                <span class="text-xs font-black text-tertiary">۱۰۰٪</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quote -->
-    <div class="rounded-2xl overflow-hidden min-h-[220px] flex items-center justify-center p-8 text-center bg-surface-container-highest animate-page delay-3">
-        <div class="max-w-xl mx-auto">
-            <span class="material-symbols-outlined text-4xl text-primary mb-3 block">format_quote</span>
-            <h3 class="text-xl md:text-2xl font-black text-on-background leading-relaxed italic mb-3">
-                «هر قدمی که برای شناخت خودت برمی‌داری، مسیری جدید به سوی جهانی ناشناخته باز می‌کنی.»
-            </h3>
-            <p class="text-on-surface-variant font-bold">— راهنمای کهن</p>
-        </div>
-    </div>
-
+            </aside>
+        </section>
+    }
 </div>
 
 @code {
-    private string activePeriod = "weekly";
-    private string selectedMood = "";
+    private const string StorageKey = "avina_user";
 
-    private record TalentItem(string Name, int Percent, string Color, string ColorLight, string Delay);
-    private record WeekDay(string Name, int Study, int Game, int Rest);
-    private record MoodItem(string Key, string Emoji, string Label, string ActiveClass);
+    private bool isLoading = true;
+    private DashboardDto? dashboard;
+    private List<PathNode> pathNodes = new();
+    private List<SignalItem> signals = new();
+    private int? selectedPathId;
 
-    private List<TalentItem> talents = new()
+    private bool IsLoggedIn => AuthState.IsLoggedIn && AuthState.CurrentUser?.Id > 0;
+    private PathNode? SelectedPath => pathNodes.FirstOrDefault(p => p.Path.Id == selectedPathId) ?? pathNodes.FirstOrDefault();
+    private string SelectedPathTitle => SelectedPath?.Path.Title ?? "درخت مهارت";
+    private int SelectedPathProgress => SelectedPath?.ProgressPercent ?? 0;
+    private int GrowthIndex => signals.Count == 0 ? 0 : Math.Clamp((int)Math.Round(signals.Average(s => s.Percent)), 0, 100);
+    private string RingDashOffset => (282.743 * (1 - (GrowthIndex / 100d))).ToString("0.###", CultureInfo.InvariantCulture);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        new("منطقی و ریاضی", 85, "#aac7ff", "#4090fe", "0.2"),
-        new("هنری و خلاق",   62, "#afc7f7", "#2e4770", "0.4"),
-        new("اجتماعی و همدلی", 45, "#ffb68c", "#e3711f", "0.6"),
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await RestoreUserFromStorageAsync();
+        await LoadGrowthMapAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RestoreUserFromStorageAsync()
+    {
+        if (AuthState.IsLoggedIn)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
+
+            var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+            if (user is not null)
+            {
+                AuthState.SetUser(user);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task LoadGrowthMapAsync()
+    {
+        isLoading = true;
+
+        try
+        {
+            if (!IsLoggedIn)
+            {
+                pathNodes = new();
+                signals = new();
+                dashboard = null;
+                return;
+            }
+
+            var userId = AuthState.CurrentUser!.Id;
+            dashboard = await GrowthEngineService.GetDashboardAsync(userId);
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            var paths = await db.GrowthPaths
+                .AsNoTracking()
+                .Where(p => p.IsActive)
+                .Include(p => p.Skills.OrderBy(s => s.Order))
+                .OrderBy(p => p.Id)
+                .ToListAsync();
+
+            var userPaths = await db.UserGrowthPaths
+                .AsNoTracking()
+                .Where(p => p.UserId == userId)
+                .ToListAsync();
+
+            var progress = await db.UserSkillProgresses
+                .AsNoTracking()
+                .Include(p => p.Skill)
+                .Where(p => p.UserId == userId)
+                .ToListAsync();
+
+            var dependencies = await db.SkillDependencies
+                .AsNoTracking()
+                .Include(d => d.RequiredSkill)
+                .ToListAsync();
+
+            var missionCounts = await db.Missions
+                .AsNoTracking()
+                .Where(m => m.IsActive)
+                .GroupBy(m => m.SkillId)
+                .Select(g => new { SkillId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.SkillId, x => x.Count);
+
+            var completedMissionCounts = await db.MissionSubmissions
+                .AsNoTracking()
+                .Where(s => s.UserId == userId && (s.Status == MissionSubmissionStatus.Approved || s.Status == MissionSubmissionStatus.AutoApproved))
+                .GroupBy(s => s.Mission.SkillId)
+                .Select(g => new { SkillId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.SkillId, x => x.Count);
+
+            pathNodes = paths.Select(path =>
+            {
+                var userPath = userPaths.FirstOrDefault(p => p.GrowthPathId == path.Id);
+                var skills = path.Skills
+                    .OrderBy(s => s.Order)
+                    .Select(skill =>
+                    {
+                        var itemProgress = progress.FirstOrDefault(p => p.SkillId == skill.Id);
+                        var required = dependencies
+                            .Where(d => d.SkillId == skill.Id)
+                            .Select(d => d.RequiredSkill.Title)
+                            .ToList();
+
+                        return new SkillNode(
+                            skill,
+                            itemProgress?.Status ?? UserSkillStatus.Locked,
+                            itemProgress?.ProgressPercent ?? 0,
+                            required,
+                            missionCounts.GetValueOrDefault(skill.Id),
+                            completedMissionCounts.GetValueOrDefault(skill.Id));
+                    })
+                    .ToList();
+
+                var pathProgress = skills.Count == 0 ? 0 : (int)Math.Round(skills.Average(s => s.ProgressPercent));
+
+                return new PathNode(
+                    path,
+                    userPath?.IsActive == true,
+                    userPath?.IsPrimary == true,
+                    pathProgress,
+                    skills.Count,
+                    skills.Count(s => s.Status == UserSkillStatus.Completed),
+                    skills);
+            }).ToList();
+
+            selectedPathId = pathNodes.FirstOrDefault(p => p.IsPrimary)?.Path.Id
+                ?? pathNodes.FirstOrDefault(p => p.IsActive)?.Path.Id
+                ?? pathNodes.FirstOrDefault()?.Path.Id;
+
+            var profile = await db.GrowthProfiles.AsNoTracking().FirstOrDefaultAsync(p => p.UserId == userId);
+            signals = BuildSignals(profile);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectPath(int pathId)
+    {
+        selectedPathId = pathId;
+    }
+
+    private async Task SetPrimaryPathAsync(int pathId)
+    {
+        if (!IsLoggedIn)
+        {
+            return;
+        }
+
+        await GrowthEngineService.SetUserPathAsync(new UserPathSelectionRequest
+        {
+            UserId = AuthState.CurrentUser!.Id,
+            PathId = pathId,
+            MakePrimary = true
+        });
+
+        await LoadGrowthMapAsync();
+    }
+
+    private async Task AddPathAsync(int pathId)
+    {
+        if (!IsLoggedIn)
+        {
+            return;
+        }
+
+        await GrowthEngineService.SetUserPathAsync(new UserPathSelectionRequest
+        {
+            UserId = AuthState.CurrentUser!.Id,
+            PathId = pathId,
+            MakePrimary = false
+        });
+
+        selectedPathId = pathId;
+        await LoadGrowthMapAsync();
+    }
+
+    private static List<SignalItem> BuildSignals(GrowthProfile? profile)
+    {
+        if (profile is null)
+        {
+            return new()
+            {
+                new("تحلیلی", 0),
+                new("خلاق", 0),
+                new("اجتماعی", 0),
+                new("تمرکز", 0),
+                new("مسئولیت", 0)
+            };
+        }
+
+        var max = new[]
+        {
+            profile.AnalyticalScore,
+            profile.CreativityScore,
+            profile.SocialScore,
+            profile.FocusScore,
+            profile.ResponsibilityScore,
+            profile.DisciplineScore,
+            profile.ResilienceScore,
+            profile.CuriosityScore,
+            profile.ConfidenceScore
+        }.DefaultIfEmpty(1).Max();
+
+        max = Math.Max(max, 10);
+
+        int Scale(int value) => Math.Clamp((int)Math.Round(value * 100.0 / max), 0, 100);
+
+        return new()
+        {
+            new("رشد تحلیلی", Scale(profile.AnalyticalScore)),
+            new("رشد خلاق", Scale(profile.CreativityScore)),
+            new("رشد اجتماعی", Scale(profile.SocialScore)),
+            new("تمرکز", Scale(profile.FocusScore)),
+            new("مسئولیت", Scale(profile.ResponsibilityScore)),
+            new("تاب‌آوری", Scale(profile.ResilienceScore))
+        };
+    }
+
+    private static string PathIcon(GrowthPath path) =>
+        !string.IsNullOrWhiteSpace(path.Icon) ? path.Icon : path.PathType switch
+        {
+            PathType.Analytical => "analytics",
+            PathType.Creative => "palette",
+            PathType.SocialLeadership => "groups",
+            PathType.MakerPractical => "build",
+            PathType.CareMeaning => "volunteer_activism",
+            _ => "explore"
+        };
+
+    private static string SkillNodeClass(SkillNode skill) => skill.Status switch
+    {
+        UserSkillStatus.Completed => "done",
+        UserSkillStatus.Unlocked or UserSkillStatus.InProgress => "open",
+        _ => "locked"
     };
 
-    private List<WeekDay> weekDays = new()
+    private static string SkillMarker(SkillNode skill) => skill.Status switch
     {
-        new("یکشنبه",  40, 30, 20),
-        new("دوشنبه",  50, 20, 25),
-        new("سه‌شنبه", 30, 40, 15),
-        new("چهارشنبه",45, 25, 25),
-        new("پنج‌شنبه",60, 10, 20),
-        new("جمعه",    10, 50, 40),
-        new("شنبه",    50, 20, 10),
+        UserSkillStatus.Completed => "✓",
+        UserSkillStatus.InProgress => "•",
+        UserSkillStatus.Unlocked => "↗",
+        _ => "قفل"
     };
 
-    private List<MoodItem> moods = new()
+    private static string SkillStatusLabel(UserSkillStatus status) => status switch
     {
-        new("great",  "😄", "عالی",   "bg-tertiary-container text-white"),
-        new("good",   "🙂", "خوب",    "bg-primary/30 border-primary/50"),
-        new("normal", "😐", "معمولی", "bg-surface-container-high"),
-        new("tired",  "😔", "خسته",   "bg-error-container"),
+        UserSkillStatus.Completed => "کامل‌شده",
+        UserSkillStatus.InProgress => "در حال رشد",
+        UserSkillStatus.Unlocked => "باز شده",
+        _ => "در انتظار پیش‌نیاز"
     };
 
-    private string GetPeriodClass(string period)
-        => activePeriod == period
-            ? "bg-white text-primary shadow-sm"
-            : "text-on-surface hover:bg-white/50 transition-colors";
+    private sealed record PathNode(
+        GrowthPath Path,
+        bool IsActive,
+        bool IsPrimary,
+        int ProgressPercent,
+        int TotalSkills,
+        int CompletedSkills,
+        List<SkillNode> Skills);
 
-    private void SetPeriod(string period) => activePeriod = period;
-    private void SelectMood(string mood) => selectedMood = mood;
+    private sealed record SkillNode(
+        Skill Skill,
+        UserSkillStatus Status,
+        int ProgressPercent,
+        List<string> RequiredSkills,
+        int MissionCount,
+        int CompletedMissionCount);
+
+    private sealed record SignalItem(string Label, int Percent);
 }

@@ -92,6 +92,18 @@ public sealed class GrowthEngineService(IDbContextFactory<AvinaDbContext> dbFact
             .FirstOrDefaultAsync(m => m.Id == missionId && m.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("ماموریت پیدا نشد.");
 
+        var hasPendingSubmission = await db.MissionSubmissions
+            .AnyAsync(
+                s => s.UserId == userId &&
+                     s.MissionId == missionId &&
+                     s.Status == MissionSubmissionStatus.Pending,
+                cancellationToken);
+
+        if (hasPendingSubmission)
+        {
+            throw new InvalidOperationException("ثبت قبلی این ماموریت هنوز در انتظار بررسی است.");
+        }
+
         ValidateMissionOutput(mission, textAnswer, mediaUrl);
 
         var submission = new MissionSubmission
@@ -583,22 +595,27 @@ public sealed class GrowthEngineService(IDbContextFactory<AvinaDbContext> dbFact
             return null;
         }
 
+        var blockedMissionIds = await GetBlockedMissionIdsAsync(db, userId, cancellationToken);
         var targetDifficulty = await CalculateAdaptiveDifficultyAsync(db, userId, cancellationToken);
         var candidateMissions = await db.Missions
             .AsNoTracking()
-            .Where(m => m.IsActive && m.PathId == path.Id && m.SkillId == currentSkill.SkillId)
+            .Include(m => m.Skill)
+            .Where(m => m.IsActive && m.PathId == path.Id && m.SkillId == currentSkill.SkillId && !blockedMissionIds.Contains(m.Id))
             .ToListAsync(cancellationToken);
 
         if (candidateMissions.Count == 0)
         {
             candidateMissions = await db.Missions
                 .AsNoTracking()
-                .Where(m => m.IsActive && m.PathId == path.Id)
+                .Include(m => m.Skill)
+                .Where(m => m.IsActive && m.PathId == path.Id && !blockedMissionIds.Contains(m.Id))
                 .ToListAsync(cancellationToken);
         }
 
         var selected = candidateMissions
-            .OrderBy(m => Math.Abs(m.Difficulty - targetDifficulty))
+            .OrderBy(m => m.SkillId == currentSkill.SkillId ? 0 : 1)
+            .ThenBy(m => m.Skill.Order)
+            .ThenBy(m => Math.Abs(m.Difficulty - targetDifficulty))
             .ThenByDescending(m => m.MissionType == MissionType.RealWorld)
             .ThenBy(m => m.Id)
             .FirstOrDefault();
@@ -618,10 +635,27 @@ public sealed class GrowthEngineService(IDbContextFactory<AvinaDbContext> dbFact
             Difficulty = selected.Difficulty,
             RewardXP = selected.RewardXP,
             RewardCoin = selected.RewardCoin,
-            ConnectedSkill = currentSkill.Skill.Title,
+            ConnectedSkill = selected.Skill.Title,
             ConnectedPath = path.Title,
             ReasonForRecommendation = reason
         };
+    }
+
+    private static async Task<HashSet<int>> GetBlockedMissionIdsAsync(
+        AvinaDbContext db,
+        int userId,
+        CancellationToken cancellationToken)
+    {
+        var missionIds = await db.MissionSubmissions
+            .AsNoTracking()
+            .Where(s =>
+                s.UserId == userId &&
+                s.Status != MissionSubmissionStatus.Rejected)
+            .Select(s => s.MissionId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return missionIds.ToHashSet();
     }
 
     private async Task<GrowthPath?> GetActivePathAsync(AvinaDbContext db, int userId, CancellationToken cancellationToken)

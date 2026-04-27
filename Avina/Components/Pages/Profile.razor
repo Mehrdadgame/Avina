@@ -126,7 +126,7 @@
 </style>
 
 <div class="profile-page">
-    <section class="profile-card">
+    <section class="profile-card animate-page">
         @if (!string.IsNullOrWhiteSpace(statusMessage))
         {
             <div class="status-box">@statusMessage</div>
@@ -170,7 +170,7 @@
         </div>
     </section>
 
-    <section class="stats-grid">
+    <section class="stats-grid animate-page delay-1">
         <div class="stat-card">
             <div class="stat-value">@currentUser?.Coin.ToString("N0")</div>
             <div class="stat-label">کوین</div>
@@ -193,7 +193,7 @@
         </div>
     </section>
 
-    <section class="profile-grid">
+    <section class="profile-grid animate-page delay-2">
         <div>
             <div class="tabs">
                 <button class="tab-btn @(activeTab == "overview" ? "active" : "")" @onclick='() => SetTab("overview")'>مرور</button>
@@ -205,7 +205,7 @@
 
             @if (activeTab == "overview")
             {
-                <section class="profile-card">
+                <section class="profile-card animate-page">
                     <h2 class="section-title">دستاوردها</h2>
                     <div class="list-stack">
                         @foreach (var achievement in achievementsList)
@@ -224,7 +224,7 @@
 
             @if (activeTab == "content")
             {
-                <section class="profile-card">
+                <section class="profile-card animate-page">
                     <h2 class="section-title">محتوای آپلودشده</h2>
                     @if (myUploadedContents.Count == 0)
                     {
@@ -250,7 +250,7 @@
 
             @if (activeTab == "courses")
             {
-                <section class="profile-card">
+                <section class="profile-card animate-page">
                     <h2 class="section-title">دوره‌های ثبت‌نام‌شده</h2>
                     @if (realEnrollments.Count == 0)
                     {
@@ -276,7 +276,7 @@
 
             @if (activeTab == "products")
             {
-                <section class="profile-card">
+                <section class="profile-card animate-page">
                     <h2 class="section-title">محصولات خریداری‌شده</h2>
                     @if (purchasedProducts.Count == 0)
                     {
@@ -317,7 +317,7 @@
 
             @if (activeTab == "settings")
             {
-                <section class="profile-card">
+                <section class="profile-card animate-page">
                     <h2 class="section-title">تنظیمات حساب</h2>
                     @if (!isAuthenticated)
                     {
@@ -403,7 +403,7 @@
             }
         </div>
 
-        <aside class="side-card">
+        <aside class="side-card animate-page delay-3">
             <h2 class="section-title">آمار سریع</h2>
             <div class="side-item"><span>عضویت از</span><strong>@currentUser?.CreatedAt.ToShamsiDate()</strong></div>
             <div class="side-item"><span>تعداد محتوا</span><strong>@myUploadedContents.Count</strong></div>
@@ -488,6 +488,46 @@
             new AchievementItem { Emoji = "🔥", Name = "یادگیرنده پرتلاش" },
             new AchievementItem { Emoji = "🚀", Name = "رشد سریع" }
         ];
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || AuthState.IsLoggedIn)
+        {
+            return;
+        }
+
+        var restored = await RestoreUserFromStorageAsync();
+        if (restored)
+        {
+            await LoadCurrentUserAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task<bool> RestoreUserFromStorageAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("lsGet", StorageKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            var user = JsonSerializer.Deserialize<UserCacheDto>(json);
+            if (user is null)
+            {
+                return false;
+            }
+
+            AuthState.SetUser(user);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private async Task LoadCurrentUserAsync()
