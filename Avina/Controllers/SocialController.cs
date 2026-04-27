@@ -43,12 +43,12 @@ public class SocialController(ISocialFeedService socialFeedService) : Controller
     }
 
     [Authorize]
-    [HttpPost("posts/{postId:int}/comments")]
-    public async Task<ActionResult<SocialFeedCommentDto>> AddComment(int postId, [FromBody] CreateSocialCommentRequest request, CancellationToken cancellationToken)
+    [HttpPost("posts/{postId:int}/reactions")]
+    public async Task<ActionResult<SetReactionResponse>> SetReaction(int postId, [FromBody] SetReactionRequest request, CancellationToken cancellationToken)
     {
         var userId = RequireUserId();
-        var comment = await socialFeedService.AddCommentAsync(userId, postId, request.Content, cancellationToken);
-        return Ok(comment);
+        var result = await socialFeedService.SetReactionAsync(userId, postId, request.Reaction, cancellationToken);
+        return Ok(new SetReactionResponse(result));
     }
 
     [Authorize]
@@ -79,6 +79,7 @@ public class SocialController(ISocialFeedService socialFeedService) : Controller
 }
 
 public record CreateSocialPostRequest(string Content, string? ImageUrl, string? VideoUrl);
-public record CreateSocialCommentRequest(string Content);
 public record ToggleLikeResponse(bool IsLiked);
 public record ToggleFollowResponse(bool IsFollowing);
+public record SetReactionRequest(Avina.Models.ReactionType? Reaction);
+public record SetReactionResponse(Avina.Models.ReactionType? Reaction);

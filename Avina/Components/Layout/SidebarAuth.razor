@@ -19,7 +19,6 @@
             </div>
         </div>
     </a>
-    <button class="btn-logout-sidebar" @onclick="HandleLogout">خروج از حساب</button>
 }
 else
 {
@@ -74,11 +73,6 @@ else
     private async Task OnAuthChanged()
     {
         await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task HandleLogout()
-    {
-        await JS.InvokeVoidAsync("logoutUser");
     }
 
     public void Dispose()

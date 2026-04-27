@@ -27,11 +27,25 @@ public class SocialComment
     public virtual User User { get; set; } = null!;
 }
 
+/// <summary>
+/// انواع reaction به سبک LinkedIn — کاربر فقط یک reaction روی هر پست می‌گذارد.
+/// </summary>
+public enum ReactionType
+{
+    Like = 1,        // 👍 می‌پسندم
+    Love = 2,        // ❤️ دوست‌داشتنی
+    Celebrate = 3,   // 👏 آفرین
+    Insightful = 4,  // 💡 الهام‌بخش
+    Curious = 5,     // 🤔 جالبه
+    Funny = 6        // 😄 خنده‌دار
+}
+
 public class SocialPostLike
 {
     public int Id { get; set; }
     public int PostId { get; set; }
     public int UserId { get; set; }
+    public ReactionType Reaction { get; set; } = ReactionType.Like;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual SocialPost Post { get; set; } = null!;

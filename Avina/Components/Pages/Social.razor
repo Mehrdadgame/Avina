@@ -3,6 +3,7 @@
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Forms
+@using Avina.Models
 @using Avina.Services
 @inject ISocialFeedService SocialFeedService
 @inject ISocialImageStorageService SocialImageStorageService
@@ -10,6 +11,7 @@
 @inject AuthStateService AuthState
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@implements IDisposable
 
 <PageTitle>دورهمی</PageTitle>
 
@@ -36,7 +38,7 @@
 .social-btn.ghost { background:#141a24; color:#aac7ff; border:1px solid #2f3c52; }
 .social-btn.follow { background:#172132; color:#d6e3ff; border:1px solid #395179; }
 .social-login-note { color:#b7c3de; font-size:.9rem; line-height:1.8; }
-.post-card { padding:1rem; display:flex; flex-direction:column; gap:.9rem; }
+.post-card { padding:1rem; display:flex; flex-direction:column; gap:.9rem; position:relative; overflow:visible; }
 .post-header { display:flex; gap:.85rem; align-items:flex-start; justify-content:space-between; }
 .post-author-wrap { display:flex; gap:.85rem; min-width:0; }
 .post-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; background:#1f2937; }
@@ -140,7 +142,15 @@
         {
             @foreach (var post in feed.Posts)
             {
-                <article class="social-panel post-card">
+                <article class="social-panel post-card @(reactionBurstPostId == post.Id ? "reaction-bursting" : "")">
+                    @if (reactionBurstPostId == post.Id && reactionBurstType.HasValue)
+                    {
+                        var burstType = reactionBurstType.Value;
+                        <div class="reaction-burst reaction-burst-@ReactionCssClass(burstType)" aria-hidden="true">
+                            <span>@ReactionEmoji(burstType)</span>
+                        </div>
+                    }
+
                     <div class="post-header">
                         <div class="post-author-wrap">
                             <img class="post-avatar" src="@ProfileAvatarService.ResolveProfileImage(post.AuthorImage, post.AuthorRole)" alt="@post.AuthorName" />
@@ -163,36 +173,57 @@
                         <video class="post-media" src="@post.VideoUrl" controls autoplay muted playsinline preload="metadata"></video>
                     }
 
-                    <div class="post-actions">
-                        <button class="action-btn @(post.IsLikedByCurrentUser ? "liked" : "")" @onclick="() => ToggleLikeAsync(post.Id)">
-                            Like @post.LikeCount
-                        </button>
-                        <button class="action-btn">Comment @post.CommentCount</button>
-                    </div>
-
-                    <div class="comment-list">
-                        @foreach (var comment in post.Comments)
-                        {
-                            <div class="comment-card">
-                                <div class="comment-head">
-                                    <img class="comment-avatar" src="@ProfileAvatarService.ResolveProfileImage(comment.UserImage, comment.UserRole)" alt="@comment.UserName" />
-                                    <div>
-                                        <div class="comment-name">@comment.UserName</div>
-                                        <div class="comment-time">@FormatRelative(comment.CreatedAt)</div>
-                                    </div>
-                                </div>
-                                <div class="comment-body">@comment.Content</div>
-                            </div>
-                        }
-                    </div>
-
-                    @if (currentUser is not null)
+                    @* ===== Reaction summary (LinkedIn style) ===== *@
+                    @if (post.TotalReactions > 0)
                     {
-                        <div class="comment-form">
-                            <input class="comment-input" @bind="commentDrafts[post.Id]" placeholder="کامنت..." />
-                            <button class="social-btn ghost" @onclick="() => AddCommentAsync(post.Id)">ارسال</button>
+                        <div class="reaction-summary">
+                            <div class="reaction-icons">
+                                @foreach (var rk in TopReactions(post.ReactionCounts))
+                                {
+                                    <span class="reaction-mini-icon" title="@ReactionLabel(rk)">@ReactionEmoji(rk)</span>
+                                }
+                            </div>
+                            <span class="reaction-count">@post.TotalReactions</span>
                         </div>
                     }
+
+                    @* ===== Action bar with reaction picker ===== *@
+                    <div class="post-actions linkedin-actions">
+                        <div class="reaction-wrapper @(openReactionPostId == post.Id ? "open" : "")"
+                             @onmouseenter="() => KeepReactionPicker(post.Id)"
+                             @onmouseleave="() => CloseReactionPicker(post.Id)">
+
+                            @if (openReactionPostId == post.Id)
+                            {
+                                <div class="reaction-popover" @onmouseenter="() => KeepReactionPicker(post.Id)">
+                                    @foreach (var r in AllReactions)
+                                    {
+                                        <button class="reaction-bubble reaction-@ReactionCssClass(r) @(post.MyReaction == r ? "active" : "")"
+                                                title="@ReactionLabel(r)"
+                                                @onclick="() => SelectReactionAsync(post.Id, r)">
+                                            <span class="reaction-emoji">@ReactionEmoji(r)</span>
+                                            <span class="reaction-tooltip">@ReactionLabel(r)</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+
+                            <button class="action-btn-li reaction-trigger @(post.MyReaction is not null ? "active" : "")"
+                                    @onmouseenter="() => OpenReactionPicker(post.Id)"
+                                    @onclick="() => QuickReactAsync(post.Id, post.MyReaction)">
+                                @if (post.MyReaction is null)
+                                {
+                                    <span class="material-symbols-outlined">thumb_up</span>
+                                    <span>پسندیدن</span>
+                                }
+                                else
+                                {
+                                    <span class="reaction-emoji-active">@ReactionEmoji(post.MyReaction.Value)</span>
+                                    <span class="reaction-label-active">@ReactionLabel(post.MyReaction.Value)</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
                 </article>
             }
         }
@@ -371,34 +402,155 @@
         }
     }
 
-    private async Task ToggleLikeAsync(int postId)
+    // ===== Reaction system (LinkedIn style) =====
+    private int? openReactionPostId;
+    private System.Threading.Timer? reactionCloseTimer;
+    private const int ReactionCloseDelayMs = 1000;
+    private int? reactionBurstPostId;
+    private ReactionType? reactionBurstType;
+    private int reactionBurstVersion;
+
+    private static readonly ReactionType[] AllReactions = new[]
+    {
+        ReactionType.Like,
+        ReactionType.Love,
+        ReactionType.Celebrate,
+        ReactionType.Insightful,
+        ReactionType.Curious,
+        ReactionType.Funny
+    };
+
+    private static string ReactionEmoji(ReactionType r) => r switch
+    {
+        ReactionType.Like => "👍",
+        ReactionType.Love => "❤️",
+        ReactionType.Celebrate => "👏",
+        ReactionType.Insightful => "💡",
+        ReactionType.Curious => "🤔",
+        ReactionType.Funny => "😄",
+        _ => "👍"
+    };
+
+    private static string ReactionLabel(ReactionType r) => r switch
+    {
+        ReactionType.Like => "می‌پسندم",
+        ReactionType.Love => "دوست‌داشتنی",
+        ReactionType.Celebrate => "آفرین",
+        ReactionType.Insightful => "الهام‌بخش",
+        ReactionType.Curious => "جالبه",
+        ReactionType.Funny => "خنده‌دار",
+        _ => "می‌پسندم"
+    };
+
+    private static string ReactionCssClass(ReactionType r) => r switch
+    {
+        ReactionType.Like => "like",
+        ReactionType.Love => "love",
+        ReactionType.Celebrate => "celebrate",
+        ReactionType.Insightful => "insightful",
+        ReactionType.Curious => "curious",
+        ReactionType.Funny => "funny",
+        _ => "like"
+    };
+
+    private static IEnumerable<ReactionType> TopReactions(Dictionary<ReactionType, int> counts)
+    {
+        return counts
+            .Where(kv => kv.Value > 0)
+            .OrderByDescending(kv => kv.Value)
+            .Take(3)
+            .Select(kv => kv.Key);
+    }
+
+    private void OpenReactionPicker(int postId)
+    {
+        CancelReactionCloseTimer();
+        openReactionPostId = postId;
+        StateHasChanged();
+    }
+
+    private void KeepReactionPicker(int postId)
+    {
+        CancelReactionCloseTimer();
+        openReactionPostId = postId;
+    }
+
+    private void CloseReactionPicker(int postId)
+    {
+        CancelReactionCloseTimer();
+        reactionCloseTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                if (openReactionPostId == postId)
+                {
+                    openReactionPostId = null;
+                    StateHasChanged();
+                }
+            });
+        }, null, ReactionCloseDelayMs, System.Threading.Timeout.Infinite);
+    }
+
+    private void CancelReactionCloseTimer()
+    {
+        reactionCloseTimer?.Dispose();
+        reactionCloseTimer = null;
+    }
+
+    private async Task SelectReactionAsync(int postId, ReactionType reaction)
     {
         if (currentUser is null)
         {
-            errorMessage = "برای لایک باید وارد شوی.";
+            errorMessage = "برای ری‌اکشن باید وارد شوی.";
             return;
         }
 
-        await SocialFeedService.ToggleLikeAsync(currentUser.Id, postId);
+        TriggerReactionBurst(postId, reaction);
+        await SocialFeedService.SetReactionAsync(currentUser.Id, postId, reaction);
+        CancelReactionCloseTimer();
+        openReactionPostId = null;
         await LoadFeedAsync();
     }
 
-    private async Task AddCommentAsync(int postId)
+    private async Task QuickReactAsync(int postId, ReactionType? currentReaction)
     {
         if (currentUser is null)
         {
-            errorMessage = "برای کامنت باید وارد شوی.";
+            errorMessage = "برای ری‌اکشن باید وارد شوی.";
             return;
         }
 
-        if (!commentDrafts.TryGetValue(postId, out var commentText))
-        {
-            return;
-        }
-
-        await SocialFeedService.AddCommentAsync(currentUser.Id, postId, commentText);
-        commentDrafts[postId] = string.Empty;
+        // اگر قبلاً ری‌اکشن داشته → toggle off (همان نوع پاس داده می‌شه)
+        // اگر نداشته → Like پیش‌فرض
+        var target = currentReaction ?? ReactionType.Like;
+        TriggerReactionBurst(postId, target);
+        await SocialFeedService.SetReactionAsync(currentUser.Id, postId, target);
+        CancelReactionCloseTimer();
+        openReactionPostId = null;
         await LoadFeedAsync();
+    }
+
+    private void TriggerReactionBurst(int postId, ReactionType reaction)
+    {
+        var version = ++reactionBurstVersion;
+        reactionBurstPostId = postId;
+        reactionBurstType = reaction;
+        StateHasChanged();
+        _ = ClearReactionBurstAsync(version);
+    }
+
+    private async Task ClearReactionBurstAsync(int version)
+    {
+        await Task.Delay(900);
+        await InvokeAsync(() =>
+        {
+            if (version == reactionBurstVersion)
+            {
+                reactionBurstPostId = null;
+                reactionBurstType = null;
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task HandleAuthStateChanged()
@@ -423,6 +575,7 @@
 
     public void Dispose()
     {
+        reactionCloseTimer?.Dispose();
         AuthState.StateChanged -= HandleAuthStateChanged;
     }
 }

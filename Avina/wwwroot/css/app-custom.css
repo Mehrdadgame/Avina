@@ -254,7 +254,8 @@ table {
 
 /* Today's Challenge Button */
 .btn-today-challenge {
-    width: 100%;
+    width: calc(100% - 1.7rem);
+    align-self: center;
     background: linear-gradient(135deg, #4248d4 0%, #9197ff 100%);
     color: white;
     border: none;
@@ -268,7 +269,7 @@ table {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin: 1rem auto 0;
     text-decoration: none;
     font-family: 'Vazirmatn', sans-serif;
     box-shadow: 0 4px 15px rgba(66, 72, 212, 0.3);

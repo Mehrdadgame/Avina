@@ -18,8 +18,24 @@ public sealed class SocialFeedPostDto
     public string? VideoUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public int LikeCount { get; set; }
-    public int CommentCount { get; set; }
+    public int CommentCount { get; set; } // kept for backward compat (always 0 now)
     public bool IsLikedByCurrentUser { get; set; }
+
+    /// <summary>
+    /// شمارش هر نوع reaction.
+    /// </summary>
+    public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
+
+    /// <summary>
+    /// reaction فعلی کاربر روی این پست (اگر داشته باشد).
+    /// </summary>
+    public ReactionType? MyReaction { get; set; }
+
+    /// <summary>
+    /// مجموع همه reactionها.
+    /// </summary>
+    public int TotalReactions => ReactionCounts.Values.Sum();
+
     public List<SocialFeedCommentDto> Comments { get; set; } = new();
 }
 
@@ -68,8 +84,14 @@ public interface ISocialFeedService
 {
     Task<SocialFeedResultDto> GetFeedAsync(int? currentUserId = null, int? authorId = null, CancellationToken cancellationToken = default);
     Task<SocialFeedPostDto> CreatePostAsync(int userId, string content, string? imageUrl = null, string? videoUrl = null, CancellationToken cancellationToken = default);
-    Task<SocialFeedCommentDto> AddCommentAsync(int userId, int postId, string content, CancellationToken cancellationToken = default);
     Task<bool> ToggleLikeAsync(int userId, int postId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// reaction کاربر روی پست را تنظیم می‌کند. اگر null پاس بدید، reaction حذف می‌شود.
+    /// اگر همان reaction قبلی پاس بدید، حذف می‌شود (toggle).
+    /// </summary>
+    Task<ReactionType?> SetReactionAsync(int userId, int postId, ReactionType? reaction, CancellationToken cancellationToken = default);
+
     Task<SocialProfileDto?> GetProfileAsync(int profileUserId, int? currentUserId = null, CancellationToken cancellationToken = default);
     Task<bool> ToggleFollowAsync(int followerId, int followingId, CancellationToken cancellationToken = default);
 }
@@ -132,35 +154,38 @@ public sealed class SocialFeedService(
 
         return new SocialFeedResultDto
         {
-            Posts = posts.Select(p => new SocialFeedPostDto
-            {
-                Id = p.Id,
-                AuthorId = p.UserId,
-                AuthorName = p.User.Name,
-                AuthorRole = p.User.Role,
-                AuthorImage = profileAvatarService.ResolveProfileImage(p.User.ProfileImage, p.User.Role),
-                Content = p.Content,
-                ImageUrl = p.ImageUrl,
-                VideoUrl = p.VideoUrl,
-                CreatedAt = p.CreatedAt,
-                LikeCount = p.Likes.Count,
-                CommentCount = p.Comments.Count,
-                IsLikedByCurrentUser = currentUserId.HasValue && p.Likes.Any(l => l.UserId == currentUserId.Value),
-                Comments = p.Comments
-                    .OrderBy(c => c.CreatedAt)
-                    .Select(c => new SocialFeedCommentDto
-                    {
-                        Id = c.Id,
-                        UserId = c.UserId,
-                        UserName = c.User.Name,
-                        UserRole = c.User.Role,
-                        UserImage = profileAvatarService.ResolveProfileImage(c.User.ProfileImage, c.User.Role),
-                        Content = c.Content,
-                        CreatedAt = c.CreatedAt
-                    })
-                    .ToList()
-            }).ToList(),
+            Posts = posts.Select(p => MapPost(p, currentUserId)).ToList(),
             SuggestedUsers = suggestedUsers
+        };
+    }
+
+    private SocialFeedPostDto MapPost(SocialPost p, int? currentUserId)
+    {
+        var counts = p.Likes
+            .GroupBy(l => l.Reaction)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var myReaction = currentUserId.HasValue
+            ? p.Likes.FirstOrDefault(l => l.UserId == currentUserId.Value)?.Reaction
+            : null;
+
+        return new SocialFeedPostDto
+        {
+            Id = p.Id,
+            AuthorId = p.UserId,
+            AuthorName = p.User.Name,
+            AuthorRole = p.User.Role,
+            AuthorImage = profileAvatarService.ResolveProfileImage(p.User.ProfileImage, p.User.Role),
+            Content = p.Content,
+            ImageUrl = p.ImageUrl,
+            VideoUrl = p.VideoUrl,
+            CreatedAt = p.CreatedAt,
+            LikeCount = p.Likes.Count,
+            CommentCount = 0, // comments disabled per design
+            IsLikedByCurrentUser = myReaction is not null,
+            ReactionCounts = counts,
+            MyReaction = myReaction,
+            Comments = new List<SocialFeedCommentDto>()
         };
     }
 
@@ -205,73 +230,57 @@ public sealed class SocialFeedService(
         };
     }
 
-    public async Task<SocialFeedCommentDto> AddCommentAsync(int userId, int postId, string content, CancellationToken cancellationToken = default)
-    {
-        var normalizedContent = content.Trim();
-        if (string.IsNullOrWhiteSpace(normalizedContent))
-        {
-            throw new InvalidOperationException("متن کامنت نمی‌تواند خالی باشد.");
-        }
-
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-
-        var postExists = await db.SocialPosts.AnyAsync(p => p.Id == postId, cancellationToken);
-        if (!postExists)
-        {
-            throw new InvalidOperationException("پست مورد نظر پیدا نشد.");
-        }
-
-        var comment = new SocialComment
-        {
-            PostId = postId,
-            UserId = userId,
-            Content = normalizedContent,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        db.SocialComments.Add(comment);
-        await db.SaveChangesAsync(cancellationToken);
-
-        var savedComment = await db.SocialComments
-            .AsNoTracking()
-            .Include(c => c.User)
-            .FirstAsync(c => c.Id == comment.Id, cancellationToken);
-
-        return new SocialFeedCommentDto
-        {
-            Id = savedComment.Id,
-            UserId = savedComment.UserId,
-            UserName = savedComment.User.Name,
-            UserRole = savedComment.User.Role,
-            UserImage = profileAvatarService.ResolveProfileImage(savedComment.User.ProfileImage, savedComment.User.Role),
-            Content = savedComment.Content,
-            CreatedAt = savedComment.CreatedAt
-        };
-    }
-
     public async Task<bool> ToggleLikeAsync(int userId, int postId, CancellationToken cancellationToken = default)
     {
+        // backward compat: simple like = Reaction.Like
+        var result = await SetReactionAsync(userId, postId, ReactionType.Like, cancellationToken);
+        return result is not null;
+    }
+
+    public async Task<ReactionType?> SetReactionAsync(int userId, int postId, ReactionType? reaction, CancellationToken cancellationToken = default)
+    {
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var existingLike = await db.SocialPostLikes
+        var existing = await db.SocialPostLikes
             .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == userId, cancellationToken);
 
-        if (existingLike is null)
+        if (reaction is null)
+        {
+            // حذف reaction
+            if (existing is not null)
+            {
+                db.SocialPostLikes.Remove(existing);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            return null;
+        }
+
+        if (existing is null)
         {
             db.SocialPostLikes.Add(new SocialPostLike
             {
                 PostId = postId,
                 UserId = userId,
+                Reaction = reaction.Value,
                 CreatedAt = DateTime.UtcNow
             });
-
             await db.SaveChangesAsync(cancellationToken);
-            return true;
+            return reaction;
         }
 
-        db.SocialPostLikes.Remove(existingLike);
+        // اگر همان reaction قبلی → toggle off
+        if (existing.Reaction == reaction.Value)
+        {
+            db.SocialPostLikes.Remove(existing);
+            await db.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
+        // تغییر نوع reaction
+        existing.Reaction = reaction.Value;
+        existing.CreatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return false;
+        return reaction;
     }
 
     public async Task<SocialProfileDto?> GetProfileAsync(int profileUserId, int? currentUserId = null, CancellationToken cancellationToken = default)

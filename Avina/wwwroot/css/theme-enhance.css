@@ -1,0 +1,1071 @@
+/* ====== Avina Theme Enhancements ====== */
+/* بهبودهای جذاب برای تم آبی-بنفش-طلایی */
+/* loaded after app-custom.css to override */
+
+/* ===== Sidebar - gradient + ستاره‌های ظریف داخلش ===== */
+.sidebar {
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 215, 140, 0.12), transparent 60%),
+        linear-gradient(180deg, #0d1235 0%, #1f1547 45%, #2a0e4a 100%) !important;
+    border-left: 1px solid rgba(255, 215, 140, 0.12) !important;
+    box-shadow: 0 0 40px rgba(76, 29, 149, 0.3);
+    /* بدون scrollbar روی کل sidebar - فقط nav اگر لازم باشه */
+    overflow: hidden !important;
+    padding: 1.25rem 1rem !important;
+}
+
+/* فقط بخش nav اگر بلند بود scroll بشه */
+.sidebar-nav {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 150, 255, 0.3) transparent;
+    padding-left: 4px; /* جا برای scrollbar نازک */
+}
+
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(180, 150, 255, 0.3);
+    border-radius: 999px;
+}
+
+/* Logo brand */
+.sidebar .logo,
+.sidebar .sidebar-header h1 {
+    background: linear-gradient(90deg, #ffd78c 0%, #ffffff 60%, #b496ff 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 24px rgba(255, 215, 140, 0.25);
+}
+
+.sidebar .logo-subtitle {
+    color: rgba(255, 215, 140, 0.7) !important;
+    letter-spacing: 2px;
+    font-size: 0.7rem !important;
+    font-weight: 700;
+}
+
+/* Navigation items */
+.sidebar .nav-item {
+    margin: 0.2rem 0.5rem !important;
+    padding: 0.7rem 0.9rem !important;
+    border-radius: 0.85rem !important;
+    color: rgba(225, 220, 255, 0.75) !important;
+    font-weight: 600 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    text-decoration: none !important;
+}
+
+.sidebar .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, #ffd78c, #b496ff);
+    border-radius: 0 2px 2px 0;
+    transition: height 0.25s ease;
+}
+
+.sidebar .nav-item:hover {
+    background: linear-gradient(90deg, rgba(255, 215, 140, 0.08), rgba(180, 150, 255, 0.06)) !important;
+    color: #fff !important;
+    transform: translateX(-3px);
+}
+
+.sidebar .nav-item:hover::before {
+    height: 60%;
+}
+
+.sidebar .nav-item.active {
+    background: linear-gradient(90deg, rgba(255, 215, 140, 0.18), rgba(180, 150, 255, 0.12)) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 16px rgba(180, 150, 255, 0.2);
+}
+
+.sidebar .nav-item.active::before {
+    height: 70%;
+}
+
+.sidebar .nav-icon {
+    font-size: 1.2rem;
+    transition: transform 0.25s;
+}
+
+.sidebar .nav-item:hover .nav-icon {
+    transform: scale(1.15);
+}
+
+/* ===== Premium nav icons (Material Symbols + gradient bubble) ===== */
+.sidebar .nav-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(170, 199, 255, 0.10), rgba(180, 150, 255, 0.10));
+    border: 1px solid rgba(170, 199, 255, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar .nav-icon-wrap .material-symbols-outlined {
+    font-size: 1.3rem !important;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    background: var(--ic-grad, linear-gradient(135deg, #aac7ff, #b496ff));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.sidebar .nav-icon-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ic-grad-bg, linear-gradient(135deg, rgba(170, 199, 255, 0.0), rgba(180, 150, 255, 0.0)));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Hover: gradient شدید‌تر و آیکون filled */
+.sidebar .nav-item:hover .nav-icon-wrap {
+    border-color: rgba(255, 215, 140, 0.4);
+    transform: scale(1.05) rotate(-3deg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px rgba(180, 150, 255, 0.25);
+}
+
+.sidebar .nav-item:hover .nav-icon-wrap::before {
+    opacity: 1;
+}
+
+.sidebar .nav-item:hover .nav-icon-wrap .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    transform: scale(1.05);
+}
+
+/* Active state: glow کامل */
+.sidebar .nav-item.active .nav-icon-wrap {
+    border-color: rgba(255, 215, 140, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 28px rgba(255, 215, 140, 0.3);
+    background: var(--ic-grad-bg-active, linear-gradient(135deg, rgba(170, 199, 255, 0.2), rgba(180, 150, 255, 0.2)));
+}
+
+.sidebar .nav-item.active .nav-icon-wrap .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+}
+
+/* رنگ‌بندی هر آیکون */
+.sidebar .nav-ic-home {
+    --ic-grad: linear-gradient(135deg, #aac7ff, #6c8aff);
+    --ic-grad-bg: linear-gradient(135deg, rgba(170, 199, 255, 0.18), rgba(108, 138, 255, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(170, 199, 255, 0.25), rgba(108, 138, 255, 0.25));
+}
+.sidebar .nav-ic-school {
+    --ic-grad: linear-gradient(135deg, #ffd78c, #ff9a55);
+    --ic-grad-bg: linear-gradient(135deg, rgba(255, 215, 140, 0.18), rgba(255, 154, 85, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(255, 215, 140, 0.28), rgba(255, 154, 85, 0.25));
+}
+.sidebar .nav-ic-games {
+    --ic-grad: linear-gradient(135deg, #b496ff, #d4a5ff);
+    --ic-grad-bg: linear-gradient(135deg, rgba(180, 150, 255, 0.18), rgba(212, 165, 255, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(180, 150, 255, 0.28), rgba(212, 165, 255, 0.25));
+}
+.sidebar .nav-ic-path {
+    --ic-grad: linear-gradient(135deg, #7dd3a8, #aac7ff);
+    --ic-grad-bg: linear-gradient(135deg, rgba(125, 211, 168, 0.18), rgba(170, 199, 255, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(125, 211, 168, 0.28), rgba(170, 199, 255, 0.25));
+}
+.sidebar .nav-ic-store {
+    --ic-grad: linear-gradient(135deg, #ffb68c, #ffd78c);
+    --ic-grad-bg: linear-gradient(135deg, rgba(255, 182, 140, 0.18), rgba(255, 215, 140, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(255, 182, 140, 0.28), rgba(255, 215, 140, 0.25));
+}
+.sidebar .nav-ic-social {
+    --ic-grad: linear-gradient(135deg, #ff7e7e, #ffb68c);
+    --ic-grad-bg: linear-gradient(135deg, rgba(255, 126, 126, 0.18), rgba(255, 182, 140, 0.18));
+    --ic-grad-bg-active: linear-gradient(135deg, rgba(255, 126, 126, 0.28), rgba(255, 182, 140, 0.25));
+}
+
+/* Today challenge button - the highlight CTA */
+.sidebar .btn-today-challenge {
+    width: calc(100% - 1.7rem) !important;
+    max-width: calc(100% - 1.7rem) !important;
+    align-self: center !important;
+    margin: 1.2rem auto !important;
+    background: linear-gradient(135deg, #b496ff 0%, #6c8aff 100%) !important;
+    color: #fff !important;
+    padding: 0.85rem 1rem !important;
+    border-radius: 0.95rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 8px 24px rgba(108, 138, 255, 0.4) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.25s !important;
+}
+
+.sidebar .btn-today-challenge::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: translateX(-100%);
+    animation: btnShimmer 3s ease-in-out infinite;
+}
+
+@keyframes btnShimmer {
+    0%, 60% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+.sidebar .btn-today-challenge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(108, 138, 255, 0.55) !important;
+}
+
+/* Sidebar footer (user) */
+.sidebar-footer {
+    background: rgba(15, 18, 35, 0.45) !important;
+    border-top: 1px solid rgba(255, 215, 140, 0.15) !important;
+    backdrop-filter: blur(10px);
+}
+
+/* ===== Top Header ===== */
+.top-header {
+    background: rgba(13, 16, 35, 0.7) !important;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(170, 199, 255, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.top-header .search-box input {
+    background: rgba(28, 32, 60, 0.6) !important;
+    border: 1px solid rgba(170, 199, 255, 0.15) !important;
+    color: #f1f5ff !important;
+    border-radius: 0.85rem !important;
+    transition: all 0.2s;
+}
+
+.top-header .search-box input::placeholder {
+    color: rgba(170, 199, 255, 0.5);
+}
+
+.top-header .search-box input:focus {
+    border-color: rgba(255, 215, 140, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(255, 215, 140, 0.12) !important;
+    background: rgba(28, 32, 60, 0.85) !important;
+    outline: none !important;
+}
+
+.btn-upload {
+    background: linear-gradient(135deg, #b496ff 0%, #6c8aff 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 0.85rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    box-shadow: 0 4px 16px rgba(108, 138, 255, 0.35);
+    transition: all 0.2s;
+}
+
+.btn-upload:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(108, 138, 255, 0.5);
+}
+
+.btn-notification {
+    background: rgba(28, 32, 60, 0.6) !important;
+    border: 1px solid rgba(170, 199, 255, 0.15) !important;
+    border-radius: 0.85rem !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s;
+    position: relative;
+    text-decoration: none !important;
+}
+
+.btn-notification:hover {
+    border-color: rgba(255, 215, 140, 0.5) !important;
+    transform: translateY(-1px);
+}
+
+.btn-notification.has-unread::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: #ff5e5e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(13, 16, 35, 0.9), 0 0 12px rgba(255, 94, 94, 0.6);
+    animation: notifPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes notifPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.85; }
+}
+
+.btn-menu {
+    background: rgba(28, 32, 60, 0.6) !important;
+    border: 1px solid rgba(170, 199, 255, 0.15) !important;
+    color: #d4d8f5 !important;
+    border-radius: 0.85rem !important;
+    width: 40px !important;
+    height: 40px !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-menu:hover {
+    border-color: rgba(255, 215, 140, 0.5) !important;
+    color: #ffd78c !important;
+}
+
+/* ===== Avatar/Profile in sidebar ===== */
+.guest-avatar,
+.sidebar-footer img,
+.sidebar-footer .user-avatar {
+    box-shadow: 0 4px 16px rgba(180, 150, 255, 0.35);
+    border: 2px solid rgba(255, 215, 140, 0.4) !important;
+}
+
+/* ===== Sidebar Coin row glow ===== */
+.sidebar-coin-row {
+    color: #ffd78c !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 12px rgba(255, 215, 140, 0.4);
+}
+
+/* ===== Notification badge sparkle ===== */
+.notification-badge {
+    background: linear-gradient(135deg, #ff5e5e, #ff9a55) !important;
+    box-shadow: 0 2px 8px rgba(255, 94, 94, 0.5) !important;
+}
+
+/* ===== Main content area subtle inner padding ===== */
+.main-content {
+    background: transparent !important;
+}
+
+/* ===== Better focus states across the app ===== */
+*:focus-visible {
+    outline: 2px solid rgba(255, 215, 140, 0.6) !important;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ===== Smooth scroll ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===== Custom scrollbar ===== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(13, 16, 35, 0.4);
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(180, 150, 255, 0.4), rgba(108, 138, 255, 0.4));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(180, 150, 255, 0.7), rgba(255, 215, 140, 0.5));
+    background-clip: padding-box;
+}
+
+/* ===== Selection color ===== */
+::selection {
+    background: rgba(255, 215, 140, 0.4);
+    color: #fff;
+}
+
+/* ===== Mobile fixes ===== */
+
+/* صفحه راست‌چین، ولی هیچ horizontal scroll اضافی نداشته باشد */
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100%;
+}
+
+/* main-content روی موبایل padding مناسب و بدون scroll horizontal */
+.main-content {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* در موبایل: مطمئن می‌شیم backdrop زیر sidebar و sidebar روی همه چیزه */
+@media (max-width: 768px) {
+    .sidebar-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1100 !important;
+        background: rgba(5, 8, 25, 0.75) !important;
+        /* blur ضعیف تر تا content پشتش معلوم باشه ولی sidebar هم درست خونده شه */
+        backdrop-filter: blur(3px) !important;
+        -webkit-backdrop-filter: blur(3px) !important;
+    }
+
+    .sidebar {
+        z-index: 1200 !important;
+        /* OPAQUE کامل - بدون شفافیت */
+        background:
+            radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 215, 140, 0.18), transparent 60%),
+            linear-gradient(180deg, #14163a 0%, #261758 45%, #341354 100%) !important;
+        opacity: 1 !important;
+        box-shadow: -12px 0 40px rgba(0, 0, 0, 0.7), 0 0 60px rgba(76, 29, 149, 0.5) !important;
+        backdrop-filter: none !important;
+        /* مهم: اگر body::before (Aurora) روی sidebar اعمال شده، خنثی کنیم */
+        isolation: isolate;
+    }
+
+    .sidebar .nav-label {
+        color: rgba(255, 255, 255, 0.92) !important;
+    }
+    .sidebar .nav-item.active .nav-label {
+        color: #fff !important;
+        font-weight: 800;
+    }
+
+    /* جلوگیری از body scroll وقتی sidebar بازه */
+    body:has(.sidebar.open) {
+        overflow: hidden;
+    }
+
+    /* در موبایل، header را ساده کن */
+    .top-header {
+        padding: 0.6rem 0.85rem !important;
+    }
+
+    .btn-upload .upload-icon ~ span,
+    .btn-upload span:not(.upload-icon) {
+        display: none;
+    }
+    .btn-upload {
+        padding: 0.5rem !important;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+    }
+
+    /* Hero card padding کمتر */
+    .growth-dashboard {
+        padding: 1rem 0.75rem 2rem !important;
+    }
+    .hero-card { padding: 1.25rem 1rem !important; }
+    .stats-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ====== Profile - Instagram-style post grid ====== */
+.ig-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.ig-tile {
+    aspect-ratio: 1;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(28, 32, 60, 0.85), rgba(20, 24, 45, 0.85));
+    border: 1px solid rgba(170, 199, 255, 0.12);
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: transform 0.25s, box-shadow 0.25s;
+    display: block;
+}
+
+.ig-tile:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(180, 150, 255, 0.25);
+    z-index: 2;
+}
+
+.ig-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+}
+
+.ig-tile:hover img {
+    transform: scale(1.08);
+}
+
+.ig-tile-video {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(180, 150, 255, 0.25), rgba(108, 138, 255, 0.25));
+}
+
+.ig-tile-video .material-symbols-outlined {
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+.ig-tile-text {
+    width: 100%;
+    height: 100%;
+    padding: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(255, 215, 140, 0.10), transparent 50%),
+        linear-gradient(135deg, #2a1f50 0%, #1a1f3a 100%);
+    overflow: hidden;
+}
+
+.ig-tile-text p {
+    margin: 0;
+    color: #e0e2ec;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    font-weight: 500;
+    text-align: center;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+}
+
+.ig-tile-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.75) 100%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1rem;
+    padding-bottom: 0.65rem;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.ig-tile:hover .ig-tile-overlay {
+    opacity: 1;
+}
+
+.ig-tile-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ig-tile-stat .material-symbols-outlined {
+    font-size: 1rem;
+    font-variation-settings: 'FILL' 1;
+}
+
+@media (max-width: 600px) {
+    .ig-grid { gap: 4px; }
+    .ig-tile-text p { font-size: 0.7rem; -webkit-line-clamp: 4; }
+}
+
+/* ===== Profile page mobile fixes ===== */
+@media (max-width: 768px) {
+    /* تب‌های پروفایل - scroll افقی روان */
+    .tabs {
+        gap: 0.5rem !important;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        flex-wrap: nowrap !important;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.25rem 0 0.5rem 0 !important;
+        margin: 0 -0.5rem 1rem -0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-left: 0.5rem !important;
+        /* مخفی کردن scrollbar */
+        scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 0.55rem 1rem !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap;
+        background: rgba(28, 32, 60, 0.6) !important;
+        border: 1px solid rgba(170, 199, 255, 0.18) !important;
+        border-radius: 999px !important;
+        color: #c1cde0 !important;
+        font-weight: 700 !important;
+    }
+    .tab-btn.active {
+        background: linear-gradient(135deg, #b496ff, #6c8aff) !important;
+        color: #fff !important;
+        border-color: transparent !important;
+        box-shadow: 0 4px 16px rgba(180, 150, 255, 0.4);
+    }
+
+    /* stats-grid پروفایل: 2 ستون مرتب */
+    .profile-grid .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    /* profile-card padding کمتر روی موبایل */
+    .profile-card { padding: 1rem !important; }
+}
+
+/* در دسکتاپ هم تب‌ها مدرن‌تر */
+.tab-btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
+}
+.tab-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 215, 140, 0.4) !important;
+}
+
+/* ====== Reactions (LinkedIn style) ====== */
+
+/* Summary row above the action bar */
+.reaction-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(170, 199, 255, 0.10);
+    margin-bottom: 0.5rem;
+}
+
+.reaction-icons {
+    display: inline-flex;
+    align-items: center;
+}
+
+.reaction-mini-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2a3050, #1a1f3a);
+    border: 2px solid #1a1f3a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-left: -6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.reaction-mini-icon:first-child { margin-left: 0; }
+.reaction-mini-icon:hover { transform: scale(1.15); z-index: 2; }
+
+.reaction-count {
+    color: #a8b3d4;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-right: 0.4rem;
+}
+
+/* Action bar */
+.linkedin-actions {
+    display: flex;
+    justify-content: center;
+    padding: 0.4rem 0;
+}
+
+/* The button + popover wrapper */
+.reaction-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.action-btn-li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 1.25rem;
+    background: transparent;
+    border: 1px solid rgba(170, 199, 255, 0.18);
+    border-radius: 0.8rem;
+    color: #c1cde0;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-btn-li:hover {
+    background: rgba(170, 199, 255, 0.08);
+    border-color: rgba(170, 199, 255, 0.4);
+    color: #fff;
+}
+
+.action-btn-li.active {
+    background: linear-gradient(135deg, rgba(108, 138, 255, 0.18), rgba(180, 150, 255, 0.18));
+    border-color: rgba(180, 150, 255, 0.5);
+    color: #b496ff;
+    box-shadow: 0 4px 16px rgba(180, 150, 255, 0.25);
+}
+
+.action-btn-li .material-symbols-outlined {
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.action-btn-li:hover .material-symbols-outlined {
+    transform: scale(1.15) rotate(-8deg);
+}
+
+.reaction-emoji-active {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.reaction-label-active {
+    background: linear-gradient(90deg, #b496ff, #ffd78c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Popover with all 6 reactions */
+.reaction-popover {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(30, 35, 65, 0.97), rgba(20, 24, 45, 0.97));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 140, 0.2);
+    border-radius: 999px;
+    padding: 0.45rem 0.55rem;
+    display: flex;
+    gap: 0.25rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 32px rgba(180, 150, 255, 0.2);
+    z-index: 50;
+    animation: reactionPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.reaction-popover::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(30, 35, 65, 0.97);
+}
+
+@keyframes reactionPopIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.85); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.reaction-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.reaction-bubble:hover {
+    transform: translateY(-10px) scale(1.4);
+}
+
+.reaction-bubble:hover .reaction-emoji {
+    animation-duration: 0.72s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+.reaction-bubble.reaction-like:hover .reaction-emoji {
+    animation-name: reactionLikePop;
+}
+
+.reaction-bubble.reaction-love:hover .reaction-emoji {
+    animation-name: reactionHeartBeat;
+}
+
+.reaction-bubble.reaction-celebrate:hover .reaction-emoji {
+    animation-name: reactionCelebrateClap;
+}
+
+.reaction-bubble.reaction-insightful:hover .reaction-emoji {
+    animation-name: reactionIdeaGlow;
+}
+
+.reaction-bubble.reaction-curious:hover .reaction-emoji {
+    animation-name: reactionCuriousTilt;
+}
+
+.reaction-bubble.reaction-funny:hover .reaction-emoji {
+    animation-name: reactionFunnyGiggle;
+}
+
+.reaction-bubble.reaction-love:hover {
+    filter: drop-shadow(0 0 14px rgba(255, 126, 126, 0.55));
+}
+
+.reaction-bubble.reaction-insightful:hover {
+    filter: drop-shadow(0 0 18px rgba(255, 215, 140, 0.55));
+}
+
+.reaction-bubble.reaction-celebrate:hover::before,
+.reaction-bubble.reaction-insightful:hover::before,
+.reaction-bubble.reaction-love:hover::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: reactionHalo 0.9s ease-out infinite;
+}
+
+.reaction-bubble.reaction-love:hover::before {
+    background: radial-gradient(circle, rgba(255, 126, 126, 0.22), transparent 62%);
+}
+
+.reaction-bubble.reaction-celebrate:hover::before {
+    background:
+        radial-gradient(circle at 28% 26%, rgba(255, 215, 140, 0.9) 0 2px, transparent 3px),
+        radial-gradient(circle at 70% 28%, rgba(180, 150, 255, 0.9) 0 2px, transparent 3px),
+        radial-gradient(circle at 36% 76%, rgba(125, 211, 168, 0.9) 0 2px, transparent 3px);
+}
+
+.reaction-bubble.reaction-insightful:hover::before {
+    background: radial-gradient(circle, rgba(255, 215, 140, 0.2), transparent 64%);
+}
+
+.reaction-bubble.active {
+    background: linear-gradient(135deg, rgba(255, 215, 140, 0.25), rgba(180, 150, 255, 0.25));
+    box-shadow: 0 4px 16px rgba(255, 215, 140, 0.3);
+}
+
+.reaction-bubble .reaction-emoji {
+    font-size: 1.7rem;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.reaction-tooltip {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.85);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+}
+
+.reaction-bubble:hover .reaction-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.post-card.reaction-bursting {
+    box-shadow: 0 0 0 1px rgba(180, 150, 255, 0.14), 0 0 34px rgba(180, 150, 255, 0.16);
+}
+
+.reaction-burst {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    z-index: 8;
+    width: 86px;
+    height: 86px;
+    margin: -43px 0 0 -43px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    animation: reactionBurstFloat 0.82s ease-out both;
+}
+
+.reaction-burst::before,
+.reaction-burst::after {
+    content: '';
+    position: absolute;
+    border-radius: inherit;
+    inset: 12px;
+    animation: reactionBurstRing 0.82s ease-out both;
+}
+
+.reaction-burst::after {
+    inset: 24px;
+    animation-delay: 0.08s;
+}
+
+.reaction-burst span {
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+    animation: reactionBurstEmoji 0.82s cubic-bezier(0.2, 1.25, 0.32, 1) both;
+}
+
+.reaction-burst-like::before,
+.reaction-burst-like::after {
+    border: 2px solid rgba(170, 199, 255, 0.5);
+}
+
+.reaction-burst-love::before,
+.reaction-burst-love::after {
+    border: 2px solid rgba(255, 126, 126, 0.55);
+    box-shadow: 0 0 24px rgba(255, 126, 126, 0.25);
+}
+
+.reaction-burst-celebrate::before,
+.reaction-burst-celebrate::after {
+    border: 2px solid rgba(255, 215, 140, 0.55);
+    background:
+        radial-gradient(circle at 18% 24%, rgba(255, 215, 140, 0.95) 0 2px, transparent 3px),
+        radial-gradient(circle at 78% 22%, rgba(180, 150, 255, 0.95) 0 2px, transparent 3px),
+        radial-gradient(circle at 22% 78%, rgba(125, 211, 168, 0.95) 0 2px, transparent 3px),
+        radial-gradient(circle at 80% 76%, rgba(255, 126, 126, 0.95) 0 2px, transparent 3px);
+}
+
+.reaction-burst-insightful::before,
+.reaction-burst-insightful::after {
+    border: 2px solid rgba(255, 215, 140, 0.6);
+    box-shadow: 0 0 28px rgba(255, 215, 140, 0.28);
+}
+
+.reaction-burst-curious::before,
+.reaction-burst-curious::after {
+    border: 2px solid rgba(180, 150, 255, 0.55);
+}
+
+.reaction-burst-funny::before,
+.reaction-burst-funny::after {
+    border: 2px solid rgba(255, 182, 140, 0.55);
+}
+
+@keyframes reactionLikePop {
+    0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+    38% { transform: translateY(-5px) rotate(-8deg) scale(1.18); }
+    70% { transform: translateY(1px) rotate(5deg) scale(0.98); }
+}
+
+@keyframes reactionHeartBeat {
+    0%, 100% { transform: scale(1); }
+    18% { transform: scale(1.28); }
+    34% { transform: scale(0.96); }
+    52% { transform: scale(1.18); }
+    72% { transform: scale(1); }
+}
+
+@keyframes reactionCelebrateClap {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-4px) rotate(-12deg) scale(1.12); }
+    50% { transform: translateY(0) rotate(10deg) scale(1.05); }
+    75% { transform: translateY(-2px) rotate(-6deg); }
+}
+
+@keyframes reactionIdeaGlow {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 215, 140, 0)); }
+    45% { transform: scale(1.16); filter: drop-shadow(0 0 16px rgba(255, 215, 140, 0.85)); }
+}
+
+@keyframes reactionCuriousTilt {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    30% { transform: rotate(-16deg) translateY(-3px); }
+    62% { transform: rotate(14deg) translateY(1px); }
+}
+
+@keyframes reactionFunnyGiggle {
+    0%, 100% { transform: translateX(0) rotate(0deg) scale(1); }
+    20% { transform: translateX(-2px) rotate(-9deg) scale(1.08); }
+    42% { transform: translateX(3px) rotate(8deg) scale(1.12); }
+    64% { transform: translateX(-1px) rotate(-5deg) scale(1.05); }
+}
+
+@keyframes reactionHalo {
+    0% { transform: scale(0.82); opacity: 0.82; }
+    100% { transform: scale(1.35); opacity: 0; }
+}
+
+@keyframes reactionBurstFloat {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(0.62); }
+    18% { opacity: 1; }
+    78% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -32px) scale(1.08); }
+}
+
+@keyframes reactionBurstEmoji {
+    0% { transform: scale(0.35) rotate(-18deg); }
+    34% { transform: scale(1.28) rotate(8deg); }
+    62% { transform: scale(0.94) rotate(-4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes reactionBurstRing {
+    0% { opacity: 0.85; transform: scale(0.42); }
+    100% { opacity: 0; transform: scale(1.75); }
+}
+
+@media (max-width: 600px) {
+    .reaction-popover { padding: 0.35rem 0.4rem; gap: 0.15rem; }
+    .reaction-bubble { width: 38px; height: 38px; }
+    .reaction-bubble .reaction-emoji { font-size: 1.4rem; }
+}

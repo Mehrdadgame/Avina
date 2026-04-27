@@ -15,7 +15,7 @@ public class AvinaDbContext : DbContext
     public DbSet<UserPurchase> UserPurchases { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
-    // New tables
+  
     public DbSet<ContentMedia> Contents { get; set; } = null!;
     public DbSet<ContentPurchase> ContentPurchases { get; set; } = null!;
     public DbSet<CourseLesson> CourseLessons { get; set; } = null!;

@@ -197,6 +197,7 @@
         <div>
             <div class="tabs">
                 <button class="tab-btn @(activeTab == "overview" ? "active" : "")" @onclick='() => SetTab("overview")'>مرور</button>
+                <button class="tab-btn @(activeTab == "posts" ? "active" : "")" @onclick='() => SetTab("posts")'>پست‌های من</button>
                 <button class="tab-btn @(activeTab == "content" ? "active" : "")" @onclick='() => SetTab("content")'>محتوای من</button>
                 <button class="tab-btn @(activeTab == "courses" ? "active" : "")" @onclick='() => SetTab("courses")'>دوره‌ها</button>
                 <button class="tab-btn @(activeTab == "products" ? "active" : "")" @onclick='() => SetTab("products")'>محصولات من</button>
@@ -219,6 +220,81 @@
                             </div>
                         }
                     </div>
+                </section>
+            }
+
+            @if (activeTab == "posts")
+            {
+                <section class="profile-card animate-page">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                        <h2 class="section-title" style="margin:0;">پست‌های من <span style="color:#8a92b3; font-weight:600; font-size:0.85rem;">(@myPosts.Count)</span></h2>
+                        <a href="/social#composer" class="btn-main" style="text-decoration:none; padding:0.5rem 1rem; font-size:0.85rem;">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">add_circle</span>
+                            <span>پست جدید</span>
+                        </a>
+                    </div>
+
+                    @if (myPosts.Count == 0)
+                    {
+                        <div style="text-align:center; padding:3rem 1rem; color:#8a92b3;">
+                            <div style="font-size:3.5rem; margin-bottom:0.75rem;">📭</div>
+                            <p style="margin:0 0 1rem 0; font-size:1rem;">هنوز هیچ پستی نگذاشتی</p>
+                            <a href="/social#composer" class="btn-main" style="text-decoration:none;">اولین پستت رو بساز</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ig-grid">
+                            @foreach (var post in myPosts)
+                            {
+                                <a href="/social#post-@post.Id" class="ig-tile" title="@post.Content">
+                                    @if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+                                    {
+                                        <img src="@post.ImageUrl" alt="post" />
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(post.VideoUrl))
+                                    {
+                                        <div class="ig-tile-video">
+                                            <span class="material-symbols-outlined">play_circle</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="ig-tile-text">
+                                            <p>@(post.Content?.Length > 120 ? post.Content[..120] + "..." : post.Content)</p>
+                                        </div>
+                                    }
+                                    <div class="ig-tile-overlay">
+                                        @{
+                                            var topReactions = post.Likes
+                                                .GroupBy(l => l.Reaction)
+                                                .OrderByDescending(g => g.Count())
+                                                .Take(3)
+                                                .Select(g => g.Key)
+                                                .ToList();
+                                        }
+                                        @if (topReactions.Count > 0)
+                                        {
+                                            <span class="ig-tile-stat ig-tile-reactions">
+                                                @foreach (var r in topReactions)
+                                                {
+                                                    <span class="ig-mini-react">@(r switch { ReactionType.Love => "❤️", ReactionType.Celebrate => "👏", ReactionType.Insightful => "💡", ReactionType.Curious => "🤔", ReactionType.Funny => "😄", _ => "👍" })</span>
+                                                }
+                                                <span>@post.Likes.Count</span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="ig-tile-stat">
+                                                <span class="material-symbols-outlined">thumb_up</span>
+                                                0
+                                            </span>
+                                        }
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
                 </section>
             }
 
@@ -426,6 +502,7 @@
     private List<UserCourseEnrollment> realEnrollments = [];
     private List<UserPurchase> purchasedProducts = [];
     private List<AchievementItem> achievementsList = [];
+    private List<SocialPost> myPosts = [];
     private string activeTab = "overview";
     private string editName = string.Empty;
     private string editRole = "دانش‌آموز";
@@ -587,6 +664,14 @@
             .Include(p => p.Product)
             .Where(p => p.UserId == currentUser.Id)
             .OrderByDescending(p => p.PurchasedAt)
+            .ToListAsync();
+
+        myPosts = await db.SocialPosts
+            .AsNoTracking()
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
+            .Where(p => p.UserId == currentUser.Id)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
         SeedEditFields();
@@ -784,13 +869,13 @@
     {
         try
         {
-            await JS.InvokeVoidAsync("lsRemove", StorageKey);
+            AuthState.Logout();
+            await JS.InvokeVoidAsync("logoutUser");
         }
         catch
         {
+            AuthState.Logout();
+            Nav.NavigateTo("/");
         }
-
-        AuthState.Logout();
-        Nav.NavigateTo("/");
     }
 }

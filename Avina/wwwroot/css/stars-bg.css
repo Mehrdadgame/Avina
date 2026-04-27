@@ -2,98 +2,77 @@
 /* انیمیشن نقشه ستارگان: ظریف، آرام، آموزشی */
 /* "هر ستاره یک مهارت، هر خط یک اتصال در مسیر رشد" */
 
-/* Canvas باید fixed و پشت همه چیز باشه */
 #avina-stars-bg {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 0;
-    pointer-events: none;
-    /* خیلی ظریف باشه - 60% شفافیت کلی */
-    opacity: 0.55;
-    /* blend mode تا با تم تیره ترکیب بشه */
-    mix-blend-mode: screen;
-    /* جلوگیری از scroll-reflow */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: -2 !important;   /* پشت همه چی، حتی Aurora (z=-1) */
+    pointer-events: none !important;
+    opacity: 1;
     will-change: transform;
-    /* محو شدن نرم در شروع */
     animation: starsFadeIn 1.6s ease-out;
 }
 
 @keyframes starsFadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 0.55;
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
-/* روی موبایل کمی کم‌رنگ‌تر باشه که حواس‌پرت‌کن نباشه */
-@media (max-width: 768px) {
-    #avina-stars-bg {
-        opacity: 0.42;
-    }
-}
-
-/* Aurora glow خیلی ظریف در گوشه‌ها برای عمق بیشتر */
+/* Aurora glow */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
     background:
-        radial-gradient(ellipse 60% 50% at 12% 8%, rgba(66, 72, 212, 0.08), transparent 60%),
-        radial-gradient(ellipse 50% 40% at 88% 92%, rgba(255, 182, 140, 0.04), transparent 60%),
-        radial-gradient(ellipse 55% 45% at 92% 18%, rgba(145, 151, 255, 0.05), transparent 65%),
-        radial-gradient(ellipse 45% 35% at 8% 88%, rgba(170, 199, 255, 0.04), transparent 55%);
+        radial-gradient(ellipse 70% 55% at 12% 8%, rgba(99, 102, 241, 0.18), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 88% 92%, rgba(255, 182, 140, 0.10), transparent 60%),
+        radial-gradient(ellipse 55% 45% at 92% 18%, rgba(168, 139, 250, 0.14), transparent 65%),
+        radial-gradient(ellipse 50% 40% at 8% 88%, rgba(96, 165, 250, 0.10), transparent 55%),
+        radial-gradient(ellipse 80% 60% at 50% 50%, rgba(76, 29, 149, 0.08), transparent 70%);
     animation: auroraDrift 32s ease-in-out infinite alternate;
 }
 
 @keyframes auroraDrift {
-    0% {
-        opacity: 0.7;
-        transform: translateY(0) scale(1);
-    }
-
-    50% {
-        opacity: 0.85;
-        transform: translateY(-8px) scale(1.02);
-    }
-
-    100% {
-        opacity: 0.65;
-        transform: translateY(4px) scale(0.99);
-    }
+    0%   { opacity: 0.85; transform: translateY(0) scale(1); }
+    50%  { opacity: 1;    transform: translateY(-10px) scale(1.03); }
+    100% { opacity: 0.75; transform: translateY(6px) scale(0.99); }
 }
 
-/* مطمئن می‌شیم محتوا همیشه روی canvas باشه */
-.app-layout,
-.main-layout,
-.sidebar,
-.top-header,
-main,
-#blazor-error-ui {
+/* main-layout و main روی canvas باشن، اما app-layout نباید stacking context بسازه
+   چون sidebar/backdrop داخلش هستند و stacking context ما رو به دام می‌اندازه */
+.main-layout, main {
     position: relative;
     z-index: 1;
 }
 
-/* Reduced motion: حذف انیمیشن aurora */
-@media (prefers-reduced-motion: reduce) {
-
-    body::before {
-        animation: none;
-    }
-
-    #avina-stars-bg {
-        animation: none;
-    }
+/* app-layout رو فقط یک container بدون stacking context جدید می‌گذاریم */
+.app-layout {
+    position: static !important;
 }
 
-/* مطمئن شدن از اینکه body پس‌زمینه شفاف نیست (canvas باید روی پس‌زمینه تیره باشه) */
-html,
+#blazor-error-ui { z-index: 2000 !important; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    body::before, #avina-stars-bg { animation: none; }
+}
+
+/* پس‌زمینه روی html (که زیر canvas میمونه) */
+html {
+    background: radial-gradient(ellipse at top, #161827 0%, #0c0e1a 60%, #07091a 100%) !important;
+    margin: 0;
+    padding: 0;
+}
 body {
-    background-color: var(--bg, #10131a) !important;
+    /* body شفاف باشه تا canvas (z=-2) دیده بشه */
+    background: transparent !important;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
