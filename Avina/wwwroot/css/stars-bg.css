@@ -1,0 +1,99 @@
+/* ====== Avina - Star Map Background ====== */
+/* انیمیشن نقشه ستارگان: ظریف، آرام، آموزشی */
+/* "هر ستاره یک مهارت، هر خط یک اتصال در مسیر رشد" */
+
+/* Canvas باید fixed و پشت همه چیز باشه */
+#avina-stars-bg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    /* خیلی ظریف باشه - 60% شفافیت کلی */
+    opacity: 0.55;
+    /* blend mode تا با تم تیره ترکیب بشه */
+    mix-blend-mode: screen;
+    /* جلوگیری از scroll-reflow */
+    will-change: transform;
+    /* محو شدن نرم در شروع */
+    animation: starsFadeIn 1.6s ease-out;
+}
+
+@keyframes starsFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 0.55;
+    }
+}
+
+/* روی موبایل کمی کم‌رنگ‌تر باشه که حواس‌پرت‌کن نباشه */
+@media (max-width: 768px) {
+    #avina-stars-bg {
+        opacity: 0.42;
+    }
+}
+
+/* Aurora glow خیلی ظریف در گوشه‌ها برای عمق بیشتر */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 60% 50% at 12% 8%, rgba(66, 72, 212, 0.08), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 88% 92%, rgba(255, 182, 140, 0.04), transparent 60%),
+        radial-gradient(ellipse 55% 45% at 92% 18%, rgba(145, 151, 255, 0.05), transparent 65%),
+        radial-gradient(ellipse 45% 35% at 8% 88%, rgba(170, 199, 255, 0.04), transparent 55%);
+    animation: auroraDrift 32s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDrift {
+    0% {
+        opacity: 0.7;
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        opacity: 0.85;
+        transform: translateY(-8px) scale(1.02);
+    }
+
+    100% {
+        opacity: 0.65;
+        transform: translateY(4px) scale(0.99);
+    }
+}
+
+/* مطمئن می‌شیم محتوا همیشه روی canvas باشه */
+.app-layout,
+.main-layout,
+.sidebar,
+.top-header,
+main,
+#blazor-error-ui {
+    position: relative;
+    z-index: 1;
+}
+
+/* Reduced motion: حذف انیمیشن aurora */
+@media (prefers-reduced-motion: reduce) {
+
+    body::before {
+        animation: none;
+    }
+
+    #avina-stars-bg {
+        animation: none;
+    }
+}
+
+/* مطمئن شدن از اینکه body پس‌زمینه شفاف نیست (canvas باید روی پس‌زمینه تیره باشه) */
+html,
+body {
+    background-color: var(--bg, #10131a) !important;
+}

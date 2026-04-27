@@ -49,6 +49,13 @@ public class AvinaDbContext : DbContext
     public DbSet<OnboardingAttempt> OnboardingAttempts { get; set; } = null!;
     public DbSet<OnboardingAnswer> OnboardingAnswers { get; set; } = null!;
 
+    // Events (per-design: Online → Real → Online cycle)
+    public DbSet<GrowthEvent> GrowthEvents { get; set; } = null!;
+    public DbSet<EventRegistration> EventRegistrations { get; set; } = null!;
+
+    // Product QR unlock log (per-design: physical products as "tools to practice the path")
+    public DbSet<ProductQrUnlock> ProductQrUnlocks { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -326,6 +333,64 @@ public class AvinaDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<OnboardingAnswer>()
             .HasIndex(a => new { a.AttemptId, a.QuestionId })
+            .IsUnique();
+
+        // ====== Growth Events (per design doc: Online → Real → Online) ======
+        modelBuilder.Entity<GrowthEvent>()
+            .HasOne(e => e.RelatedPath)
+            .WithMany()
+            .HasForeignKey(e => e.RelatedPathId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<GrowthEvent>()
+            .HasOne(e => e.PostEventMission)
+            .WithMany()
+            .HasForeignKey(e => e.PostEventMissionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<GrowthEvent>()
+            .HasIndex(e => new { e.Status, e.StartAt });
+
+        modelBuilder.Entity<EventRegistration>()
+            .HasOne(r => r.Event)
+            .WithMany(e => e.Registrations)
+            .HasForeignKey(r => r.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<EventRegistration>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<EventRegistration>()
+            .HasIndex(r => new { r.EventId, r.UserId })
+            .IsUnique();
+
+        // ====== Product → Path linkage + QR unlock ======
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.RelatedPath)
+            .WithMany()
+            .HasForeignKey(p => p.RelatedPathId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.RelatedSkill)
+            .WithMany()
+            .HasForeignKey(p => p.RelatedSkillId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.QrCode)
+            .IsUnique()
+            .HasFilter("[QrCode] IS NOT NULL");
+
+        modelBuilder.Entity<ProductQrUnlock>()
+            .HasOne(u => u.User)
+            .WithMany()
+            .HasForeignKey(u => u.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ProductQrUnlock>()
+            .HasOne(u => u.Product)
+            .WithMany()
+            .HasForeignKey(u => u.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ProductQrUnlock>()
+            .HasIndex(u => new { u.UserId, u.ProductId })
             .IsUnique();
 
         SeedData(modelBuilder);
