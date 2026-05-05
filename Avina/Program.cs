@@ -1,7 +1,14 @@
 using Avina.Components;
+using Avina.Data;
 using Avina.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Database
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AvinaDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -19,16 +26,26 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 
 var app = builder.Build();
 
+// Apply migrations on startup
+try
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AvinaDbContext>();
+    db.Database.Migrate();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️  Database migration failed: {ex.Message}");
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 else
 {
-    // Swagger UI only in development
     app.MapOpenApi();
 }
 
@@ -41,7 +58,6 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Map API controllers
 app.MapControllers();
 
 app.Run();

@@ -3,14 +3,38 @@ namespace Avina.Models;
 public class User
 {
     public int Id { get; set; }
-    public string? Name { get; set; }
-    public string? Email { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public string PasswordSalt { get; set; } = string.Empty;
+    public int? Age { get; set; }
+    public string? AvatarUrl { get; set; }
     public string? ProfileImage { get; set; }
     public string? Bio { get; set; }
-    public string? Role { get; set; }
-    public int Coin { get; set; }
-    public int Followers { get; set; }
-    public int Following { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public string Role { get; set; } = "دانش‌آموز";
+    public int Coin { get; set; } = 100;
+    public int Level { get; set; } = 1;
+    public int Experience { get; set; } = 0;
+    public int Followers { get; set; } = 0;
+    public int Following { get; set; } = 0;
     public List<string> Achievements { get; set; } = new();
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LastLoginAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+
+    // Navigation properties
+    public virtual ICollection<UserPurchase> Purchases { get; set; } = new List<UserPurchase>();
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<SocialPost> SocialPosts { get; set; } = new List<SocialPost>();
+    public virtual ICollection<SocialComment> SocialComments { get; set; } = new List<SocialComment>();
+    public virtual ICollection<SocialPostLike> SocialPostLikes { get; set; } = new List<SocialPostLike>();
+    public virtual ICollection<UserFollow> FollowersMap { get; set; } = new List<UserFollow>();
+    public virtual ICollection<UserFollow> FollowingMap { get; set; } = new List<UserFollow>();
+    public virtual GrowthProfile? GrowthProfile { get; set; }
+    public virtual ICollection<UserGrowthPath> GrowthPaths { get; set; } = new List<UserGrowthPath>();
+    public virtual ICollection<UserSkillProgress> SkillProgresses { get; set; } = new List<UserSkillProgress>();
+    public virtual ICollection<MissionSubmission> MissionSubmissions { get; set; } = new List<MissionSubmission>();
+    public virtual ICollection<RewardTransaction> RewardTransactions { get; set; } = new List<RewardTransaction>();
+    public virtual ICollection<OnboardingAttempt> OnboardingAttempts { get; set; } = new List<OnboardingAttempt>();
 }
