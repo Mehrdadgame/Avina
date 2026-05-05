@@ -1,5 +1,6 @@
 html, body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Vazirmatn, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
 }
 
 .btn-primary {

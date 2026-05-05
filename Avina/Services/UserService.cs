@@ -1,4 +1,6 @@
+using Avina.Data;
 using Avina.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Avina.Services;
 
@@ -13,45 +15,44 @@ public interface IUserService
 
 public class UserService : IUserService
 {
-    public Task<User?> GetUserByIdAsync(int id)
+    private readonly AvinaDbContext _context;
+
+    public UserService(AvinaDbContext context)
     {
-        // Mock implementation - بعداً از دیتابیس پر کنیم
-        return Task.FromResult<User?>(new User
-        {
-            Id = id,
-            Name = "علی محمدی",
-            Email = "ali@example.com",
-            Role = "دانش‌آموز",
-            ProfileImage = "images/profiles/user1.jpg",
-            Bio = "فعال و پرانرژی",
-            Coin = 2450,
-            Followers = 125,
-            Following = 89,
-            CreatedAt = DateTime.Now.AddMonths(-3)
-        });
+        _context = context;
     }
 
-    public Task<User?> GetCurrentUserAsync()
+    public async Task<User?> GetUserByIdAsync(int id)
     {
-        // Mock implementation
-        return GetUserByIdAsync(1);
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id && u.IsActive);
     }
 
-    public Task UpdateUserAsync(User user)
+    public async Task<User?> GetCurrentUserAsync()
     {
-        // Mock implementation
-        return Task.CompletedTask;
+        // در آینده از HttpContext/JWT claim می‌خوانیم — فعلاً اولین کاربر فعال
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.IsActive);
     }
 
-    public Task<bool> LoginAsync(string email, string password)
+    public async Task UpdateUserAsync(User user)
     {
-        // Mock implementation
-        return Task.FromResult(true);
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> LoginAsync(string email, string password)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+
+        if (user == null) return false;
+
+        return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
     }
 
     public Task LogoutAsync()
     {
-        // Mock implementation
         return Task.CompletedTask;
     }
 }
